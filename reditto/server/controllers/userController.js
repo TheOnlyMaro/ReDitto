@@ -27,7 +27,7 @@ const createUser = async (req, res) => {
     const user = new User({
       username,
       email,
-      password, // Note: In production, hash this password before saving
+      password, // Password is already hashed by middleware
       displayName: displayName || username
     });
 

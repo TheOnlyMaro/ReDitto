@@ -7,20 +7,26 @@ const {
   getUserByUsername,
   deleteUser
 } = require('../controllers/userController');
+const {
+  validateUserRegistration,
+  validateUserUpdate,
+  hashPassword,
+  validateObjectId
+} = require('../middleware/validation');
 
 // Create a new user
-router.post('/', createUser);
+router.post('/', validateUserRegistration, hashPassword, createUser);
 
 // Get user by username
 router.get('/username/:username', getUserByUsername);
 
 // Get user by ID
-router.get('/:userId', getUserById);
+router.get('/:userId', validateObjectId('userId'), getUserById);
 
 // Update user
-router.put('/:userId', updateUser);
+router.put('/:userId', validateObjectId('userId'), validateUserUpdate, updateUser);
 
 // Delete user
-router.delete('/:userId', deleteUser);
+router.delete('/:userId', validateObjectId('userId'), deleteUser);
 
 module.exports = router;
