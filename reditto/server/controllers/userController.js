@@ -99,9 +99,7 @@ const getUserById = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId)
-      .select('-password')
-      .populate('communities.created', 'name')
-      .populate('communities.joined', 'name');
+      .select('-password');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -123,9 +121,7 @@ const getUserByUsername = async (req, res) => {
     const { username } = req.params;
 
     const user = await User.findOne({ username })
-      .select('-password')
-      .populate('communities.created', 'name')
-      .populate('communities.joined', 'name');
+      .select('-password');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
