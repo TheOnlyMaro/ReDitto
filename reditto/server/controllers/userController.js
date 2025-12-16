@@ -1,55 +1,5 @@
 const User = require('../models/User');
 
-// Create a new user
-const createUser = async (req, res) => {
-  try {
-    const { username, email, password, displayName } = req.body;
-
-    // Validate required fields
-    if (!username || !email || !password) {
-      return res.status(400).json({ 
-        error: 'Username, email, and password are required' 
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
-    });
-
-    if (existingUser) {
-      return res.status(409).json({ 
-        error: 'User with this email or username already exists' 
-      });
-    }
-
-    // Create new user
-    const user = new User({
-      username,
-      email,
-      password, // Password is already hashed by middleware
-      displayName: displayName || username
-    });
-
-    await user.save();
-
-    // Return user without password
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(201).json({ 
-      message: 'User created successfully',
-      user: userResponse 
-    });
-  } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ 
-      error: 'Failed to create user',
-      details: error.message 
-    });
-  }
-};
-
 // Update user profile (only editable fields)
 const updateUser = async (req, res) => {
   try {
@@ -161,7 +111,6 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-  createUser,
   updateUser,
   getUserById,
   getUserByUsername,
