@@ -40,12 +40,20 @@ const userSchema = new mongoose.Schema({
       default: 0
     }
   },
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post'
+  }],
   communities: {
     created: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Community'
     }],
     joined: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Community'
+    }],
+    moderated: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Community'
     }]
