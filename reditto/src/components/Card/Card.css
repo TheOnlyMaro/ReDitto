@@ -1,0 +1,18 @@
+.card {
+  background-color: white;
+  border: 1px solid #edeff1;
+  border-radius: 4px;
+}
+
+.card-padding {
+  padding: 16px;
+}
+
+.card-hover {
+  transition: box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
