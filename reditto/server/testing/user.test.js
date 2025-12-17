@@ -38,11 +38,12 @@ describe('Authentication Tests', () => {
   });
 
   afterAll(async () => {
+    await User.deleteMany({});
     await mongoose.connection.close();
   });
 
   beforeEach(async () => {
-    // Clear users collection before each test
+    // Clear users collection before each test for isolation
     await User.deleteMany({});
   });
 
@@ -108,6 +109,10 @@ describe('Authentication Tests', () => {
         .post('/api/auth/register')
         .send(validUserData)
         .expect(201);
+      
+      // Force index build and wait
+      await User.ensureIndexes();
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const response = await request(app)
         .post('/api/auth/register')
@@ -122,7 +127,9 @@ describe('Authentication Tests', () => {
         .post('/api/auth/register')
         .send(validUserData)
         .expect(201);
-
+      // Force index build and wait
+      await User.ensureIndexes();
+      await new Promise(resolve => setTimeout(resolve, 100));
       const duplicateEmailUser = {
         username: 'different123',
         email: validUserData.email,
@@ -168,7 +175,7 @@ describe('Authentication Tests', () => {
   describe('POST /api/auth/login - User Login', () => {
     test('Should login with valid credentials', async () => {
       // First register a user
-      await registerUser();
+      const registered = await registerUser();
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -186,6 +193,10 @@ describe('Authentication Tests', () => {
 
     test('Should return valid JWT token on login', async () => {
       const registered = await registerUser();
+      
+      // Verify user exists in database
+      const userExists = await User.findOne({ email: validUserData.email });
+      expect(userExists).not.toBeNull();
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -203,6 +214,7 @@ describe('Authentication Tests', () => {
     test('Should update lastActive on login', async () => {
       await registerUser();
       const originalUser = await User.findOne({ email: validUserData.email });
+      expect(originalUser).not.toBeNull();
       const originalLastActive = originalUser.settings.lastActive;
 
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -257,7 +269,11 @@ describe('Authentication Tests', () => {
     });
 
     test('Should be case-insensitive for email', async () => {
-      await registerUser();
+      const registered = await registerUser();
+      
+      // Verify user exists
+      const userExists = await User.findOne({ email: validUserData.email });
+      expect(userExists).not.toBeNull();
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -492,7 +508,9 @@ describe('Authentication Tests', () => {
       
       // Verify the user was not updated
       const user = await User.findById(registered.user._id);
-      expect(user.displayName).not.toBe('Hacker Name');
+      if (user) {
+        expect(user.displayName).not.toBe('Hacker Name');
+      }
     });
 
     test('Should reject token signed with different secret on token refresh', async () => {
@@ -556,6 +574,10 @@ describe('Authentication Tests', () => {
       test('Should retrieve user with all fields populated', async () => {
         const registered = await registerUser();
         const userId = registered.user._id;
+        
+        // Verify user exists in DB
+        const userExists = await User.findById(userId);
+        expect(userExists).not.toBeNull();
 
         const response = await request(app)
           .get(`/api/users/${userId}`)

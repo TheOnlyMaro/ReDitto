@@ -112,23 +112,21 @@ const communitySchema = new mongoose.Schema({
 });
 
 // Index for faster lookups
-communitySchema.index({ name: 1 });
+// Note: name index is already created by the unique constraint
 communitySchema.index({ creator: 1 });
 communitySchema.index({ memberCount: -1 });
 communitySchema.index({ createdAt: -1 });
 
 // Update the updatedAt timestamp before saving
-communitySchema.pre('save', function(next) {
+communitySchema.pre('save', function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 // Add creator as moderator automatically
-communitySchema.pre('save', function(next) {
+communitySchema.pre('save', function() {
   if (this.isNew && !this.moderators.includes(this.creator)) {
     this.moderators.push(this.creator);
   }
-  next();
 });
 
 // Virtual for URL-friendly name

@@ -7,4 +7,5 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  maxWorkers: 1, // Run tests serially to avoid database conflicts
 };

@@ -117,25 +117,18 @@ postSchema.index({ community: 1, createdAt: -1 });
 postSchema.index({ community: 1, voteCount: -1 });
 
 // Update timestamps
-postSchema.pre('save', function(next) {
+postSchema.pre('save', function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 // Calculate vote count before saving
-postSchema.pre('save', function(next) {
+postSchema.pre('save', function() {
   this.voteCount = this.votes.upvotes.length - this.votes.downvotes.length;
-  next();
 });
 
 // Virtual for vote score display
 postSchema.virtual('score').get(function() {
   return this.voteCount;
-});
-
-// Virtual for URL
-postSchema.virtual('url').get(function() {
-  return `/r/${this.community}/post/${this._id}`;
 });
 
 // Method to check if user has upvoted
