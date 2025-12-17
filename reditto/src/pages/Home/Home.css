@@ -32,10 +32,10 @@
 
 .home-main {
   display: grid;
-  grid-template-columns: 1fr 312px;
+  grid-template-columns: auto 1fr 312px;
   gap: 24px;
   padding: 0 20px 40px;
-  max-width: 1248px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -61,13 +61,23 @@
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  .home-main {
+    grid-template-columns: auto 1fr;
+  }
+  
+  .home-sidebar {
+    display: none;
+  }
+}
+
 @media (max-width: 960px) {
   .home-main {
     grid-template-columns: 1fr;
   }
   
   .home-sidebar {
-    position: static;
+    display: none;
   }
 }
 

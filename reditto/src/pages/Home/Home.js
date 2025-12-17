@@ -1,5 +1,6 @@
 import React from 'react';
 import Navbar from '../../components/Navbar/Navbar';
+import Sidebar from '../../components/Sidebar/Sidebar';
 import './Home.css';
 
 const Home = ({ user, onLogout }) => {
@@ -14,7 +15,8 @@ const Home = ({ user, onLogout }) => {
   return (
     <div className="home">
       <Navbar user={currentUser} onSearch={handleSearch} />
-      
+    <Sidebar />
+
       <div className="home-content">
         <div className="home-hero">
           <h1>Welcome to ReDitto</h1>
@@ -22,6 +24,7 @@ const Home = ({ user, onLogout }) => {
         </div>
         
         <div className="home-main">
+          
           <div className="home-feed">
             <div className="feed-placeholder">
               <p>Feed will be populated here</p>
