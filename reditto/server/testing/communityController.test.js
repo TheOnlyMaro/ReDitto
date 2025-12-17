@@ -15,8 +15,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/communities', communityRoutes);
 
 describe('Community Controller Tests', () => {
-  let testUser;
-  let testUser2;
   let authToken;
   let authToken2;
 
@@ -43,7 +41,6 @@ describe('Community Controller Tests', () => {
         password: 'Test123Pass'
       });
     
-    testUser = user1Response.body.user;
     authToken = user1Response.body.token;
 
     const user2Response = await request(app)
@@ -54,7 +51,6 @@ describe('Community Controller Tests', () => {
         password: 'Test123Pass'
       });
     
-    testUser2 = user2Response.body.user;
     authToken2 = user2Response.body.token;
   });
 
@@ -393,7 +389,7 @@ describe('Community Controller Tests', () => {
       expect(response.body.message).toBe('Community deleted successfully');
 
       // Verify deletion
-      const checkResponse = await request(app)
+      await request(app)
         .get('/api/communities/testcommunity')
         .expect(404);
     });

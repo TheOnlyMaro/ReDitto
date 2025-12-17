@@ -18,11 +18,8 @@ app.use('/api/communities', communityRoutes);
 app.use('/api/posts', postRoutes);
 
 describe('Post Controller Tests', () => {
-  let testUser;
-  let testUser2;
   let authToken;
   let authToken2;
-  let testCommunity;
 
   beforeAll(async () => {
     await mongoose.connect(process.env.MONGODB_TEST_URI);
@@ -49,7 +46,6 @@ describe('Post Controller Tests', () => {
         password: 'Test123Pass'
       });
     
-    testUser = user1Response.body.user;
     authToken = user1Response.body.token;
 
     const user2Response = await request(app)
@@ -60,11 +56,10 @@ describe('Post Controller Tests', () => {
         password: 'Test123Pass'
       });
     
-    testUser2 = user2Response.body.user;
     authToken2 = user2Response.body.token;
 
     // Create test community
-    const communityResponse = await request(app)
+    await request(app)
       .post('/api/communities')
       .set('Authorization', `Bearer ${authToken}`)
       .send({
@@ -72,7 +67,6 @@ describe('Post Controller Tests', () => {
         description: 'A test community'
       });
     
-    testCommunity = communityResponse.body.community;
   });
 
   describe('POST /api/posts - Create Post', () => {
