@@ -15,8 +15,7 @@ const sidebarData = {
   ]
 };
 
-const Sidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(true);
+const Sidebar = ({ isExpanded, setIsExpanded }) => {
   const [moderationExpanded, setModerationExpanded] = useState(true);
   const [communitiesExpanded, setCommunitiesExpanded] = useState(true);
 

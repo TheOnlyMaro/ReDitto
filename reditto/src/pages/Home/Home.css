@@ -7,6 +7,25 @@
 .home-content {
   max-width: 1600px;
   margin: 0 auto;
+  transition: margin-left 0.3s ease;
+}
+
+.home-content.sidebar-expanded {
+  margin-left: 260px;
+}
+
+.home-content.sidebar-collapsed {
+  margin-left: 60px;
+}
+
+@media (max-width: 960px) {
+  .home-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
+  .home-content.sidebar-expanded {
+    margin-left: 0;
+  }
 }
 
 .home-hero {
@@ -16,6 +35,27 @@
   text-align: center;
   margin-bottom: 24px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: 260px;
+  height: 100%;
+  background: linear-gradient(135deg, #0079D3 0%, #0099ff 100%);
+}
+
+.sidebar-collapsed .home-hero::before {
+  width: 60px;
+}
+
+@media (max-width: 960px) {
+  .home-hero::before {
+    display: none;
+  }
 }
 
 .home-hero h1 {
@@ -32,10 +72,10 @@
 
 .home-main {
   display: grid;
-  grid-template-columns: auto 1fr 312px;
+  grid-template-columns: 1fr 312px;
   gap: 24px;
   padding: 0 20px 40px;
-  max-width: 1600px;
+  max-width: 1340px;
   margin: 0 auto;
 }
 
@@ -63,7 +103,7 @@
 /* Responsive */
 @media (max-width: 1200px) {
   .home-main {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr;
   }
   
   .home-sidebar {
@@ -74,10 +114,6 @@
 @media (max-width: 960px) {
   .home-main {
     grid-template-columns: 1fr;
-  }
-  
-  .home-sidebar {
-    display: none;
   }
 }
 
