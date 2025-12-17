@@ -23,6 +23,6 @@ describe('Database Connection Tests', () => {
 
 describe('Server Health Tests', () => {
   test('Environment variables should be loaded', () => {
-    expect(process.env.PORT).toBeDefined();
+    expect(process.env.SERVER_PORT).toBeDefined();
   });
 });
