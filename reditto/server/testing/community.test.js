@@ -81,7 +81,7 @@ describe('Community Model Tests', () => {
     });
 
     test('should fail with duplicate community name', async () => {
-      const first = await Community.create({
+        await Community.create({
         name: 'duplicate_test',
         creator: testUser._id
       });

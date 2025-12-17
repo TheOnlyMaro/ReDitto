@@ -175,7 +175,7 @@ describe('Authentication Tests', () => {
   describe('POST /api/auth/login - User Login', () => {
     test('Should login with valid credentials', async () => {
       // First register a user
-      const registered = await registerUser();
+      await registerUser();
 
       const response = await request(app)
         .post('/api/auth/login')
@@ -269,7 +269,7 @@ describe('Authentication Tests', () => {
     });
 
     test('Should be case-insensitive for email', async () => {
-      const registered = await registerUser();
+      await registerUser();
       
       // Verify user exists
       const userExists = await User.findOne({ email: validUserData.email });
@@ -508,9 +508,8 @@ describe('Authentication Tests', () => {
       
       // Verify the user was not updated
       const user = await User.findById(registered.user._id);
-      if (user) {
-        expect(user.displayName).not.toBe('Hacker Name');
-      }
+      expect(user).not.toBeNull();
+      expect(user.displayName).not.toBe('Hacker Name');
     });
 
     test('Should reject token signed with different secret on token refresh', async () => {
