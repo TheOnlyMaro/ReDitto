@@ -24,7 +24,8 @@
     "eject": "react-scripts eject",
     "server": "node server/index.js",
     "test:server": "jest --config jest.config.js",
-    "dev": "concurrently \"npm start\" \"npm run server\""
+    "dev": "concurrently \"npm start\" \"npm run server\"",
+    "git-history": "node scripts/generate-commits.js"
   },
   "eslintConfig": {
     "extends": [

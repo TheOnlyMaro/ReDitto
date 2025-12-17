@@ -19,6 +19,9 @@
 .env.test.local
 .env.production.local
 
+# auto-generated documentation
+COMMITS.md
+
 # logs
 npm-debug.log*
 yarn-debug.log*
