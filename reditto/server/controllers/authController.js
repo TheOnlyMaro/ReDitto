@@ -16,9 +16,9 @@ const register = async (req, res) => {
   try {
     const { username, email, password, displayName } = req.body;
 
-    // Check if user already exists
+    // Check if user already exists (convert email to lowercase for comparison)
     const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
+      $or: [{ email: email.toLowerCase() }, { username }] 
     });
 
     if (existingUser) {
