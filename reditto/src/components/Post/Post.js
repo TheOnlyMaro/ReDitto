@@ -1,8 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './Post.css';
 
-const Post = ({ post, onVote, onComment, onShare }) => {
+const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
   const [userVote, setUserVote] = useState(null); // null, 'upvote', or 'downvote'
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [isJoined, setIsJoined] = useState(isFollowing);
+  const optionsRef = useRef(null);
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setOptionsOpen(false);
+      }
+    };
+
+    if (optionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [optionsOpen]);
+
+  // Update isJoined when isFollowing prop changes
+  useEffect(() => {
+    setIsJoined(isFollowing);
+  }, [isFollowing]);
 
   const handleUpvote = () => {
     const newVote = userVote === 'upvote' ? null : 'upvote';
@@ -32,6 +57,21 @@ const Post = ({ post, onVote, onComment, onShare }) => {
     }
   };
 
+  const handleJoinClick = () => {
+    const newJoinedState = !isJoined;
+    setIsJoined(newJoinedState);
+    if (onJoin) {
+      onJoin(post.community.name, newJoinedState);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (onSave) {
+      onSave(post.id);
+    }
+    setOptionsOpen(false);
+  };
+
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
     const posted = new Date(timestamp);
@@ -54,14 +94,55 @@ const Post = ({ post, onVote, onComment, onShare }) => {
     <div className="post">
       {/* Post Header */}
       <div className="post-header">
-        <img 
-          src={post.community.icon} 
-          alt={post.community.name} 
-          className="community-icon"
-        />
-        <span className="community-name">{post.community.name}</span>
-        <span className="post-divider">•</span>
-        <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
+        <div className="post-header-left">
+          <img 
+            src={post.community.icon} 
+            alt={post.community.name} 
+            className="community-icon"
+          />
+          <span className="community-name">{post.community.name}</span>
+          <span className="post-divider">•</span>
+          <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
+        </div>
+
+        {user && (
+          <div className="post-header-right">
+            {/* Join Button - toggleable */}
+            <button 
+              className={`post-join-btn ${isJoined ? 'joined' : ''}`}
+              onClick={handleJoinClick}
+            >
+              {isJoined ? 'Joined' : 'Join'}
+            </button>
+
+            {/* Options Menu */}
+            <div className="post-options" ref={optionsRef}>
+              <button 
+                className="post-options-btn"
+                onClick={() => setOptionsOpen(!optionsOpen)}
+                aria-label="Post options"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="4" r="1.5" fill="currentColor"/>
+                  <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+                  <circle cx="10" cy="16" r="1.5" fill="currentColor"/>
+                </svg>
+              </button>
+
+              {/* Options Dropdown */}
+              {optionsOpen && (
+                <div className="post-options-dropdown">
+                  <button className="post-options-item" onClick={handleSaveClick}>
+                    <svg width="18" height="18" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 2a2 2 0 00-2 2v14l7-4 7 4V4a2 2 0 00-2-2H5z" fill="currentColor"/>
+                    </svg>
+                    <span>Save post</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Post Title */}

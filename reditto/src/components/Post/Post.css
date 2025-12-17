@@ -15,9 +15,23 @@
 .post-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
   font-size: 14px;
+}
+
+.post-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.post-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .community-icon {
@@ -39,6 +53,109 @@
 .post-time {
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+/* Join Button */
+.post-join-btn {
+  background: none;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-join-btn:hover {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.post-join-btn.joined {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.post-join-btn.joined:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: transparent;
+}
+
+/* Options Menu */
+.post-options {
+  position: relative;
+}
+
+.post-options-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.post-options-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.post-options-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 100;
+  animation: slideDown 0.15s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.post-options-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.post-options-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.post-options-item svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 /* Post Title */

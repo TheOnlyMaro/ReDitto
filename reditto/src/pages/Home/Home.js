@@ -49,6 +49,7 @@ const dummyPosts = [
 
 const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [followedCommunities, setFollowedCommunities] = useState(['r/reactjs']); // Example: user follows r/reactjs
   
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -68,6 +69,21 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
   const handleShare = (postId) => {
     console.log(`Share post ${postId}`);
     // TODO: Implement share functionality
+  };
+
+  const handleJoin = (communityName, isJoining) => {
+    console.log(`${isJoining ? 'Join' : 'Unjoin'} community:`, communityName);
+    if (isJoining) {
+      setFollowedCommunities(prev => [...prev, communityName]);
+    } else {
+      setFollowedCommunities(prev => prev.filter(name => name !== communityName));
+    }
+    // TODO: Implement join/unjoin functionality
+  };
+
+  const handleSave = (postId) => {
+    console.log(`Save post:`, postId);
+    // TODO: Implement save functionality
   };
 
   // Use real user prop or null for logged out state
@@ -96,9 +112,13 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
               <Post 
                 key={post.id}
                 post={post}
+                user={currentUser}
+                isFollowing={followedCommunities.includes(post.community.name)}
                 onVote={handleVote}
                 onComment={handleComment}
                 onShare={handleShare}
+                onJoin={handleJoin}
+                onSave={handleSave}
               />
             ))}
           </div>
