@@ -7,15 +7,7 @@ import { authService } from './services/authService';
 import './App.css';
 
 function App() {
-  // Dummy user data for testing
-  const dummyUser = {
-    username: 'testuser',
-    email: 'testuser@reditto.com',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    id: 1
-  };
-
-  const [user, setUser] = useState(dummyUser); // Start with dummy user for testing
+  const [user, setUser] = useState(null);
   const [darkMode, setDarkMode] = useState(true);
 
   // Check if user is already logged in on mount
@@ -53,8 +45,8 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} />} />
-          <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} darkMode={darkMode} />} />
-          <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} darkMode={darkMode} />} />
+          <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
         </Routes>
       </div>
     </Router>
