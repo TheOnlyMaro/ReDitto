@@ -5,3 +5,6 @@ export { default as Card } from './Card/Card';
 export { default as Avatar } from './Avatar/Avatar';
 export { default as Loading } from './Loading/Loading';
 export { default as Alert } from './Alert/Alert';
+export { default as Logo } from './Logo/Logo';
+export { default as SearchBar } from './SearchBar/SearchBar';
+export { default as Navbar } from './Navbar/Navbar';

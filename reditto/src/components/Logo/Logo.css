@@ -1,0 +1,43 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #0079D3;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logo-image {
+  height: 64px;
+  width: 64px;
+  object-fit: contain;
+}
+
+.logo-small .logo-image {
+  height: 24px;
+  width: 24px;
+}
+
+.logo-large .logo-image {
+  height: 40px;
+  width: 40px;
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  color: #0079D3;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .logo-text {
+    display: none;
+  }
+}
