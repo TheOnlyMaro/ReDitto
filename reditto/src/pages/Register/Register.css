@@ -1,0 +1,30 @@
+@import '../Login/Login.css';
+
+.auth-content-wide {
+  max-width: 520px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.auth-terms {
+  margin: 16px 0 20px 0;
+}
+
+.auth-terms p {
+  color: #878a8c;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
