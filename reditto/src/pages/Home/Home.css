@@ -81,6 +81,7 @@
 
 .home-feed {
   min-height: 400px;
+  padding: 0;
 }
 
 .feed-placeholder,

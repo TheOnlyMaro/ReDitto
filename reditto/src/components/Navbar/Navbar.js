@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../Logo/Logo';
 import SearchBar from '../SearchBar/SearchBar';
@@ -6,13 +6,56 @@ import Avatar from '../Avatar/Avatar';
 import Button from '../Button/Button';
 import './Navbar.css';
 
-const Navbar = ({ user, onSearch }) => {
+const Navbar = ({ user, onSearch, darkMode, setDarkMode, onLogout }) => {
   const navigate = useNavigate();
   const isLoggedIn = !!user;
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   const handleLoginClick = () => {
     navigate('/login');
   };
+
+  const toggleProfileMenu = () => {
+    setProfileMenuOpen(!profileMenuOpen);
+  };
+
+  const handleViewProfile = () => {
+    navigate(`/user/${user?.username}`);
+    setProfileMenuOpen(false);
+  };
+
+  const handleEditProfile = () => {
+    navigate('/settings/profile');
+    setProfileMenuOpen(false);
+  };
+
+  const handleSettings = () => {
+    navigate('/settings');
+    setProfileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    if (onLogout) onLogout();
+    setProfileMenuOpen(false);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    if (profileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <nav className="navbar">
@@ -68,8 +111,12 @@ const Navbar = ({ user, onSearch }) => {
               </button>
 
               {/* Profile Menu */}
-              <div className="navbar-profile">
-                <button className="navbar-profile-btn" aria-label="User menu">
+              <div className="navbar-profile" ref={profileMenuRef}>
+                <button 
+                  className="navbar-profile-btn" 
+                  aria-label="User menu"
+                  onClick={toggleProfileMenu}
+                >
                   <Avatar 
                     src={user.avatar} 
                     username={user.username}
@@ -79,6 +126,70 @@ const Navbar = ({ user, onSearch }) => {
                     <path d="M14.17 6.71l-3.88 3.88-3.88-3.88c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l4.59 4.59c.39.39 1.02.39 1.41 0l4.59-4.59c.39-.39.39-1.02 0-1.41-.39-.39-1.03-.39-1.42 0z" fill="currentColor"/>
                   </svg>
                 </button>
+
+                {/* Profile Dropdown Menu */}
+                {profileMenuOpen && (
+                  <div className="profile-dropdown">
+                    {/* View Profile */}
+                    <button className="profile-dropdown-item profile-header" onClick={handleViewProfile}>
+                      <Avatar 
+                        src={user.avatar} 
+                        username={user.username}
+                        size="medium"
+                      />
+                      <div className="profile-info">
+                        <span className="profile-title">View Profile</span>
+                        <span className="profile-subtitle">u/{user.username}</span>
+                      </div>
+                    </button>
+
+                    <div className="profile-dropdown-divider"></div>
+
+                    {/* Edit Profile */}
+                    <button className="profile-dropdown-item" onClick={handleEditProfile}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" fill="currentColor"/>
+                      </svg>
+                      <span>Edit Profile</span>
+                    </button>
+
+                    {/* Dark Mode Toggle */}
+                    <div className="profile-dropdown-item dark-mode-item">
+                      <div className="dark-mode-label">
+                        <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" fill="currentColor"/>
+                        </svg>
+                        <span>Dark Mode</span>
+                      </div>
+                      <label className="toggle-switch">
+                        <input 
+                          type="checkbox" 
+                          checked={darkMode}
+                          onChange={(e) => setDarkMode(e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="profile-dropdown-divider"></div>
+
+                    {/* Settings */}
+                    <button className="profile-dropdown-item" onClick={handleSettings}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" fill="currentColor"/>
+                      </svg>
+                      <span>Settings</span>
+                    </button>
+
+                    {/* Log Out */}
+                    <button className="profile-dropdown-item logout-item" onClick={handleLogout}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" fill="currentColor"/>
+                      </svg>
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -9,3 +9,5 @@ export { default as Logo } from './Logo/Logo';
 export { default as SearchBar } from './SearchBar/SearchBar';
 export { default as Navbar } from './Navbar/Navbar';
 export { default as Sidebar } from './Sidebar/Sidebar';
+export { default as Post } from './Post/Post';
+export { default as Comment } from './Comment/Comment';

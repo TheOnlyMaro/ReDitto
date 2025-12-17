@@ -1,0 +1,35 @@
+.comment {
+  padding: 12px;
+  border-left: 2px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comment-divider {
+  color: var(--text-secondary);
+}
+
+.comment-time {
+  color: var(--text-secondary);
+}
+
+.comment-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

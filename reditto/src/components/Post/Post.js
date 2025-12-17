@@ -1,0 +1,130 @@
+import React, { useState } from 'react';
+import './Post.css';
+
+const Post = ({ post, onVote, onComment, onShare }) => {
+  const [userVote, setUserVote] = useState(null); // null, 'upvote', or 'downvote'
+
+  const handleUpvote = () => {
+    const newVote = userVote === 'upvote' ? null : 'upvote';
+    setUserVote(newVote);
+    if (onVote) {
+      onVote(post.id, newVote);
+    }
+  };
+
+  const handleDownvote = () => {
+    const newVote = userVote === 'downvote' ? null : 'downvote';
+    setUserVote(newVote);
+    if (onVote) {
+      onVote(post.id, newVote);
+    }
+  };
+
+  const handleCommentClick = () => {
+    if (onComment) {
+      onComment(post.id);
+    }
+  };
+
+  const handleShareClick = () => {
+    if (onShare) {
+      onShare(post.id);
+    }
+  };
+
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date();
+    const posted = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - posted) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  };
+
+  const calculateVoteScore = () => {
+    let score = post.voteScore || 0;
+    if (userVote === 'upvote') score += 1;
+    if (userVote === 'downvote') score -= 1;
+    return score;
+  };
+
+  return (
+    <div className="post">
+      {/* Post Header */}
+      <div className="post-header">
+        <img 
+          src={post.community.icon} 
+          alt={post.community.name} 
+          className="community-icon"
+        />
+        <span className="community-name">{post.community.name}</span>
+        <span className="post-divider">•</span>
+        <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
+      </div>
+
+      {/* Post Title */}
+      <h2 className="post-title">{post.title}</h2>
+
+      {/* Post Content */}
+      {post.type === 'text' && post.content && (
+        <p className="post-content">{post.content}</p>
+      )}
+
+      {post.type === 'image' && post.imageUrl && (
+        <div className="post-image-container">
+          <img 
+            src={post.imageUrl} 
+            alt={post.title} 
+            className="post-image"
+          />
+        </div>
+      )}
+
+      {/* Interaction Bar */}
+      <div className="post-interactions">
+        {/* Vote Section */}
+        <div className="post-vote">
+          <button 
+            className={`vote-btn upvote ${userVote === 'upvote' ? 'active' : ''}`}
+            onClick={handleUpvote}
+            aria-label="Upvote"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L4 12H8V20H16V12H20L12 4Z" fill="currentColor"/>
+            </svg>
+          </button>
+          <span className="vote-score">{calculateVoteScore()}</span>
+          <button 
+            className={`vote-btn downvote ${userVote === 'downvote' ? 'active' : ''}`}
+            onClick={handleDownvote}
+            aria-label="Downvote"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 20L20 12H16V4H8V12H4L12 20Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Comment Section */}
+        <button className="post-action-btn" onClick={handleCommentClick}>
+          <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l.917-3.917A6.75 6.75 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" fill="currentColor"/>
+          </svg>
+          <span>{post.commentCount || 0} Comments</span>
+        </button>
+
+        {/* Share Section */}
+        <button className="post-action-btn" onClick={handleShareClick}>
+          <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 13.442c-.633 0-1.204.246-1.637.642l-5.938-3.463c.046-.204.075-.412.075-.621s-.029-.417-.075-.621l5.938-3.463a2.49 2.49 0 001.637.642c1.379 0 2.5-1.121 2.5-2.5S16.379 1.558 15 1.558s-2.5 1.121-2.5 2.5c0 .209.029.417.075.621l-5.938 3.463a2.49 2.49 0 00-1.637-.642c-1.379 0-2.5 1.121-2.5 2.5s1.121 2.5 2.5 2.5c.633 0 1.204-.246 1.637-.642l5.938 3.463c-.046.204-.075.412-.075.621 0 1.379 1.121 2.5 2.5 2.5s2.5-1.121 2.5-2.5-1.121-2.5-2.5-2.5z" fill="currentColor"/>
+          </svg>
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Post;

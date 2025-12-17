@@ -7,7 +7,15 @@ import { authService } from './services/authService';
 import './App.css';
 
 function App() {
-  const [user, setUser] = useState(null);
+  // Dummy user data for testing
+  const dummyUser = {
+    username: 'testuser',
+    email: 'testuser@reditto.com',
+    avatar: 'https://i.pravatar.cc/150?img=3',
+    id: 1
+  };
+
+  const [user, setUser] = useState(dummyUser); // Start with dummy user for testing
   const [darkMode, setDarkMode] = useState(true);
 
   // Check if user is already logged in on mount

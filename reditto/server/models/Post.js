@@ -121,6 +121,20 @@ postSchema.pre('save', function() {
   this.updatedAt = Date.now();
 });
 
+// Validate that text posts don't have imageUrl and image posts don't have text content
+postSchema.pre('save', function(next) {
+  if (this.type === 'text' && this.imageUrl) {
+    return next(new Error('Text posts cannot have an image URL'));
+  }
+  if (this.type === 'image' && this.content) {
+    return next(new Error('Image posts cannot have text content'));
+  }
+  if (this.type === 'image' && !this.imageUrl) {
+    return next(new Error('Image posts must have an image URL'));
+  }
+  next();
+});
+
 // Calculate vote count before saving
 postSchema.pre('save', function() {
   this.voteCount = this.votes.upvotes.length - this.votes.downvotes.length;

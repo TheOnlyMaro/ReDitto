@@ -1,0 +1,192 @@
+.post {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.post:hover {
+  border-color: var(--text-secondary);
+}
+
+/* Post Header */
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.community-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.community-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.post-divider {
+  color: var(--text-secondary);
+}
+
+.post-time {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Post Title */
+.post-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+/* Post Content */
+.post-content {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.post-image-container {
+  margin-bottom: 16px;
+  max-height: 512px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* Interaction Bar */
+.post-interactions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Vote Section */
+.post-vote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-tertiary);
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.vote-btn:hover {
+  background-color: var(--bg-secondary);
+}
+
+.vote-btn.upvote.active {
+  color: #0079D3;
+}
+
+.vote-btn.upvote.active svg {
+  color: #0079D3;
+}
+
+.vote-btn.downvote.active {
+  color: #ea0027;
+}
+
+.vote-btn.downvote.active svg {
+  color: #ea0027;
+}
+
+.vote-score {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Action Buttons */
+.post-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.post-action-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.post-action-btn svg {
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .post {
+    padding: 12px;
+  }
+
+  .post-title {
+    font-size: 18px;
+  }
+
+  .post-content {
+    font-size: 14px;
+  }
+
+  .post-interactions {
+    gap: 4px;
+  }
+
+  .post-action-btn span {
+    display: none;
+  }
+
+  .post-vote {
+    padding: 4px 6px;
+  }
+
+  .vote-score {
+    min-width: 24px;
+    font-size: 13px;
+  }
+}
