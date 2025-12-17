@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Input, Button, Card, Alert } from '../../components';
+import { authAPI } from '../../services/api';
+import { authService } from '../../services/authService';
 import './Register.css';
 
-const Register = ({ onSwitchToLogin }) => {
+const Register = ({ onSwitchToLogin, onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -85,19 +87,37 @@ const Register = ({ onSwitchToLogin }) => {
 
     setIsLoading(true);
 
-    // Simulate API call - will connect to backend later
-    setTimeout(() => {
-      setIsLoading(false);
-      setAlert({
-        type: 'success',
-        message: 'Account created successfully! (UI only - backend not connected yet)'
-      });
-      console.log('Registration attempt:', {
+    try {
+      // Call backend API
+      const response = await authAPI.register({
         username: formData.username,
         email: formData.email,
+        password: formData.password,
         displayName: formData.displayName || formData.username
       });
-    }, 1000);
+
+      // Save token and user to localStorage
+      authService.saveAuth(response.token, response.user);
+
+      setAlert({
+        type: 'success',
+        message: 'Account created successfully! Redirecting...'
+      });
+
+      // Call onRegisterSuccess callback if provided
+      if (onRegisterSuccess) {
+        setTimeout(() => {
+          onRegisterSuccess(response.user);
+        }, 1000);
+      }
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: error.message || 'Failed to create account. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

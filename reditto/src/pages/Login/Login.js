@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Input, Button, Card, Alert } from '../../components';
+import { authAPI } from '../../services/api';
+import { authService } from '../../services/authService';
 import './Login.css';
 
-const Login = ({ onSwitchToRegister }) => {
+const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -53,15 +55,35 @@ const Login = ({ onSwitchToRegister }) => {
 
     setIsLoading(true);
 
-    // Simulate API call - will connect to backend later
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Call backend API
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Save token and user to localStorage
+      authService.saveAuth(response.token, response.user);
+
       setAlert({
         type: 'success',
-        message: 'Login successful! (UI only - backend not connected yet)'
+        message: 'Login successful! Redirecting...'
       });
-      console.log('Login attempt:', formData);
-    }, 1000);
+
+      // Call onLoginSuccess callback if provided
+      if (onLoginSuccess) {
+        setTimeout(() => {
+          onLoginSuccess(response.user);
+        }, 1000);
+      }
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: error.message || 'Failed to login. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
