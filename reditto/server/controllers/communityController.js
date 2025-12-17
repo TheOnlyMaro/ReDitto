@@ -1,6 +1,5 @@
 const Community = require('../models/Community');
 const User = require('../models/User');
-const mongoose = require('mongoose');
 
 // Create a new community
 const createCommunity = async (req, res) => {
@@ -35,8 +34,9 @@ const createCommunity = async (req, res) => {
 
     await community.save();
 
-    // Populate creator details
+    // Populate creator and moderator details
     await community.populate('creator', 'username displayName avatar');
+    await community.populate('moderators', 'username displayName avatar');
 
     res.status(201).json({
       message: 'Community created successfully',

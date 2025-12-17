@@ -98,6 +98,11 @@ const getPostById = async (req, res) => {
     // Don't return deleted posts unless user is author or moderator
     if (post.flags.isDeleted) {
       const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(404).json({ 
+          error: 'Post not found' 
+        });
+      }
       const isAuthor = post.isAuthor(userId);
       const community = await Community.findById(post.community);
       const isModerator = community && community.isModerator(userId);
