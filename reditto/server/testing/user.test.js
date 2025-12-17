@@ -413,10 +413,7 @@ describe('Authentication Tests', () => {
 
   describe('Security Tests - Token Manipulation', () => {
     test('Should reject token with modified payload', async () => {
-      const registered = await registerUser();
-      
-      // Decode and modify the token
-      const decoded = jwt.decode(registered.token);
+      // Create a token with a different user ID
       const modifiedToken = jwt.sign(
         { userId: new mongoose.Types.ObjectId().toString() }, // Different user ID
         process.env.JWT_SECRET,
@@ -460,7 +457,7 @@ describe('Authentication Tests', () => {
     test('Should reject token signed with different secret on /api/auth/me', async () => {
       const registered = await registerUser();
       
-      // Create token with wrong secret
+      // Create token with wrong secret using the registered user's ID
       const tokenWithWrongSecret = jwt.sign(
         { userId: registered.user._id },
         'completely_different_secret_key',
