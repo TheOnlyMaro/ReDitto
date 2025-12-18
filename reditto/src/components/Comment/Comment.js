@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Comment.css';
 
 const MAX_NESTING_LEVEL = 5;
 const INITIAL_REPLIES_SHOWN = 3;
 
-const Comment = ({ comment, depth = 0 }) => {
+// Utility function to fetch comment by ID from the data structure
+const fetchCommentById = (commentId, allComments) => {
+  return allComments.find(c => c.id === commentId);
+};
+
+const Comment = ({ comment, depth = 0, allComments = [] }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
+  const [loadedReplies, setLoadedReplies] = useState([]);
+
+  // Recursively fetch all replies based on comment.replies array of IDs
+  useEffect(() => {
+    if (comment.replies && comment.replies.length > 0) {
+      const fetchedReplies = comment.replies
+        .map(replyId => fetchCommentById(replyId, allComments))
+        .filter(reply => reply !== undefined);
+      setLoadedReplies(fetchedReplies);
+    }
+  }, [comment.replies, allComments]);
 
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
@@ -48,9 +64,9 @@ const Comment = ({ comment, depth = 0 }) => {
     }
   };
 
-  const hasReplies = comment.replies && comment.replies.length > 0;
-  const hiddenRepliesCount = hasReplies && !showAllReplies ? Math.max(0, comment.replies.length - INITIAL_REPLIES_SHOWN) : 0;
-  const visibleReplies = hasReplies && !showAllReplies ? comment.replies.slice(0, INITIAL_REPLIES_SHOWN) : comment.replies || [];
+  const hasReplies = loadedReplies && loadedReplies.length > 0;
+  const hiddenRepliesCount = hasReplies && !showAllReplies ? Math.max(0, loadedReplies.length - INITIAL_REPLIES_SHOWN) : 0;
+  const visibleReplies = hasReplies && !showAllReplies ? loadedReplies.slice(0, INITIAL_REPLIES_SHOWN) : loadedReplies || [];
 
   // Check if we've reached max nesting depth
   const atMaxDepth = depth >= MAX_NESTING_LEVEL;
@@ -84,7 +100,7 @@ const Comment = ({ comment, depth = 0 }) => {
             <span className="comment-divider">•</span>
             <span className="comment-time">{formatTimeAgo(comment.createdAt)}</span>
             {isCollapsed && hasReplies && (
-              <span className="comment-reply-count">({comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'})</span>
+              <span className="comment-reply-count">({loadedReplies.length} {loadedReplies.length === 1 ? 'reply' : 'replies'})</span>
             )}
           </div>
 
@@ -152,7 +168,7 @@ const Comment = ({ comment, depth = 0 }) => {
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id} comment={reply} depth={depth + 1} />
+                <Comment key={reply.id} comment={reply} depth={depth + 1} allComments={allComments} />
               ))}
               
               {hiddenRepliesCount > 0 && (

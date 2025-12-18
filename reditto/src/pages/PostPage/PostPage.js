@@ -260,13 +260,20 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
               {/* Comments Section */}
               <div className="post-comments-section">
                 <div className="comments-header">
-                  <h2>{dummyComments.length} Comments</h2>
+                  <h2>{dummyComments?.comments?.filter(c => c.parentId === null).length || 0} Comments</h2>
                 </div>
                 
                 <div className="comments-list">
-                  {dummyComments.map((comment) => (
-                    <Comment key={comment.id} comment={comment} depth={0} />
-                  ))}
+                  {(dummyComments?.comments || [])
+                    .filter(comment => comment.parentId === null)
+                    .map((comment) => (
+                      <Comment 
+                        key={comment.id} 
+                        comment={comment} 
+                        depth={0}
+                        allComments={dummyComments?.comments || []}
+                      />
+                    ))}
                 </div>
               </div>
             </div>

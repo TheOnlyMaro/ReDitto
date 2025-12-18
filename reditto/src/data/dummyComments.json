@@ -1,216 +1,229 @@
-[
-  {
-    "id": "c1",
-    "author": "techEnthusiast42",
-    "content": "This is amazing! I've been waiting for something like this for so long. Great work on the implementation!",
-    "createdAt": "2025-12-18T10:30:00Z",
-    "voteScore": 245,
-    "replies": [
-      {
-        "id": "c1r1",
-        "author": "codeNinja",
-        "content": "Totally agree! The attention to detail is impressive.",
-        "createdAt": "2025-12-18T11:00:00Z",
-        "voteScore": 82,
-        "replies": [
-          {
-            "id": "c1r1r1",
-            "author": "devMaster",
-            "content": "I noticed they used React 18 features extensively. Really modern approach!",
-            "createdAt": "2025-12-18T11:30:00Z",
-            "voteScore": 34,
-            "replies": [
-              {
-                "id": "c1r1r1r1",
-                "author": "jsWizard",
-                "content": "The use of hooks is particularly elegant. Clean code all around.",
-                "createdAt": "2025-12-18T12:00:00Z",
-                "voteScore": 18,
-                "replies": [
-                  {
-                    "id": "c1r1r1r1r1",
-                    "author": "reactFanatic",
-                    "content": "Props management could be better though. Have you considered using Context API for some of these?",
-                    "createdAt": "2025-12-18T12:30:00Z",
-                    "voteScore": 9,
-                    "replies": [
-                      {
-                        "id": "c1r1r1r1r1r1",
-                        "author": "stateManager",
-                        "content": "Good point! Redux might also be worth considering for global state.",
-                        "createdAt": "2025-12-18T13:00:00Z",
-                        "voteScore": 5,
-                        "replies": []
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "c1r1r2",
-            "author": "uiDesigner",
-            "content": "The UI is clean but could use some micro-interactions. Anyone else think so?",
-            "createdAt": "2025-12-18T11:45:00Z",
-            "voteScore": 15,
-            "replies": []
-          }
-        ]
-      },
-      {
-        "id": "c1r2",
-        "author": "backendDev",
-        "content": "How's the backend handling this? MongoDB or PostgreSQL?",
-        "createdAt": "2025-12-18T11:15:00Z",
-        "voteScore": 56,
-        "replies": [
-          {
-            "id": "c1r2r1",
-            "author": "dbExpert",
-            "content": "Looks like MongoDB based on the schema structure. Good choice for this use case.",
-            "createdAt": "2025-12-18T11:45:00Z",
-            "voteScore": 23,
-            "replies": []
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "c2",
-    "author": "criticalThinker",
-    "content": "Not sure about this approach. Have you considered the performance implications when dealing with thousands of nested comments?",
-    "createdAt": "2025-12-18T09:45:00Z",
-    "voteScore": -12,
-    "replies": [
-      {
-        "id": "c2r1",
-        "author": "perfOptimizer",
-        "content": "Valid concern. Pagination and lazy loading would definitely help here.",
-        "createdAt": "2025-12-18T10:00:00Z",
-        "voteScore": 67,
-        "replies": []
-      }
-    ]
-  },
-  {
-    "id": "c3",
-    "author": "casualObserver",
-    "content": "Just passing by to say this looks great! Keep up the good work 👍",
-    "createdAt": "2025-12-18T08:20:00Z",
-    "voteScore": 189,
-    "replies": []
-  },
-  {
-    "id": "c4",
-    "author": "bugHunter",
-    "content": "Found a bug: when you click the upvote button twice quickly, it doesn't register correctly. Anyone else experiencing this?",
-    "createdAt": "2025-12-18T07:30:00Z",
-    "voteScore": 103,
-    "replies": [
-      {
-        "id": "c4r1",
-        "author": "qaTester",
-        "content": "Can confirm. Happens on Chrome and Firefox. Seems like a race condition issue.",
-        "createdAt": "2025-12-18T08:00:00Z",
-        "voteScore": 45,
-        "replies": [
-          {
-            "id": "c4r1r1",
-            "author": "techEnthusiast42",
-            "content": "Thanks for catching this! I'll look into debouncing the click handler.",
-            "createdAt": "2025-12-18T08:30:00Z",
-            "voteScore": 78,
-            "replies": []
-          }
-        ]
-      },
-      {
-        "id": "c4r2",
-        "author": "mobileDev",
-        "content": "Also happens on mobile Safari. Definitely needs fixing.",
-        "createdAt": "2025-12-18T08:15:00Z",
-        "voteScore": 32,
-        "replies": []
-      }
-    ]
-  },
-  {
-    "id": "c5",
-    "author": "longFormWriter",
-    "content": "This is a much longer comment to test how the UI handles extensive text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nIt's important to test edge cases like this to ensure the UI doesn't break with longer content.",
-    "createdAt": "2025-12-18T06:00:00Z",
-    "voteScore": 12,
-    "replies": [
-      {
-        "id": "c5r1",
-        "author": "uxResearcher",
-        "content": "Good point about testing longer content. The readability is still good though!",
-        "createdAt": "2025-12-18T06:30:00Z",
-        "voteScore": 8,
-        "replies": []
-      }
-    ]
-  },
-  {
-    "id": "c6",
-    "author": "memeKing",
-    "content": "This is the way. 🚀",
-    "createdAt": "2025-12-18T05:00:00Z",
-    "voteScore": 420,
-    "replies": [
-      {
-        "id": "c6r1",
-        "author": "fellowMemer",
-        "content": "This is the way.",
-        "createdAt": "2025-12-18T05:15:00Z",
-        "voteScore": 156,
-        "replies": [
-          {
-            "id": "c6r1r1",
-            "author": "anotherMemer",
-            "content": "This is the way.",
-            "createdAt": "2025-12-18T05:30:00Z",
-            "voteScore": 89,
-            "replies": []
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "c7",
-    "author": "newbieQuestion",
-    "content": "Can someone explain how the voting system works? I'm new to this platform.",
-    "createdAt": "2025-12-18T04:00:00Z",
-    "voteScore": 5,
-    "replies": [
-      {
-        "id": "c7r1",
-        "author": "helpfulVeteran",
-        "content": "Sure! Upvotes increase a post's visibility, downvotes decrease it. The total is the vote score you see.",
-        "createdAt": "2025-12-18T04:15:00Z",
-        "voteScore": 34,
-        "replies": [
-          {
-            "id": "c7r1r1",
-            "author": "newbieQuestion",
-            "content": "Thanks! That makes sense now.",
-            "createdAt": "2025-12-18T04:30:00Z",
-            "voteScore": 12,
-            "replies": []
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "c8",
-    "author": "deletedUser",
-    "content": "[deleted]",
-    "createdAt": "2025-12-18T03:00:00Z",
-    "voteScore": 0,
-    "replies": []
-  }
-]
+{
+  "comments": [
+    {
+      "id": "c1",
+      "author": "techEnthusiast42",
+      "content": "This is amazing! I've been waiting for something like this for so long. Great work on the implementation!",
+      "createdAt": "2025-12-18T10:30:00Z",
+      "voteScore": 245,
+      "parentId": null,
+      "replies": ["c1r1", "c1r2"]
+    },
+    {
+      "id": "c1r1",
+      "author": "codeNinja",
+      "content": "Totally agree! The attention to detail is impressive.",
+      "createdAt": "2025-12-18T11:00:00Z",
+      "voteScore": 82,
+      "parentId": "c1",
+      "replies": ["c1r1r1", "c1r1r2"]
+    },
+    {
+      "id": "c1r1r1",
+      "author": "devMaster",
+      "content": "I noticed they used React 18 features extensively. Really modern approach!",
+      "createdAt": "2025-12-18T11:30:00Z",
+      "voteScore": 34,
+      "parentId": "c1r1",
+      "replies": ["c1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1",
+      "author": "jsWizard",
+      "content": "The use of hooks is particularly elegant. Clean code all around.",
+      "createdAt": "2025-12-18T12:00:00Z",
+      "voteScore": 18,
+      "parentId": "c1r1r1",
+      "replies": ["c1r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1r1",
+      "author": "reactFanatic",
+      "content": "Props management could be better though. Have you considered using Context API for some of these?",
+      "createdAt": "2025-12-18T12:30:00Z",
+      "voteScore": 9,
+      "parentId": "c1r1r1r1",
+      "replies": ["c1r1r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1r1r1",
+      "author": "stateManager",
+      "content": "Good point! Redux might also be worth considering for global state.",
+      "createdAt": "2025-12-18T13:00:00Z",
+      "voteScore": 5,
+      "parentId": "c1r1r1r1r1",
+      "replies": []
+    },
+    {
+      "id": "c1r1r2",
+      "author": "uiDesigner",
+      "content": "The UI is clean but could use some micro-interactions. Anyone else think so?",
+      "createdAt": "2025-12-18T11:45:00Z",
+      "voteScore": 15,
+      "parentId": "c1r1",
+      "replies": []
+    },
+    {
+      "id": "c1r2",
+      "author": "backendDev",
+      "content": "How's the backend handling this? MongoDB or PostgreSQL?",
+      "createdAt": "2025-12-18T11:15:00Z",
+      "voteScore": 56,
+      "parentId": "c1",
+      "replies": ["c1r2r1"]
+    },
+    {
+      "id": "c1r2r1",
+      "author": "dbExpert",
+      "content": "Looks like MongoDB based on the schema structure. Good choice for this use case.",
+      "createdAt": "2025-12-18T11:45:00Z",
+      "voteScore": 23,
+      "parentId": "c1r2",
+      "replies": []
+    },
+    {
+      "id": "c2",
+      "author": "criticalThinker",
+      "content": "Not sure about this approach. Have you considered the performance implications when dealing with thousands of nested comments?",
+      "createdAt": "2025-12-18T09:45:00Z",
+      "voteScore": -12,
+      "parentId": null,
+      "replies": ["c2r1"]
+    },
+    {
+      "id": "c2r1",
+      "author": "perfOptimizer",
+      "content": "Valid concern. Pagination and lazy loading would definitely help here.",
+      "createdAt": "2025-12-18T10:00:00Z",
+      "voteScore": 67,
+      "parentId": "c2",
+      "replies": []
+    },
+    {
+      "id": "c3",
+      "author": "casualObserver",
+      "content": "Just passing by to say this looks great! Keep up the good work 👍",
+      "createdAt": "2025-12-18T08:20:00Z",
+      "voteScore": 189,
+      "parentId": null,
+      "replies": []
+    },
+    {
+      "id": "c4",
+      "author": "bugHunter",
+      "content": "Found a bug: when you click the upvote button twice quickly, it doesn't register correctly. Anyone else experiencing this?",
+      "createdAt": "2025-12-18T07:30:00Z",
+      "voteScore": 103,
+      "parentId": null,
+      "replies": ["c4r1", "c4r2"]
+    },
+    {
+      "id": "c4r1",
+      "author": "qaTester",
+      "content": "Can confirm. Happens on Chrome and Firefox. Seems like a race condition issue.",
+      "createdAt": "2025-12-18T08:00:00Z",
+      "voteScore": 45,
+      "parentId": "c4",
+      "replies": ["c4r1r1"]
+    },
+    {
+      "id": "c4r1r1",
+      "author": "techEnthusiast42",
+      "content": "Thanks for catching this! I'll look into debouncing the click handler.",
+      "createdAt": "2025-12-18T08:30:00Z",
+      "voteScore": 78,
+      "parentId": "c4r1",
+      "replies": []
+    },
+    {
+      "id": "c4r2",
+      "author": "mobileDev",
+      "content": "Also happens on mobile Safari. Definitely needs fixing.",
+      "createdAt": "2025-12-18T08:15:00Z",
+      "voteScore": 32,
+      "parentId": "c4",
+      "replies": []
+    },
+    {
+      "id": "c5",
+      "author": "longFormWriter",
+      "content": "This is a much longer comment to test how the UI handles extensive text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nIt's important to test edge cases like this to ensure the UI doesn't break with longer content.",
+      "createdAt": "2025-12-18T06:00:00Z",
+      "voteScore": 12,
+      "parentId": null,
+      "replies": ["c5r1"]
+    },
+    {
+      "id": "c5r1",
+      "author": "uxResearcher",
+      "content": "Good point about testing longer content. The readability is still good though!",
+      "createdAt": "2025-12-18T06:30:00Z",
+      "voteScore": 8,
+      "parentId": "c5",
+      "replies": []
+    },
+    {
+      "id": "c6",
+      "author": "memeKing",
+      "content": "This is the way. 🚀",
+      "createdAt": "2025-12-18T05:00:00Z",
+      "voteScore": 420,
+      "parentId": null,
+      "replies": ["c6r1"]
+    },
+    {
+      "id": "c6r1",
+      "author": "fellowMemer",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T05:15:00Z",
+      "voteScore": 156,
+      "parentId": "c6",
+      "replies": ["c6r1r1"]
+    },
+    {
+      "id": "c6r1r1",
+      "author": "anotherMemer",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T05:30:00Z",
+      "voteScore": 89,
+      "parentId": "c6r1",
+      "replies": []
+    },
+    {
+      "id": "c7",
+      "author": "newbieQuestion",
+      "content": "Can someone explain how the voting system works? I'm new to this platform.",
+      "createdAt": "2025-12-18T04:00:00Z",
+      "voteScore": 5,
+      "parentId": null,
+      "replies": ["c7r1"]
+    },
+    {
+      "id": "c7r1",
+      "author": "helpfulVeteran",
+      "content": "Sure! Upvotes increase a post's visibility, downvotes decrease it. The total is the vote score you see.",
+      "createdAt": "2025-12-18T04:15:00Z",
+      "voteScore": 34,
+      "parentId": "c7",
+      "replies": ["c7r1r1"]
+    },
+    {
+      "id": "c7r1r1",
+      "author": "newbieQuestion",
+      "content": "Thanks! That makes sense now.",
+      "createdAt": "2025-12-18T04:30:00Z",
+      "voteScore": 12,
+      "parentId": "c7r1",
+      "replies": []
+    },
+    {
+      "id": "c8",
+      "author": "deletedUser",
+      "content": "[deleted]",
+      "createdAt": "2025-12-18T03:00:00Z",
+      "voteScore": 0,
+      "parentId": null,
+      "replies": []
+    }
+  ]
+}
