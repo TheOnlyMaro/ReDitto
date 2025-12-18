@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Loading from '../Loading/Loading';
 import './Comment.css';
@@ -15,7 +15,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
-  const [repliesExpanded, setRepliesExpanded] = useState(false);
+  //const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -31,7 +31,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
     try {
       // Fetch all replies for this comment
       await onFetchReplies(comment.replies, depth + 1);
-      setRepliesExpanded(true);
+      //setRepliesExpanded(true);
     } catch (error) {
       console.error('Error loading replies:', error);
     } finally {
