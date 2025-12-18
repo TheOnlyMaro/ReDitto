@@ -68,7 +68,9 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
 
   const handleCommentClick = () => {
     // Navigate to post page when clicking comments
-    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
+    //TOPOLISH
+    const communityName = post.community.name.replace(/^r\//, '');
+    navigate(`/r/${communityName}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
   const handleShareClick = () => {
@@ -120,7 +122,8 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     ) {
       return;
     }
-    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
+    const communityName = post.community.name.replace(/^r\//, '');
+    navigate(`/r/${communityName}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
   return (
