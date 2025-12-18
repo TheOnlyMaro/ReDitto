@@ -329,22 +329,6 @@ const getCommentReplies = async (req, res) => {
 };
 
 // Update comment
-      if (!requesterId || comment.author._id.toString() !== requesterId) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
-    }
-
-    res.status(200).json({ comment });
-  } catch (error) {
-    console.error('Error fetching comment:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch comment',
-      details: error.message 
-    });
-  }
-};
-
-// Update comment
 const updateComment = async (req, res) => {
   try {
     const { commentId } = req.params;
