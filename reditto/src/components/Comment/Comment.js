@@ -4,6 +4,8 @@ import './Comment.css';
 
 const MAX_NESTING_LEVEL = 5;
 const INITIAL_REPLIES_SHOWN = 3;
+const MAX_DEPTH_AUTO_LOAD = 2; // Only auto-load replies for depth 0, 1, 2
+const MAX_COMMENTS_PER_FETCH = 20; // Limit number of comments fetched at once
 
 // Utility function to fetch comment by ID from the data structure
 const fetchCommentById = (commentId, allComments) => {
@@ -15,16 +17,63 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
   const [loadedReplies, setLoadedReplies] = useState([]);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
 
-  // Recursively fetch all replies based on comment.replies array of IDs
+
+  // Only auto-fetch replies if within depth limit
+  const shouldAutoLoad = depth < MAX_DEPTH_AUTO_LOAD;
+
+  // Recursively fetch replies based on comment.replies array of IDs
+  // Only auto-load if within depth limit, otherwise wait for user to expand
   useEffect(() => {
-    if (comment.replies && comment.replies.length > 0) {
+    if (shouldAutoLoad && comment.replies && comment.replies.length > 0 && loadedReplies.length === 0) {
+      //TODO: Replace with actual API call when integrating with backend
+      // Simulate async fetch with 1-second delay for testing
+      console.log('Auto-loading replies for comment:', comment.id, 'at depth:', depth);
+      console.log('Full comments data:', JSON.stringify(allComments, null, 2));
+      setIsLoadingReplies(true);
+      setTimeout(() => {
+        const fetchedReplies = comment.replies
+          .slice(0, MAX_COMMENTS_PER_FETCH)
+          .map(replyId => fetchCommentById(replyId, allComments))
+          .filter(reply => reply !== undefined);
+        console.log('Auto-loaded replies:', fetchedReplies);
+        setLoadedReplies(fetchedReplies);
+        setIsLoadingReplies(false);
+        setRepliesExpanded(true);
+      }, 1000); // Temporary 1-second delay for testing
+    }
+  }, [comment.replies, allComments, shouldAutoLoad, loadedReplies.length]);
+
+  // Function to load replies on demand (for collapsed/deeper levels)
+  const handleLoadReplies = () => {
+    if (loadedReplies.length > 0) {
+      // Already loaded, just toggle expand
+      setRepliesExpanded(!repliesExpanded);
+      return;
+    }
+
+    if (!comment.replies || comment.replies.length === 0) {
+      return;
+    }
+
+    //TODO: Replace with actual API call when integrating with backend
+    // Simulate async fetch with 1-second delay for testing
+    console.log('Manually loading replies for comment:', comment.id, 'at depth:', depth);
+    console.log('Full comments data:', JSON.stringify(allComments, null, 2));
+    setIsLoadingReplies(true);
+    setTimeout(() => {
       const fetchedReplies = comment.replies
+        .slice(0, MAX_COMMENTS_PER_FETCH)
         .map(replyId => fetchCommentById(replyId, allComments))
         .filter(reply => reply !== undefined);
+      console.log('Manually loaded replies:', fetchedReplies);
       setLoadedReplies(fetchedReplies);
-    }
-  }, [comment.replies, allComments]);
+      setIsLoadingReplies(false);
+      setRepliesExpanded(true);
+    }, 1000); // Temporary 1-second delay for testing
+  };
 
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
@@ -64,12 +113,16 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
     }
   };
 
-  const hasReplies = loadedReplies && loadedReplies.length > 0;
-  const hiddenRepliesCount = hasReplies && !showAllReplies ? Math.max(0, loadedReplies.length - INITIAL_REPLIES_SHOWN) : 0;
-  const visibleReplies = hasReplies && !showAllReplies ? loadedReplies.slice(0, INITIAL_REPLIES_SHOWN) : loadedReplies || [];
+  const hasReplies = comment.replies && comment.replies.length > 0;
+  const hasLoadedReplies = loadedReplies && loadedReplies.length > 0;
+  const hiddenRepliesCount = hasLoadedReplies && !showAllReplies ? Math.max(0, loadedReplies.length - INITIAL_REPLIES_SHOWN) : 0;
+  const visibleReplies = hasLoadedReplies && !showAllReplies ? loadedReplies.slice(0, INITIAL_REPLIES_SHOWN) : loadedReplies || [];
 
   // Check if we've reached max nesting depth
   const atMaxDepth = depth >= MAX_NESTING_LEVEL;
+
+  // Check if replies should be lazy-loaded (beyond auto-load depth)
+  const shouldLazyLoad = depth >= MAX_DEPTH_AUTO_LOAD && hasReplies && !repliesExpanded;
 
   // Generate avatar URL - using DiceBear API for consistent avatars
   const avatarUrl = comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`;
@@ -100,7 +153,7 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
             <span className="comment-divider">•</span>
             <span className="comment-time">{formatTimeAgo(comment.createdAt)}</span>
             {isCollapsed && hasReplies && (
-              <span className="comment-reply-count">({loadedReplies.length} {loadedReplies.length === 1 ? 'reply' : 'replies'})</span>
+              <span className="comment-reply-count">({comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'})</span>
             )}
           </div>
 
@@ -165,19 +218,44 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
                 Continue this thread →
               </Link>
             </div>
+          ) : shouldLazyLoad ? (
+            <div className="comment-lazy-load">
+              {isLoadingReplies ? (
+                <div className="comment-loading">
+                  <div className="comment-loading-spinner"></div>
+                  <span>Loading replies...</span>
+                </div>
+              ) : (
+                <button 
+                  className="load-replies-btn"
+                  onClick={handleLoadReplies}
+                >
+                  Load {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                </button>
+              )}
+            </div>
           ) : (
             <>
-              {visibleReplies.map((reply) => (
-                <Comment key={reply.id} comment={reply} depth={depth + 1} allComments={allComments} />
-              ))}
-              
-              {hiddenRepliesCount > 0 && (
-                <button 
-                  className="show-more-replies-btn"
-                  onClick={() => setShowAllReplies(true)}
-                >
-                  Show {hiddenRepliesCount} more {hiddenRepliesCount === 1 ? 'reply' : 'replies'}
-                </button>
+              {isLoadingReplies ? (
+                <div className="comment-loading">
+                  <div className="comment-loading-spinner"></div>
+                  <span>Loading replies...</span>
+                </div>
+              ) : (
+                <>
+                  {visibleReplies.map((reply) => (
+                    <Comment key={reply.id} comment={reply} depth={depth + 1} allComments={allComments} />
+                  ))}
+                  
+                  {hiddenRepliesCount > 0 && (
+                    <button 
+                      className="show-more-replies-btn"
+                      onClick={() => setShowAllReplies(true)}
+                    >
+                      Show {hiddenRepliesCount} more {hiddenRepliesCount === 1 ? 'reply' : 'replies'}
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

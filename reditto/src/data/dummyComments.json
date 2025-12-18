@@ -52,6 +52,114 @@
       "createdAt": "2025-12-18T13:00:00Z",
       "voteScore": 5,
       "parentId": "c1r1r1r1r1",
+      "replies": ["c1r1r1r1r1r1r1", "c1r1r1r1r1r1r2"]
+    },
+    {
+      "id": "c1r1r1r1r1r1r1",
+      "author": "architectPro",
+      "content": "For a project of this scale, Context API should suffice. Redux adds unnecessary complexity unless you need time-travel debugging.",
+      "createdAt": "2025-12-18T13:15:00Z",
+      "voteScore": 12,
+      "parentId": "c1r1r1r1r1r1",
+      "replies": ["c1r1r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1r1r1r1r1",
+      "author": "reduxMaster",
+      "content": "I respectfully disagree. Redux Toolkit has made Redux much simpler, and the DevTools are invaluable for debugging complex state interactions.",
+      "createdAt": "2025-12-18T13:30:00Z",
+      "voteScore": 8,
+      "parentId": "c1r1r1r1r1r1r1",
+      "replies": ["c1r1r1r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1r1r1r1r1r1",
+      "author": "modernDev",
+      "content": "Have you all considered Zustand? It's like Redux but with a much simpler API and less boilerplate.",
+      "createdAt": "2025-12-18T13:45:00Z",
+      "voteScore": 15,
+      "parentId": "c1r1r1r1r1r1r1r1",
+      "replies": ["c1r1r1r1r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r1r1r1r1r1r1r1r1",
+      "author": "stateDebater",
+      "content": "Zustand is great for smaller apps, but for enterprise-level applications, Redux's ecosystem and middleware support is unmatched.",
+      "createdAt": "2025-12-18T14:00:00Z",
+      "voteScore": 6,
+      "parentId": "c1r1r1r1r1r1r1r1r1",
+      "replies": []
+    },
+    {
+      "id": "c1r1r1r1r1r1r2",
+      "author": "pragmaticCoder",
+      "content": "This is getting too deep into the weeds. The real question is: does the current implementation work well? If yes, don't over-engineer it.",
+      "createdAt": "2025-12-18T13:20:00Z",
+      "voteScore": 34,
+      "parentId": "c1r1r1r1r1r1",
+      "replies": ["c1r1r1r1r1r1r2r1"]
+    },
+    {
+      "id": "c1r1r1r1r1r1r2r1",
+      "author": "wiseSenior",
+      "content": "Exactly! YAGNI principle applies here. Add complexity only when you need it.",
+      "createdAt": "2025-12-18T13:35:00Z",
+      "voteScore": 21,
+      "parentId": "c1r1r1r1r1r1r2",
+      "replies": []
+    },
+    {
+      "id": "c1r1r2",
+      "author": "uiDesigner",
+      "content": "The UI is clean but could use some micro-interactions. Anyone else think so?",
+      "createdAt": "2025-12-18T11:45:00Z",
+      "voteScore": 15,
+      "parentId": "c1r1",
+      "replies": ["c1r1r2r1", "c1r1r2r2"]
+    },
+    {
+      "id": "c1r1r2r1",
+      "author": "animationNerd",
+      "content": "Agreed! Some subtle transitions on hover would really polish the experience.",
+      "createdAt": "2025-12-18T12:00:00Z",
+      "voteScore": 9,
+      "parentId": "c1r1r2",
+      "replies": ["c1r1r2r1r1"]
+    },
+    {
+      "id": "c1r1r2r1r1",
+      "author": "cssWizard",
+      "content": "I'd suggest using CSS transitions with cubic-bezier for smooth, natural-feeling animations. Check out easings.net for inspiration!",
+      "createdAt": "2025-12-18T12:15:00Z",
+      "voteScore": 7,
+      "parentId": "c1r1r2r1",
+      "replies": ["c1r1r2r1r1r1"]
+    },
+    {
+      "id": "c1r1r2r1r1r1",
+      "author": "performanceGuru",
+      "content": "Just be careful not to overdo it. Too many animations can hurt performance on lower-end devices.",
+      "createdAt": "2025-12-18T12:30:00Z",
+      "voteScore": 11,
+      "parentId": "c1r1r2r1r1",
+      "replies": ["c1r1r2r1r1r1r1"]
+    },
+    {
+      "id": "c1r1r2r1r1r1r1",
+      "author": "a11yAdvocate",
+      "content": "Also remember to respect prefers-reduced-motion! Accessibility matters.",
+      "createdAt": "2025-12-18T12:45:00Z",
+      "voteScore": 18,
+      "parentId": "c1r1r2r1r1r1",
+      "replies": []
+    },
+    {
+      "id": "c1r1r2r2",
+      "author": "motionDesigner",
+      "content": "Framer Motion would be perfect for this! It has great spring animations out of the box.",
+      "createdAt": "2025-12-18T12:05:00Z",
+      "voteScore": 6,
+      "parentId": "c1r1r2",
       "replies": []
     },
     {
@@ -97,6 +205,60 @@
       "createdAt": "2025-12-18T10:00:00Z",
       "voteScore": 67,
       "parentId": "c2",
+      "replies": ["c2r1r1", "c2r1r2"]
+    },
+    {
+      "id": "c2r1r1",
+      "author": "scalabilityExpert",
+      "content": "Exactly! Reddit handles this by only loading top-level comments initially, then fetching nested ones on demand.",
+      "createdAt": "2025-12-18T10:15:00Z",
+      "voteScore": 43,
+      "parentId": "c2r1",
+      "replies": ["c2r1r1r1"]
+    },
+    {
+      "id": "c2r1r1r1",
+      "author": "dataEngineer",
+      "content": "You could also implement virtualization for extremely long comment threads. react-window is great for this.",
+      "createdAt": "2025-12-18T10:30:00Z",
+      "voteScore": 28,
+      "parentId": "c2r1r1",
+      "replies": ["c2r1r1r1r1"]
+    },
+    {
+      "id": "c2r1r1r1r1",
+      "author": "frontendArchitect",
+      "content": "Good suggestion! Though you'd need to carefully handle the nesting depth with virtualization to maintain the visual hierarchy.",
+      "createdAt": "2025-12-18T10:45:00Z",
+      "voteScore": 19,
+      "parentId": "c2r1r1r1",
+      "replies": ["c2r1r1r1r1r1"]
+    },
+    {
+      "id": "c2r1r1r1r1r1",
+      "author": "optimizationNerd",
+      "content": "True. You'd also want to implement intersection observer for lazy loading images in deeply nested comments.",
+      "createdAt": "2025-12-18T11:00:00Z",
+      "voteScore": 14,
+      "parentId": "c2r1r1r1r1",
+      "replies": ["c2r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c2r1r1r1r1r1r1",
+      "author": "webPerfExpert",
+      "content": "Don't forget about code splitting! Load comment components dynamically to reduce initial bundle size.",
+      "createdAt": "2025-12-18T11:15:00Z",
+      "voteScore": 22,
+      "parentId": "c2r1r1r1r1r1",
+      "replies": []
+    },
+    {
+      "id": "c2r1r2",
+      "author": "criticalThinker",
+      "content": "Glad to see people thinking about this seriously. Too many projects ignore performance until it's too late.",
+      "createdAt": "2025-12-18T10:20:00Z",
+      "voteScore": 51,
+      "parentId": "c2r1",
       "replies": []
     },
     {
@@ -133,6 +295,51 @@
       "createdAt": "2025-12-18T08:30:00Z",
       "voteScore": 78,
       "parentId": "c4r1",
+      "replies": ["c4r1r1r1"]
+    },
+    {
+      "id": "c4r1r1r1",
+      "author": "jsLibraryFan",
+      "content": "Lodash has a great debounce function, or you could use the newer AbortController API for more control.",
+      "createdAt": "2025-12-18T08:45:00Z",
+      "voteScore": 42,
+      "parentId": "c4r1r1",
+      "replies": ["c4r1r1r1r1"]
+    },
+    {
+      "id": "c4r1r1r1r1",
+      "author": "vanillaJsAdvocate",
+      "content": "Or just write your own debounce - it's only a few lines of code and you avoid the dependency.",
+      "createdAt": "2025-12-18T09:00:00Z",
+      "voteScore": 35,
+      "parentId": "c4r1r1r1",
+      "replies": ["c4r1r1r1r1r1"]
+    },
+    {
+      "id": "c4r1r1r1r1r1",
+      "author": "dependencyDebater",
+      "content": "While I appreciate the sentiment, using well-tested libraries saves time and prevents subtle bugs. Lodash's debounce handles edge cases you might miss.",
+      "createdAt": "2025-12-18T09:15:00Z",
+      "voteScore": 29,
+      "parentId": "c4r1r1r1r1",
+      "replies": ["c4r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c4r1r1r1r1r1r1",
+      "author": "bundleSizeWatcher",
+      "content": "True, but with tree-shaking, importing just debounce from lodash adds minimal overhead. Best of both worlds!",
+      "createdAt": "2025-12-18T09:30:00Z",
+      "voteScore": 24,
+      "parentId": "c4r1r1r1r1r1",
+      "replies": ["c4r1r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c4r1r1r1r1r1r1r1",
+      "author": "modernToolingFan",
+      "content": "Use lodash-es for ESM support - even better tree-shaking!",
+      "createdAt": "2025-12-18T09:45:00Z",
+      "voteScore": 16,
+      "parentId": "c4r1r1r1r1r1r1",
       "replies": []
     },
     {
@@ -187,6 +394,51 @@
       "createdAt": "2025-12-18T05:30:00Z",
       "voteScore": 89,
       "parentId": "c6r1",
+      "replies": ["c6r1r1r1"]
+    },
+    {
+      "id": "c6r1r1r1",
+      "author": "memeChainContinuer",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T05:45:00Z",
+      "voteScore": 67,
+      "parentId": "c6r1r1",
+      "replies": ["c6r1r1r1r1"]
+    },
+    {
+      "id": "c6r1r1r1r1",
+      "author": "mandoFan2025",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T06:00:00Z",
+      "voteScore": 54,
+      "parentId": "c6r1r1r1",
+      "replies": ["c6r1r1r1r1r1"]
+    },
+    {
+      "id": "c6r1r1r1r1r1",
+      "author": "wayEnthusiast",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T06:15:00Z",
+      "voteScore": 41,
+      "parentId": "c6r1r1r1r1",
+      "replies": ["c6r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c6r1r1r1r1r1r1",
+      "author": "theWayKeeper",
+      "content": "This is the way.",
+      "createdAt": "2025-12-18T06:30:00Z",
+      "voteScore": 33,
+      "parentId": "c6r1r1r1r1r1",
+      "replies": ["c6r1r1r1r1r1r1r1"]
+    },
+    {
+      "id": "c6r1r1r1r1r1r1r1",
+      "author": "infiniteWayMemer",
+      "content": "This is... actually getting ridiculous now 😂",
+      "createdAt": "2025-12-18T06:45:00Z",
+      "voteScore": 128,
+      "parentId": "c6r1r1r1r1r1r1",
       "replies": []
     },
     {
@@ -214,6 +466,33 @@
       "createdAt": "2025-12-18T04:30:00Z",
       "voteScore": 12,
       "parentId": "c7r1",
+      "replies": ["c7r1r1r1"]
+    },
+    {
+      "id": "c7r1r1r1",
+      "author": "welcomingCommittee",
+      "content": "Welcome to the community! Feel free to ask any questions. We're here to help!",
+      "createdAt": "2025-12-18T04:45:00Z",
+      "voteScore": 18,
+      "parentId": "c7r1r1",
+      "replies": ["c7r1r1r1r1"]
+    },
+    {
+      "id": "c7r1r1r1r1",
+      "author": "communityVeteran",
+      "content": "Pro tip: Check out the sidebar for community guidelines and helpful resources!",
+      "createdAt": "2025-12-18T05:00:00Z",
+      "voteScore": 14,
+      "parentId": "c7r1r1r1",
+      "replies": ["c7r1r1r1r1r1"]
+    },
+    {
+      "id": "c7r1r1r1r1r1",
+      "author": "newbieQuestion",
+      "content": "Will do! This community seems really friendly 😊",
+      "createdAt": "2025-12-18T05:15:00Z",
+      "voteScore": 23,
+      "parentId": "c7r1r1r1r1",
       "replies": []
     },
     {
