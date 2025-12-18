@@ -11,15 +11,29 @@ const fetchCommentById = (commentId, allComments) => {
   return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
-const Comment = ({ comment, depth = 0, allComments = [] }) => {
+const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
 
-  // Function to toggle replies visibility
-  const handleLoadReplies = () => {
-    setRepliesExpanded(!repliesExpanded);
+  // Function to load unfetched replies
+  const handleLoadReplies = async () => {
+    if (!comment.replies || comment.replies.length === 0 || !onFetchReplies) {
+      return;
+    }
+    
+    setIsLoadingReplies(true);
+    try {
+      // Fetch all replies for this comment
+      await onFetchReplies(comment.replies, depth + 1);
+      setRepliesExpanded(true);
+    } catch (error) {
+      console.error('Error loading replies:', error);
+    } finally {
+      setIsLoadingReplies(false);
+    }
   };
 
   const formatTimeAgo = (timestamp) => {
@@ -176,17 +190,24 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
             </div>
           ) : replyObjects.length === 0 ? (
             <div className="comment-lazy-load">
-              <button 
-                className="load-replies-btn"
-                onClick={handleLoadReplies}
-              >
-                Load {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
-              </button>
+              {isLoadingReplies ? (
+                <div className="comment-loading">
+                  <Loading size="small" />
+                  <span>Loading replies...</span>
+                </div>
+              ) : (
+                <button 
+                  className="load-replies-btn"
+                  onClick={handleLoadReplies}
+                >
+                  Load {comment.replyCount || 0} {(comment.replyCount || 0) === 1 ? 'reply' : 'replies'}
+                </button>
+              )}
             </div>
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} />
+                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} />
               ))}
               
               {hiddenRepliesCount > 0 && (

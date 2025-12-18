@@ -177,6 +177,50 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     fetchComments();
   }, [postId]);
 
+  // Function to fetch additional replies on demand
+  const handleFetchReplies = async (replyIds, currentDepth) => {
+    const MAX_FETCH_DEPTH = 5; // Allow deeper fetching on manual load
+    
+    if (currentDepth >= MAX_FETCH_DEPTH) {
+      return;
+    }
+    
+    const newComments = [];
+    
+    const fetchRepliesRecursive = async (replyId, depth) => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const comment = data.comment;
+        
+        // Handle deleted author
+        if (!comment.author) {
+          comment.author = { username: '[deleted]' };
+        }
+        
+        newComments.push(comment);
+        
+        // Recursively fetch nested replies if within depth limit
+        if (depth < MAX_FETCH_DEPTH && comment.replies && comment.replies.length > 0) {
+          await Promise.all(
+            comment.replies.map(childReplyId => fetchRepliesRecursive(childReplyId, depth + 1))
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching reply:', error);
+      }
+    };
+    
+    // Fetch all requested replies
+    await Promise.all(replyIds.map(replyId => fetchRepliesRecursive(replyId, currentDepth)));
+    
+    // Add new comments to state
+    if (newComments.length > 0) {
+      setComments(prev => [...prev, ...newComments]);
+    }
+  };
+
   const handleSearch = (query) => {
     console.log('Search query:', query);
     // TODO: Implement search functionality
@@ -632,7 +676,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             createdAt: comment.createdAt,
                             voteScore: comment.voteCount,
                             parentId: comment.parentComment,
-                            replies: comment.replies
+                            replies: comment.replies || [],
+                            replyCount: comment.replyCount || 0,
+                            flags: comment.flags
                           }} 
                           depth={0}
                           allComments={comments.map(c => ({
@@ -642,8 +688,11 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             createdAt: c.createdAt,
                             voteScore: c.voteCount,
                             parentId: c.parentComment,
-                            replies: c.replies
+                            replies: c.replies || [],
+                            replyCount: c.replyCount || 0,
+                            flags: c.flags
                           }))}
+                          onFetchReplies={handleFetchReplies}
                         />
                       ))}
                   </div>
