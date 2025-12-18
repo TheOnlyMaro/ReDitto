@@ -29,10 +29,26 @@ const createCommunity = async (req, res) => {
       creator: creatorId,
       category: category || 'General',
       settings: settings || {},
-      appearance: appearance || {}
+      appearance: appearance || {},
+      memberCount: 1 // Start with 1 member (the creator)
     });
 
     await community.save();
+
+    // Auto-join: Add creator to community members and update user's joined communities
+    const user = await User.findById(creatorId);
+    if (user) {
+      if (!user.communities) {
+        user.communities = { joined: [] };
+      }
+      if (!user.communities.joined) {
+        user.communities.joined = [];
+      }
+      if (!user.communities.joined.includes(community._id)) {
+        user.communities.joined.push(community._id);
+        await user.save();
+      }
+    }
 
     // Populate creator and moderator details
     await community.populate('creator', 'username displayName avatar');
@@ -40,7 +56,8 @@ const createCommunity = async (req, res) => {
 
     res.status(201).json({
       message: 'Community created successfully',
-      community
+      community,
+      user // Return updated user data
     });
   } catch (error) {
     console.error('Error creating community:', error);

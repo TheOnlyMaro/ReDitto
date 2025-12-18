@@ -78,12 +78,83 @@ const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, s
       return;
     }
 
-    // TODO: Implement API call to create community
-    console.log('Creating community with data:', formData);
-    setAlert({
-      type: 'info',
-      message: 'Community creation coming soon...'
-    });
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      
+      if (!token) {
+        setAlert({
+          type: 'error',
+          message: 'You must be logged in to create a community'
+        });
+        return;
+      }
+
+      // Prepare data for API
+      const communityData = {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        settings: {
+          isPrivate: formData.isPrivate,
+          allowedPostTypes: {
+            text: formData.allowTextPosts,
+            link: formData.allowLinkPosts,
+            image: formData.allowImagePosts
+          }
+        },
+        appearance: {
+          icon: formData.icon || undefined,
+          banner: formData.banner || undefined,
+          primaryColor: formData.primaryColor
+        }
+      };
+
+      // Call API to create community
+      const response = await fetch('http://localhost:5000/api/communities', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(communityData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAlert({
+          type: 'error',
+          message: data.error || 'Failed to create community'
+        });
+        return;
+      }
+
+      // Update user data if returned (auto-join functionality)
+      if (data.user) {
+        // Dispatch custom event to update user in App.js
+        window.dispatchEvent(new CustomEvent('userDataUpdated', {
+          detail: { user: data.user }
+        }));
+      }
+
+      // Success - show success message and navigate to the new community
+      setAlert({
+        type: 'success',
+        message: `Community r/${formData.name} created successfully!`
+      });
+
+      // Navigate to the new community page after a short delay
+      setTimeout(() => {
+        navigate(`/r/${formData.name}`);
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error creating community:', error);
+      setAlert({
+        type: 'error',
+        message: 'Failed to create community. Please try again.'
+      });
+    }
   };
 
   const categories = [
