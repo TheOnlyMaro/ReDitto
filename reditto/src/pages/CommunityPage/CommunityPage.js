@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
@@ -16,6 +16,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
   const [alert, setAlert] = useState(null);
   const [shareMenuPostId, setShareMenuPostId] = useState(null);
   const [isJoined, setIsJoined] = useState(false);
+  const [expandedRules, setExpandedRules] = useState({});
 
   // Fetch community data
   useEffect(() => {
@@ -211,6 +212,13 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     });
   };
 
+  const toggleRule = (ruleIndex) => {
+    setExpandedRules(prev => ({
+      ...prev,
+      [ruleIndex]: !prev[ruleIndex]
+    }));
+  };
+
   return (
     <div className="community-page">
       <Navbar 
@@ -324,6 +332,81 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                 </>
               )}
             </div>
+
+            {/* Community Rules */}
+            {community && community.rules && community.rules.length > 0 && (
+              <div className="community-sidebar-card">
+                <h3>r/{community.name} rules</h3>
+                <div className="rules-list">
+                  {community.rules
+                    .sort((a, b) => (a.order || 0) - (b.order || 0))
+                    .map((rule, index) => (
+                      <div key={index} className="rule-item">
+                        <div className="rule-header" onClick={() => toggleRule(index)}>
+                          <span className="rule-number">{index + 1}.</span>
+                          <span className="rule-title">{rule.title}</span>
+                          <button className="rule-expand-btn" aria-label={expandedRules[index] ? 'Collapse' : 'Expand'}>
+                            <svg 
+                              width="16" 
+                              height="16" 
+                              viewBox="0 0 16 16" 
+                              style={{ transform: expandedRules[index] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                            >
+                              <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                        {expandedRules[index] && rule.description && (
+                          <div className="rule-description">
+                            {rule.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Moderators */}
+            {community && (
+              <div className="community-sidebar-card">
+                <h3>Moderators</h3>
+                <div className="moderators-list">
+                  {/* Creator first */}
+                  {community.creator && (
+                    <Link 
+                      to={`/user/${community.creator.username}`} 
+                      className="moderator-item"
+                    >
+                      <img 
+                        src={community.creator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.creator.username}`}
+                        alt={community.creator.username}
+                        className="moderator-avatar"
+                      />
+                      <span className="moderator-username">u/{community.creator.username}</span>
+                    </Link>
+                  )}
+                  
+                  {/* Other moderators (excluding creator if they're in the list) */}
+                  {community.moderators && community.moderators
+                    .filter(mod => mod._id !== community.creator?._id)
+                    .map((moderator) => (
+                      <Link 
+                        key={moderator._id}
+                        to={`/user/${moderator.username}`} 
+                        className="moderator-item"
+                      >
+                        <img 
+                          src={moderator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${moderator.username}`}
+                          alt={moderator.username}
+                          className="moderator-avatar"
+                        />
+                        <span className="moderator-username">u/{moderator.username}</span>
+                      </Link>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

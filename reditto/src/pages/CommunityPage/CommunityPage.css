@@ -189,6 +189,7 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px;
+  margin-bottom: 16px;
 }
 
 .community-sidebar-card h3 {
@@ -235,6 +236,135 @@
 .sidebar-created {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+/* Community Rules */
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rule-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px 0;
+}
+
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+.rule-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+  transition: background-color 0.2s;
+}
+
+.rule-header:hover {
+  background-color: var(--hover-bg);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 0 -8px;
+}
+
+.rule-number {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.rule-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.rule-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease, color 0.2s;
+  flex-shrink: 0;
+}
+
+.rule-expand-btn:hover {
+  color: var(--text-primary);
+}
+
+.rule-expand-btn.expanded {
+  transform: rotate(180deg);
+}
+
+.rule-expand-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rule-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding: 8px 0 4px 0;
+  margin-left: 24px;
+  animation: expandRule 0.2s ease;
+}
+
+@keyframes expandRule {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Moderators */
+.moderators-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.moderator-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.moderator-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.moderator-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background-color: var(--border-color);
+}
+
+.moderator-username {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 /* Mobile Responsive */
