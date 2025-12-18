@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Loading from '../../components/Loading/Loading';
 import Comment from '../../components/Comment/Comment';
+import Alert from '../../components/Alert/Alert';
 import dummyComments from '../../data/dummyComments.json';
 import './PostPage.css';
 
@@ -14,6 +15,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   const [post, setPost] = useState(location.state?.post || null);
   const [loading, setLoading] = useState(!location.state?.post);
   const [userVote, setUserVote] = useState(null);
+  const [alert, setAlert] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   // Fetch post if not passed via navigation state
   useEffect(() => {
@@ -87,23 +91,198 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     }
   };
 
-  const handleUpvote = () => {
+  const handleUpvote = async () => {
+    if (!user) {
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to vote'
+      });
+      return;
+    }
+
+    const previousVote = userVote;
+    const previousScore = post.voteScore;
+    const voteType = userVote === 'upvote' ? 'unvote' : 'upvote';
+
+    // Optimistically update UI
     if (userVote === 'upvote') {
       setUserVote(null);
-      // TODO: Call API to remove vote
+      setPost(prev => ({ ...prev, voteScore: prev.voteScore - 1 }));
     } else {
       setUserVote('upvote');
-      // TODO: Call API to upvote
+      setPost(prev => ({ 
+        ...prev, 
+        voteScore: prev.voteScore + (userVote === 'downvote' ? 2 : 1) 
+      }));
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      const endpoint = voteType === 'unvote' 
+        ? `http://localhost:5000/api/posts/${postId}/vote`
+        : `http://localhost:5000/api/posts/${postId}/upvote`;
+      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Vote failed');
+      }
+    } catch (error) {
+      console.error('Failed to vote:', error);
+      // Rollback on error
+      setUserVote(previousVote);
+      setPost(prev => ({ ...prev, voteScore: previousScore }));
+      setAlert({
+        type: 'error',
+        message: 'Failed to vote. Please try again.'
+      });
     }
   };
 
-  const handleDownvote = () => {
+  const handleDownvote = async () => {
+    if (!user) {
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to vote'
+      });
+      return;
+    }
+
+    const previousVote = userVote;
+    const previousScore = post.voteScore;
+    const voteType = userVote === 'downvote' ? 'unvote' : 'downvote';
+
+    // Optimistically update UI
     if (userVote === 'downvote') {
       setUserVote(null);
-      // TODO: Call API to remove vote
+      setPost(prev => ({ ...prev, voteScore: prev.voteScore + 1 }));
     } else {
       setUserVote('downvote');
-      // TODO: Call API to downvote
+      setPost(prev => ({ 
+        ...prev, 
+        voteScore: prev.voteScore - (userVote === 'upvote' ? 2 : 1) 
+      }));
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      const endpoint = voteType === 'unvote' 
+        ? `http://localhost:5000/api/posts/${postId}/vote`
+        : `http://localhost:5000/api/posts/${postId}/downvote`;
+      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Vote failed');
+      }
+    } catch (error) {
+      console.error('Failed to vote:', error);
+      // Rollback on error
+      setUserVote(previousVote);
+      setPost(prev => ({ ...prev, voteScore: previousScore }));
+      setAlert({
+        type: 'error',
+        message: 'Failed to vote. Please try again.'
+      });
+    }
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to comment'
+      });
+      return;
+    }
+
+    if (!commentText.trim()) {
+      setAlert({
+        type: 'warning',
+        message: 'Comment cannot be empty'
+      });
+      return;
+    }
+
+    if (commentText.length > 10000) {
+      setAlert({
+        type: 'error',
+        message: 'Comment cannot exceed 10,000 characters'
+      });
+      return;
+    }
+
+    setIsSubmittingComment(true);
+
+    try {
+      //TODO: Replace with actual API call to create comment
+      // const token = localStorage.getItem('reditto_auth_token');
+      // const response = await fetch(`http://localhost:5000/api/comments`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`,
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify({
+      //     content: commentText,
+      //     post: postId,
+      //     parentComment: null
+      //   })
+      // });
+      // if (!response.ok) throw new Error('Failed to create comment');
+      // const data = await response.json();
+
+      //TODO: Simulating adding comment to dummy data (replace with API integration)
+      const newComment = {
+        id: `c${Date.now()}`,
+        author: user.username,
+        content: commentText,
+        createdAt: new Date().toISOString(),
+        voteScore: 1,
+        parentId: null,
+        replies: []
+      };
+
+      // Add to dummy comments array
+      dummyComments.comments.unshift(newComment);
+
+      // Update post comment count
+      setPost(prev => ({
+        ...prev,
+        commentCount: prev.commentCount + 1
+      }));
+
+      // Clear input
+      setCommentText('');
+
+      setAlert({
+        type: 'success',
+        message: 'Comment posted successfully!'
+      });
+    } catch (error) {
+      console.error('Failed to post comment:', error);
+      setAlert({
+        type: 'error',
+        message: 'Failed to post comment. Please try again.'
+      });
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -124,6 +303,13 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
   return (
     <div className="post-page">
+      {alert && (
+        <Alert 
+          type={alert.type} 
+          message={alert.message} 
+          onClose={() => setAlert(null)}
+        />
+      )}
       <Navbar 
         user={user} 
         onSearch={handleSearch}
@@ -259,6 +445,35 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
               {/* Comments Section */}
               <div className="post-comments-section">
+                {/* Comment Input */}
+                <div className="comment-input-container">
+                  <div className="comment-input-header">
+                    <span className="comment-as">Comment as <strong>{user?.username || 'Guest'}</strong></span>
+                  </div>
+                  <form onSubmit={handleCommentSubmit}>
+                    <textarea
+                      className="comment-input-textarea"
+                      placeholder={user ? "What are your thoughts?" : "Login to comment"}
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      disabled={!user || isSubmittingComment}
+                      rows={4}
+                    />
+                    <div className="comment-input-footer">
+                      <span className="comment-input-count">
+                        {commentText.length}/10000
+                      </span>
+                      <button 
+                        type="submit" 
+                        className="comment-submit-btn"
+                        disabled={!user || !commentText.trim() || isSubmittingComment}
+                      >
+                        {isSubmittingComment ? 'Posting...' : 'Comment'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
                 <div className="comments-header">
                   <h2>{dummyComments?.comments?.filter(c => c.parentId === null).length || 0} Comments</h2>
                 </div>

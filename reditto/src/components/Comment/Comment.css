@@ -117,6 +117,9 @@
   margin-bottom: 8px;
   font-size: 12px;
   flex-wrap: wrap;
+}
+
+.comment-author {
   font-weight: 600;
   color: var(--text-primary);
   text-decoration: none;
@@ -125,7 +128,7 @@
 
 .comment-author:hover {
   color: #ff8c42;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .comment-divider {
