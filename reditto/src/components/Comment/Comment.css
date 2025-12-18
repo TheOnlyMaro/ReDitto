@@ -238,7 +238,7 @@
   content: '';
   position: absolute;
   left: -24px;
-  top: 0;
+  top: -100px;
   bottom: 8px;
   width: 2px;
   background-color: var(--border-color);
