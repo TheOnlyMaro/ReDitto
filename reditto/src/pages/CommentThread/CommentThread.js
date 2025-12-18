@@ -351,11 +351,27 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
     }
   };
 
-  const handleBackToPost = () => {
-    if (post) {
-      navigate(`/r/${post.community?.name}/posts/${post._id}`);
-    } else if (rootComment) {
-      navigate(`/r/posts/${rootComment.post}`);
+  const handleBackToPost = async () => {
+    if (post && post.community?.name) {
+      navigate(`/r/${post.community.name}/posts/${post._id}`);
+    } else if (rootComment && rootComment.post) {
+      // Fetch post data if not available
+      try {
+        const response = await fetch(`http://localhost:5000/api/posts/${rootComment.post}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.post && data.post.community?.name) {
+            navigate(`/r/${data.post.community.name}/posts/${data.post._id}`);
+          } else {
+            navigate(-1);
+          }
+        } else {
+          navigate(-1);
+        }
+      } catch (error) {
+        console.error('Failed to fetch post:', error);
+        navigate(-1);
+      }
     } else {
       navigate(-1);
     }
