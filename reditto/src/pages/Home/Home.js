@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
@@ -15,12 +15,6 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
   const [alert, setAlert] = useState(null);
   const [shareMenuPostId, setShareMenuPostId] = useState(null);
 
-  // Create stable references for vote arrays to use as dependencies
-  const voteData = useMemo(() => ({
-    upvoted: user?.upvotedPosts || [],
-    downvoted: user?.downvotedPosts || []
-  }), [user?.upvotedPosts, user?.downvotedPosts]);
-
   // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
     if (userLoading) return; // Wait until user fetch is complete
@@ -33,8 +27,8 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
         
         // Get user's joined communities if logged in
         const joinedCommunityIds = user?.communities?.joined || [];
-        const upvotedPostIds = voteData.upvoted.map(id => id.toString());
-        const downvotedPostIds = voteData.downvoted.map(id => id.toString());
+        const upvotedPostIds = (user?.upvotedPosts || []).map(id => id.toString());
+        const downvotedPostIds = (user?.downvotedPosts || []).map(id => id.toString());
         console.log('User joined community IDs:', joinedCommunityIds);
         console.log('User upvoted posts:', upvotedPostIds);
         console.log('User downvoted posts:', downvotedPostIds);
@@ -82,8 +76,7 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
 
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLoading, location.key, userVoteVersion, voteData]); // Refetch when returning to page or when user votes change
-  
+  }, [userLoading, location.key, userVoteVersion]); // Refetch when returning to page or when user votes change  
   const handleSearch = (query) => {
     console.log('Search query:', query);
     // TODO: Implement search functionality
