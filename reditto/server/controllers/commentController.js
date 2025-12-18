@@ -169,11 +169,25 @@ const getCommentsByPost = async (req, res) => {
 
     // Get comments with pagination
     const comments = await Comment.find(query)
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('parentComment', 'content author')
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit);
+    
+    // Handle deleted authors - replace null with placeholder
+    comments.forEach(comment => {
+      if (!comment.author || comment.author.flags?.isDeleted) {
+        comment.author = {
+          _id: 'deleted',
+          username: '[deleted]',
+          displayName: '[deleted]'
+        };
+      }
+    });
 
     // Get total count
     const totalComments = await Comment.countDocuments(query);
@@ -208,12 +222,24 @@ const getCommentById = async (req, res) => {
     }
 
     let comment = await Comment.findById(commentId)
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('post', 'title')
       .populate('parentComment', 'content author');
 
     if (!comment) {
       return res.status(404).json({ error: 'Comment not found' });
+    }
+    
+    // Handle deleted author
+    if (!comment.author || comment.author.flags?.isDeleted) {
+      comment.author = {
+        _id: 'deleted',
+        username: '[deleted]',
+        displayName: '[deleted]'
+      };
     }
 
     // Return deleted comments with [deleted] content to maintain thread structure
@@ -279,8 +305,22 @@ const getCommentReplies = async (req, res) => {
     const replies = await Comment.find({
       _id: { $in: replyIds }
     })
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .sort(sortOptions);
+    
+    // Handle deleted authors
+    replies.forEach(reply => {
+      if (!reply.author || reply.author.flags?.isDeleted) {
+        reply.author = {
+          _id: 'deleted',
+          username: '[deleted]',
+          displayName: '[deleted]'
+        };
+      }
+    });
 
     res.status(200).json({
       replies,

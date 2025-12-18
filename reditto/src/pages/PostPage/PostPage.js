@@ -33,6 +33,16 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
         }
         
         const data = await response.json();
+        const fetchedPost = data.post;
+        
+        // Handle deleted author gracefully
+        if (!fetchedPost.author) {
+          fetchedPost.author = {
+            _id: 'deleted',
+            username: '[deleted]',
+            displayName: '[deleted]'
+          };
+        }
         
         // Determine user's vote on this post
         let userVote = null;
@@ -104,7 +114,13 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           throw new Error('Failed to fetch comments');
         }
         const data = await response.json();
-        const topLevelComments = data.comments || [];
+        const topLevelComments = (data.comments || []).map(c => {
+          // Handle deleted authors
+          if (!c.author) {
+            c.author = { username: '[deleted]' };
+          }
+          return c;
+        });
         
         // Store all fetched comments in a flat array
         const allFetchedComments = [...topLevelComments];
@@ -125,6 +141,11 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
               
               // Add to our flat array
               allFetchedComments.push(replyComment);
+              
+              // Handle deleted author
+              if (!replyComment.author) {
+                replyComment.author = { username: '[deleted]' };
+              }
               
               // Recursively fetch this reply's replies
               await fetchRepliesRecursive(replyComment, currentDepth + 1);

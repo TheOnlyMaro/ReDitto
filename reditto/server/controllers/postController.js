@@ -86,7 +86,10 @@ const getPostById = async (req, res) => {
     }
 
     const post = await Post.findById(postId)
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('community', 'name description memberCount');
 
     if (!post) {
@@ -94,24 +97,20 @@ const getPostById = async (req, res) => {
         error: 'Post not found' 
       });
     }
-
-    // Don't return deleted posts unless user is author or moderator
+    
+    // Handle deleted author
+    if (!post.author || post.author.flags?.isDeleted) {
+      post.author = {
+        _id: 'deleted',
+        username: '[deleted]',
+        displayName: '[deleted]'
+      };
+    }
+    
+    // Show deleted posts (they still have comments that should be visible)
+    // Just mark them as deleted in the response
     if (post.flags.isDeleted) {
-      const userId = req.user?.userId;
-      if (!userId) {
-        return res.status(404).json({ 
-          error: 'Post not found' 
-        });
-      }
-      const isAuthor = post.isAuthor(userId);
-      const community = await Community.findById(post.community);
-      const isModerator = community && community.isModerator(userId);
-
-      if (!isAuthor && !isModerator) {
-        return res.status(404).json({ 
-          error: 'Post not found' 
-        });
-      }
+      post._doc.isDeleted = true;
     }
 
     res.status(200).json({ post });
@@ -173,8 +172,22 @@ const getPosts = async (req, res) => {
       .sort(sort)
       .limit(parseInt(limit))
       .skip(skip)
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('community', 'name');
+    
+    // Handle deleted authors
+    posts.forEach(post => {
+      if (!post.author || post.author.flags?.isDeleted) {
+        post.author = {
+          _id: 'deleted',
+          username: '[deleted]',
+          displayName: '[deleted]'
+        };
+      }
+    });
 
     const total = await Post.countDocuments(query);
 
