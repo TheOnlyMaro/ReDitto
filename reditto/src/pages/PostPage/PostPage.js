@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Loading from '../../components/Loading/Loading';
+import Comment from '../../components/Comment/Comment';
+import dummyComments from '../../data/dummyComments.json';
 import './PostPage.css';
 
 const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
@@ -257,8 +259,15 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
               {/* Comments Section */}
               <div className="post-comments-section">
-                <h2>Comments</h2>
-                {/* Comments will be rendered here */}
+                <div className="comments-header">
+                  <h2>{dummyComments.length} Comments</h2>
+                </div>
+                
+                <div className="comments-list">
+                  {dummyComments.map((comment) => (
+                    <Comment key={comment.id} comment={comment} depth={0} />
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
