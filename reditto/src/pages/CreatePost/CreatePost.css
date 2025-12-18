@@ -2,6 +2,18 @@
 .create-post-page {
   min-height: 100vh;
   background-color: var(--bg-primary);
+  position: relative;
+}
+
+/* Alert positioning */
+.create-post-page .alert {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 400px;
+  max-width: 600px;
 }
 
 .create-content {

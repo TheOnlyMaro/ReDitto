@@ -44,27 +44,22 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
       try {
         setLoadingCommunities(true);
         
-        // Fetch communities user has joined
-        if (user.communities?.joined && user.communities.joined.length > 0) {
-          const communityPromises = user.communities.joined.map(async (communityId) => {
-            try {
-              const response = await fetch(`http://localhost:5000/api/communities/${communityId}`);
-              if (response.ok) {
-                const data = await response.json();
-                return data.community;
-              }
-              return null;
-            } catch (error) {
-              console.error('Failed to fetch community:', error);
-              return null;
-            }
-          });
+        // Fetch all communities and filter by user's joined list
+        const response = await fetch('http://localhost:5000/api/communities');
+        
+        if (response.ok) {
+          const data = await response.json();
           
-          const fetchedCommunities = await Promise.all(communityPromises);
-          const validCommunities = fetchedCommunities.filter(c => c !== null);
-          setCommunities(validCommunities);
-        } else {
-          setCommunities([]);
+          // Filter to only communities user has joined
+          if (user.communities?.joined && user.communities.joined.length > 0) {
+            const joinedCommunityIds = user.communities.joined.map(id => id.toString());
+            const userCommunities = data.communities.filter(community => 
+              joinedCommunityIds.includes(community._id.toString())
+            );
+            setCommunities(userCommunities);
+          } else {
+            setCommunities([]);
+          }
         }
         
         setLoadingCommunities(false);
@@ -211,10 +206,18 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
       }
 
       const selectedFlair = availableFlairs.find(f => f._id === formData.flairId);
+      
+      // Find the selected community to get its name
+      const selectedCommunity = communities.find(comm => comm._id === formData.community);
+      if (!selectedCommunity) {
+        setAlert({ type: 'error', message: 'Selected community not found' });
+        return;
+      }
+      
       const postData = {
         title: formData.title,
         type: postType,
-        community: formData.community,
+        community: selectedCommunity.name, // Send community name instead of ID
         ...(postType === 'text' && { content: formData.content }),
         ...(postType === 'link' && { url: formData.url }),
         ...(postType === 'image' && { imageUrl: formData.imageUrl }),
@@ -250,15 +253,10 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         type: 'success',
         message: 'Post created successfully!'
       });
-
-      // Get community name for navigation
-      const selectedCommunity = communities.find(c => c._id === formData.community);
       
       // Navigate to the new post after a short delay
       setTimeout(() => {
-        if (selectedCommunity) {
-          navigate(`/r/${selectedCommunity.name}/posts/${data.post._id}`);
-        }
+        navigate(`/r/${selectedCommunity.name}/posts/${data.post._id}`);
       }, 1000);
 
     } catch (error) {
