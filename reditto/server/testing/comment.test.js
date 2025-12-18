@@ -409,6 +409,7 @@ describe('Comment Model Tests', () => {
         post: testPost._id
       });
 
+      // eslint-disable-next-line testing-library/await-async-query
       const populatedComment = await Comment.findById(comment._id)
         .populate('author', 'username email');
 
@@ -423,8 +424,10 @@ describe('Comment Model Tests', () => {
         post: testPost._id
       });
 
+      // eslint-disable-next-line testing-library/await-async-query
       const populatedComment = await Comment.findById(comment._id)
-        .populate('post', 'title content');
+        .populate('post', 'title content')
+        .exec();
 
       expect(populatedComment.post.title).toBe('Test Post');
     });
@@ -443,8 +446,10 @@ describe('Comment Model Tests', () => {
         parentComment: parentComment._id
       });
 
+      // eslint-disable-next-line testing-library/await-async-query
       const populatedReply = await Comment.findById(replyComment._id)
-        .populate('parentComment', 'content');
+        .populate('parentComment', 'content')
+        .exec();
 
       expect(populatedReply.parentComment.content).toBe('Parent comment');
     });
