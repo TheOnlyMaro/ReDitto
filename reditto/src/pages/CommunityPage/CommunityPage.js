@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
 import Loading from '../../components/Loading/Loading';
 import Alert from '../../components/Alert/Alert';
+import Button from '../../components/Button/Button';
 import './CommunityPage.css';
 
 const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
@@ -45,7 +46,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     };
 
     fetchCommunity();
-  }, [communityName, user]);
+  }, [communityName]);
 
   // Fetch posts from this community
   useEffect(() => {
@@ -260,15 +261,20 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                 </div>
               </div>
               <div className="community-info-right">
-                <button 
+                <Button 
+                  variant={isJoined ? 'secondary' : 'primary'}
                   className={`community-join-btn ${isJoined ? 'joined' : ''}`}
                   onClick={handleJoinCommunity}
                 >
                   {isJoined ? 'Joined' : 'Join'}
-                </button>
-                <button className="community-create-post-btn" onClick={handleCreatePost}>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="community-create-post-btn" 
+                  onClick={handleCreatePost}
+                >
                   Create Post
-                </button>
+                </Button>
               </div>
             </div>
             {community.description && (
@@ -345,7 +351,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                         <div className="rule-header" onClick={() => toggleRule(index)}>
                           <span className="rule-number">{index + 1}.</span>
                           <span className="rule-title">{rule.title}</span>
-                          <button className="rule-expand-btn" aria-label={expandedRules[index] ? 'Collapse' : 'Expand'}>
+                          <button className="rule-expand-btn" aria-label={expandedRules[index] ? 'Collapse' : 'Expand'} type="button">
                             <svg 
                               width="16" 
                               height="16" 

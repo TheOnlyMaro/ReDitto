@@ -80,49 +80,41 @@
   gap: 12px;
 }
 
+/* Custom button styling for community page */
 .community-join-btn {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 24px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background-color: #0079D3 !important;
+  color: white !important;
+  border: 1px solid #0079D3 !important;
 }
 
 .community-join-btn:hover {
-  background-color: #ff9f5a;
+  background-color: #ff8c42 !important;
+  border-color: #ff8c42 !important;
+  color: white !important;
 }
 
 .community-join-btn.joined {
-  background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .community-join-btn.joined:hover {
-  background-color: var(--bg-primary);
-  border-color: var(--primary);
-  color: var(--primary);
+  background-color: #211e1e !important;
+  border-color: #272422 !important;
+  color: white !important;
 }
 
 .community-create-post-btn {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 8px 24px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background-color: transparent !important;
+  color: #0079D3 !important;
+  border: 1px solid #0079D3 !important;
 }
 
 .community-create-post-btn:hover {
-  background-color: var(--bg-tertiary);
-  border-color: var(--primary);
+  background-color: #ff8c42 !important;
+  border-color: #ff8c42 !important;
+  color: white !important;
 }
 
 .community-description {
