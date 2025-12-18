@@ -18,21 +18,52 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     if (!post) {
       const fetchPost = async () => {
         try {
-          // TODO: Replace with actual API call
-          // const response = await fetch(`http://localhost:5000/api/posts/${postId}`);
-          // const data = await response.json();
-          // setPost(data.post);
-          console.log('TODO: Fetch post from API with ID:', postId);
+          const response = await fetch(`http://localhost:5000/api/posts/${postId}`);
+          
+          if (!response.ok) {
+            throw new Error('Post not found');
+          }
+          
+          const data = await response.json();
+          
+          // Transform the post data to match expected format
+          const transformedPost = {
+            id: data.post._id,
+            type: data.post.type,
+            title: data.post.title,
+            content: data.post.content,
+            imageUrl: data.post.imageUrl,
+            url: data.post.url,
+            flair: data.post.flair,
+            community: {
+              id: data.post.community._id,
+              name: data.post.community.name,
+              icon: data.post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
+            },
+            author: {
+              username: data.post.author.username,
+              displayName: data.post.author.displayName,
+              avatar: data.post.author.avatar
+            },
+            voteScore: data.post.voteCount,
+            commentCount: data.post.commentCount,
+            createdAt: new Date(data.post.createdAt),
+            userVote: null // TODO: Determine user's vote if logged in
+          };
+          
+          setPost(transformedPost);
           setLoading(false);
         } catch (error) {
           console.error('Failed to fetch post:', error);
           setLoading(false);
+          // Redirect to home if post not found
+          navigate('/');
         }
       };
 
       fetchPost();
     }
-  }, [postId, post]);
+  }, [postId, post, navigate]);
 
   useEffect(() => {
     if (post) {
