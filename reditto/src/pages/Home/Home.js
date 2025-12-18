@@ -10,6 +10,7 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
+  const [shareMenuPostId, setShareMenuPostId] = useState(null);
 
   // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
@@ -231,9 +232,39 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
   };
 
   const handleShare = (postId) => {
-    console.log(`Share post ${postId}`);
-    // TODO: Implement share functionality
+    setShareMenuPostId(shareMenuPostId === postId ? null : postId);
   };
+
+  const handleCopyLink = (postId, communityName) => {
+    const postUrl = `${window.location.origin}/r/${communityName}/posts/${postId}`;
+    navigator.clipboard.writeText(postUrl).then(() => {
+      setAlert({
+        type: 'success',
+        message: 'Link copied to clipboard!'
+      });
+      setShareMenuPostId(null);
+    }).catch(err => {
+      console.error('Failed to copy link:', err);
+      setAlert({
+        type: 'error',
+        message: 'Failed to copy link'
+      });
+    });
+  };
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (shareMenuPostId && !event.target.closest('.share-menu-container')) {
+        setShareMenuPostId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [shareMenuPostId]);
 
   const handleJoin = async (communityName, isJoining, communityId) => {
     console.log(`${isJoining ? 'Join' : 'Unjoin'} community:`, communityName);
@@ -332,6 +363,8 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
                   onVote={handleVote}
                   onComment={handleComment}
                   onShare={handleShare}
+                  onCopyLink={handleCopyLink}
+                  shareMenuOpen={shareMenuPostId === post.id}
                   onJoin={handleJoin}
                   onSave={handleSave}
                 />

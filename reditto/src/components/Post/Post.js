@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Post.css';
 
-const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
+const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink, shareMenuOpen, onJoin, onSave }) => {
   const navigate = useNavigate();
   const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -87,7 +87,8 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
-  const handleShareClick = () => {
+  const handleShareClick = (e) => {
+    e.stopPropagation();
     if (onShare) {
       onShare(post.id);
     }
@@ -130,6 +131,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     if (
       e.target.closest('.vote-btn') ||
       e.target.closest('.post-action-btn') ||
+      e.target.closest('.share-menu-container') ||
       e.target.closest('.post-join-btn') ||
       e.target.closest('.post-options') ||
       e.target.tagName === 'A'
@@ -250,12 +252,24 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
         </button>
 
         {/* Share Section */}
-        <button className="post-action-btn" onClick={handleShareClick}>
-          <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 13.442c-.633 0-1.204.246-1.637.642l-5.938-3.463c.046-.204.075-.412.075-.621s-.029-.417-.075-.621l5.938-3.463a2.49 2.49 0 001.637.642c1.379 0 2.5-1.121 2.5-2.5S16.379 1.558 15 1.558s-2.5 1.121-2.5 2.5c0 .209.029.417.075.621l-5.938 3.463a2.49 2.49 0 00-1.637-.642c-1.379 0-2.5 1.121-2.5 2.5s1.121 2.5 2.5 2.5c.633 0 1.204-.246 1.637-.642l5.938 3.463c-.046.204-.075.412-.075.621 0 1.379 1.121 2.5 2.5 2.5s2.5-1.121 2.5-2.5-1.121-2.5-2.5-2.5z" fill="currentColor"/>
-          </svg>
-          <span>Share</span>
-        </button>
+        <div className="share-menu-container">
+          <button className="post-action-btn" onClick={handleShareClick}>
+            <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 13.442c-.633 0-1.204.246-1.637.642l-5.938-3.463c.046-.204.075-.412.075-.621s-.029-.417-.075-.621l5.938-3.463a2.49 2.49 0 001.637.642c1.379 0 2.5-1.121 2.5-2.5S16.379 1.558 15 1.558s-2.5 1.121-2.5 2.5c0 .209.029.417.075.621l-5.938 3.463a2.49 2.49 0 00-1.637-.642c-1.379 0-2.5 1.121-2.5 2.5s1.121 2.5 2.5 2.5c.633 0 1.204-.246 1.637-.642l5.938 3.463c-.046.204-.075.412-.075.621 0 1.379 1.121 2.5 2.5 2.5s2.5-1.121 2.5-2.5-1.121-2.5-2.5-2.5z" fill="currentColor"/>
+            </svg>
+            <span>Share</span>
+          </button>
+          {shareMenuOpen && (
+            <div className="share-menu">
+              <button className="share-menu-item" onClick={() => onCopyLink && onCopyLink(post.id, post.community.name)}>
+                <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.586 2.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" fill="currentColor"/>
+                </svg>
+                <span>Copy link</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
