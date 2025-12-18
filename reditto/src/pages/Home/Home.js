@@ -5,8 +5,7 @@ import Post from '../../components/Post/Post';
 import Loading from '../../components/Loading/Loading';
 import './Home.css';
 
-const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode }) => {
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 

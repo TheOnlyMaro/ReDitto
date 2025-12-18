@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Post.css';
 
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
+  const navigate = useNavigate();
   const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
@@ -65,9 +67,8 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   };
 
   const handleCommentClick = () => {
-    if (onComment) {
-      onComment(post.id);
-    }
+    // Navigate to post page when clicking comments
+    navigate(`/posts/${post.id}`, { state: { post } });
   };
 
   const handleShareClick = () => {
@@ -108,8 +109,22 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     return post.voteScore || 0;
   };
 
+  const handlePostClick = (e) => {
+    // Don't navigate if clicking on interactive elements
+    if (
+      e.target.closest('.vote-btn') ||
+      e.target.closest('.post-action-btn') ||
+      e.target.closest('.post-join-btn') ||
+      e.target.closest('.post-options') ||
+      e.target.tagName === 'A'
+    ) {
+      return;
+    }
+    navigate(`/posts/${post.id}`, { state: { post } });
+  };
+
   return (
-    <div className="post">
+    <div className="post" onClick={handlePostClick} style={{ cursor: 'pointer' }}>
       {/* Post Header */}
       <div className="post-header">
         <div className="post-header-left">
