@@ -11,7 +11,7 @@ const fetchCommentById = (commentId, allComments) => {
   return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
-const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, user }) => {
+const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, user, postId }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
@@ -248,8 +248,11 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
         <div className="comment-replies">
           {atMaxDepth ? (
             <div className="comment-continue-thread">
-              {/* TODO: Implement "Continue this thread" link that opens replies in a new context */}
-              <Link to="#" className="continue-thread-link">
+              <Link 
+                to={`/r/comments/${comment.id || comment._id}`}
+                className="continue-thread-link"
+                state={{ comment: fetchCommentById(comment.id || comment._id, allComments), postId }}
+              >
                 Continue this thread →
               </Link>
             </div>
@@ -272,7 +275,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onReplySubmit={onReplySubmit} user={user} />
+                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onReplySubmit={onReplySubmit} user={user} postId={postId} />
               ))}
               
               {hiddenRepliesCount > 0 && (

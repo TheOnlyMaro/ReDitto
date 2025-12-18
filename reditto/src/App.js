@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import PostPage from './pages/PostPage/PostPage';
+import CommentThread from './pages/CommentThread/CommentThread';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
@@ -158,6 +159,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName" element={<div style={{padding: '100px', textAlign: 'center'}}>Community Page - Coming Soon</div>} />
           <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />

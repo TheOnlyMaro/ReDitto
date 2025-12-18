@@ -1,0 +1,220 @@
+.comment-thread-page {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.comment-thread-content {
+  margin-left: 240px;
+  padding: 20px;
+  max-width: 1200px;
+  transition: margin-left 0.3s ease;
+}
+
+.comment-thread-content.sidebar-collapsed {
+  margin-left: 60px;
+}
+
+.comment-thread-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.comment-thread-main {
+  background-color: var(--bg-primary);
+}
+
+.comment-thread-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.comment-thread-back-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.comment-thread-back-btn svg {
+  flex-shrink: 0;
+}
+
+.comment-thread-post-info {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.thread-post-link {
+  text-decoration: none;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.thread-post-link h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.thread-post-link:hover h3 {
+  color: var(--primary);
+}
+
+.thread-post-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.thread-community {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.thread-community:hover {
+  color: var(--primary);
+}
+
+.thread-post-meta .divider {
+  color: var(--text-secondary);
+}
+
+.comment-thread-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.thread-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.thread-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comment-input-container {
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--bg-primary);
+}
+
+.comment-input-header {
+  margin-bottom: 8px;
+}
+
+.comment-as {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-as strong {
+  color: var(--text-primary);
+}
+
+.comment-input-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.comment-input-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.comment-input-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.comment-input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.comment-input-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-submit-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+  background-color: #ff9f5a;
+}
+
+.comment-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.root-comment-wrapper {
+  margin-top: 20px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .comment-thread-content {
+    margin-left: 0;
+    padding: 12px;
+  }
+
+  .comment-thread-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+
+  .comment-thread-card {
+    padding: 16px;
+  }
+
+  .comment-input-textarea {
+    min-height: 80px;
+  }
+}

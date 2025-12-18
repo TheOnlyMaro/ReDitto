@@ -807,6 +807,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             return handleCommentSubmit(fakeEvent, parentCommentId);
                           }}
                           user={user}
+                          postId={postId}
                         />
                       ))}
                   </div>
