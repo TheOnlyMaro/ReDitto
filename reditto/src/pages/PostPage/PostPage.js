@@ -20,6 +20,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const [optimisticCommentIds, setOptimisticCommentIds] = useState(new Set());
 
   // Fetch post data (always fetch to get fresh vote counts and data)
   useEffect(() => {
@@ -167,7 +168,36 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           topLevelComments.map(comment => fetchRepliesRecursive(comment, 0))
         );
         
-        setComments(allFetchedComments);
+        // Clean up any failed optimistic comments
+        // If we have optimistic comment IDs, check if they're in the fetched data
+        // Only remove them if the fetch is complete and they're not found
+        const fetchedIds = new Set(allFetchedComments.map(c => c._id.toString()));
+        const failedOptimisticIds = Array.from(optimisticCommentIds).filter(
+          id => !id.startsWith('temp_') || !fetchedIds.has(id)
+        );
+        
+        if (failedOptimisticIds.length > 0) {
+          // Remove failed optimistic comments
+          setComments(prevComments => 
+            prevComments.filter(c => !failedOptimisticIds.includes(c._id))
+          );
+          
+          // Clean up optimistic IDs
+          setOptimisticCommentIds(prev => {
+            const newSet = new Set(prev);
+            failedOptimisticIds.forEach(id => newSet.delete(id));
+            return newSet;
+          });
+        } else {
+          // Normal update - merge with any optimistic comments still pending
+          setComments(prevComments => {
+            const optimisticOnly = prevComments.filter(c => 
+              optimisticCommentIds.has(c._id)
+            );
+            return [...allFetchedComments, ...optimisticOnly];
+          });
+        }
+        
         setCommentsLoading(false);
       } catch (error) {
         console.error('Failed to fetch comments:', error);
@@ -177,7 +207,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     };
 
     fetchComments();
-  }, [postId]);
+  }, [postId, optimisticCommentIds]);
 
   // Function to fetch additional replies on demand
   const handleFetchReplies = async (replyIds, currentDepth) => {
@@ -384,26 +414,72 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
     setIsSubmittingComment(true);
 
-    try {
-      //TODO: Replace with actual API call to create comment
-      // const token = localStorage.getItem('reditto_auth_token');
-      // const response = await fetch(`http://localhost:5000/api/comments`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify({
-      //     content: textToSubmit,
-      //     post: postId,
-      //     parentComment: parentCommentId
-      //   })
-      // });
-      // if (!response.ok) throw new Error('Failed to create comment');
-      // const data = await response.json();
+    // Generate temporary ID for optimistic update
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
+    
+    // Create optimistic comment object
+    const optimisticComment = {
+      _id: tempId,
+      content: textToSubmit,
+      author: {
+        _id: user._id,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar
+      },
+      post: postId,
+      parentComment: parentCommentId,
+      voteCount: 0,
+      replyCount: 0,
+      replies: [],
+      createdAt: new Date().toISOString(),
+      flags: { isDeleted: false }
+    };
 
-      // For now, just show success message without adding to list
-      // Once API is integrated, refetch comments after successful creation
+    // Add optimistic comment to UI immediately
+    setComments(prevComments => [...prevComments, optimisticComment]);
+    setOptimisticCommentIds(prev => new Set([...prev, tempId]));
+    
+    // Update post comment count optimistically
+    setPost(prevPost => ({
+      ...prevPost,
+      commentCount: (prevPost.commentCount || 0) + 1
+    }));
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      const response = await fetch(`http://localhost:5000/api/comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: textToSubmit,
+          post: postId,
+          parentComment: parentCommentId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create comment');
+      }
+      
+      const data = await response.json();
+      
+      // Replace optimistic comment with real comment from server
+      setComments(prevComments => 
+        prevComments.map(c => 
+          c._id === tempId ? data.comment : c
+        )
+      );
+      
+      // Remove from optimistic IDs since it's now confirmed
+      setOptimisticCommentIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tempId);
+        return newSet;
+      });
 
       // Clear input only if it's a top-level comment
       if (!parentCommentId) {
@@ -412,10 +488,28 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
       setAlert({
         type: 'success',
-        message: parentCommentId ? 'Reply will be posted once API is integrated' : 'Comment will be posted once API is integrated'
+        message: parentCommentId ? 'Reply posted successfully' : 'Comment posted successfully'
       });
     } catch (error) {
       console.error('Failed to post comment:', error);
+      
+      // Remove optimistic comment on failure
+      setComments(prevComments => 
+        prevComments.filter(c => c._id !== tempId)
+      );
+      
+      setOptimisticCommentIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tempId);
+        return newSet;
+      });
+      
+      // Revert post comment count
+      setPost(prevPost => ({
+        ...prevPost,
+        commentCount: Math.max(0, (prevPost.commentCount || 0) - 1)
+      }));
+      
       setAlert({
         type: 'error',
         message: 'Failed to post comment. Please try again.'
