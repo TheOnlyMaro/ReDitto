@@ -1,4 +1,4 @@
-/* Shared styles with CreateCommunity */
+/* Modern CreatePost Page */
 .create-post-page {
   min-height: 100vh;
   background-color: var(--bg-primary);
@@ -6,7 +6,7 @@
 
 .create-content {
   margin-left: 256px;
-  padding: 24px;
+  padding: 32px;
   transition: margin-left 0.3s ease;
 }
 
@@ -19,27 +19,28 @@
   margin: 0 auto;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 32px;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .create-header {
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 40px;
 }
 
 .create-header h1 {
-  font-size: 28px;
+  font-size: 32px;
   color: var(--text-primary);
   margin: 0 0 8px 0;
   font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .create-header p {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-secondary);
   margin: 0;
+  font-weight: 400;
 }
 
 /* Form Sections */

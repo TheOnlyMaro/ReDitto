@@ -121,6 +121,42 @@ This script populates the development database with test data:
 - Username: `monketest1`
 - Password: `Test123!`
 
+#### Generate Commit History
+```bash
+npm run git-history
+```
+This script (`scripts/generate-commits.js`) generates a formatted commit history:
+- Fetches all git commits from repository
+- Organizes commits by date
+- Outputs to `COMMITS.md`
+- Includes commit hash, author, date, and changed files
+- Auto-generates table of contents
+
+#### Generate Postman Collection
+```bash
+node scripts/generate-postman-collection.js
+```
+This script generates a Postman collection for API testing:
+- Creates collection with all API endpoints
+- Includes authentication routes
+- Sets up environment variables
+- Outputs JSON file to `scripts/output/`
+- Ready to import into Postman
+
+### Available Scripts Summary
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| Start Frontend | `npm start` | Runs React dev server on port 3000 |
+| Start Backend | `npm run server` | Runs Express server on port 5000 |
+| Full Stack | `npm run dev` | Runs both frontend and backend concurrently |
+| Run Tests | `npm run test:server` | Executes all backend tests with Jest |
+| Frontend Tests | `npm test` | Runs React test suite |
+| Build Production | `npm run build` | Creates optimized production build |
+| Populate Database | `node scripts/populate.js` | Seeds database with test data |
+| Generate Commits | `npm run git-history` | Creates formatted commit history |
+| Generate Postman | `node scripts/generate-postman-collection.js` | Creates API collection |
+
 ## Testing Strategy
 
 ### Test Environment Setup
@@ -151,12 +187,14 @@ module.exports = {
 **Test File Organization**:
 ```
 server/testing/
-├── server.test.js              # Database connection tests
-├── user.test.js                # User & auth endpoint tests
-├── community.test.js           # Community model tests
-├── communityController.test.js # Community API tests
-├── post.test.js                # Post model tests
-└── postController.test.js      # Post API tests
+├── server.test.js              # Database connection tests (2 tests)
+├── user.test.js                # User & auth endpoint tests (52 tests)
+├── community.test.js           # Community model tests (13 tests)
+├── communityController.test.js # Community API tests (22 tests)
+├── post.test.js                # Post model tests (10 tests)
+├── postController.test.js      # Post API tests (51 tests)
+├── comment.test.js             # Comment model tests (13 tests)
+└── commentController.test.js   # Comment API tests (51 tests)
 ```
 
 **Test Categories**:
@@ -243,10 +281,10 @@ const validUserData = {
 - `beforeEach`: Clear users collection (ensures clean state)
 
 ### Test Results
-- **Total Tests**: 202
+- **Total Tests**: 202+
 - **Pass Rate**: 100%
-- **Average Test Time**: ~20 seconds for full suite
-- **Coverage**: Authentication, authorization, CRUD operations, security, communities, posts, voting
+- **Average Test Time**: ~40 seconds for full suite
+- **Coverage**: Authentication, authorization, CRUD operations, security, communities, posts, comments, voting, nested threading
 
 ### Postman API Testing
 
@@ -343,6 +381,41 @@ const validUserData = {
 
 - `DELETE {{baseUrl}}/posts/{{postId}}/vote` - Remove vote (protected)
 
+**Comments Folder**:
+- `POST {{baseUrl}}/comments` - Create comment (protected)
+  ```json
+  {
+    "content": "This is a comment",
+    "post": "postId",
+    "parentComment": null
+  }
+  ```
+  *Tests*: Save commentId to environment
+  *Headers*: `Authorization: Bearer {{token}}`
+
+- `GET {{baseUrl}}/comments/post/{{postId}}` - Get all comments for a post
+
+- `GET {{baseUrl}}/comments/{{commentId}}` - Get comment by ID
+
+- `GET {{baseUrl}}/comments/{{commentId}}/replies` - Get comment replies
+
+- `PUT {{baseUrl}}/comments/{{commentId}}` - Update comment (protected)
+  ```json
+  {
+    "content": "Updated comment content"
+  }
+  ```
+  *Headers*: `Authorization: Bearer {{token}}`
+
+- `POST {{baseUrl}}/comments/{{commentId}}/upvote` - Upvote comment (protected)
+  *Headers*: `Authorization: Bearer {{token}}`
+
+- `POST {{baseUrl}}/comments/{{commentId}}/downvote` - Downvote comment (protected)
+
+- `DELETE {{baseUrl}}/comments/{{commentId}}` - Delete comment (protected)
+
+- `DELETE {{baseUrl}}/comments/{{commentId}}/vote` - Remove vote (protected)
+
 #### Testing Workflow
 
 **Manual Testing Flow**:
@@ -399,6 +472,17 @@ pm.test("User has required fields", function () {
 - ✅ Downvote after upvote changes vote
 - ✅ Filter posts by community
 - ✅ Sort posts by new/top/hot
+
+**Comment Operations**:
+- ✅ Create top-level comment
+- ✅ Create nested reply to comment
+- ✅ Get all comments for a post
+- ✅ Get replies for a comment
+- ✅ Update comment content
+- ✅ Delete comment (soft delete)
+- ✅ Upvote/downvote comments
+- ✅ Vote count updates correctly
+- ✅ Reply count updates recursively
 
 ### Manual Frontend Testing
 
@@ -589,11 +673,14 @@ Request → Routes → Middleware → Controllers → Models → Database
      - createCommunity, getCommunity, updateCommunity, deleteCommunity
    - `postController.js`: Post operations
      - createPost, getPosts, getPost, updatePost, deletePost, upvotePost, downvotePost
+   - `commentController.js`: Comment operations
+     - createComment, getCommentsByPost, getCommentById, getCommentReplies, updateComment, deleteComment, upvoteComment, downvoteComment, removeVote
 
 4. **Models** (`server/models/`)
    - `User.js`: Mongoose schema with validation
    - `Community.js`: Community schema with rules, flairs, settings
    - `Post.js`: Post schema with voting, validation, soft delete
+   - `Comment.js`: Comment schema with nested threading, voting, reply counts
 
 #### Authentication Flow
 
@@ -922,15 +1009,15 @@ NODE_ENV=production npm run server
 ### Completed Features
 - [x] Post creation and management (API ready)
 - [x] Community (subreddit) functionality
-- [x] Voting system (upvote/downvote posts)
+- [x] Voting system (upvote/downvote posts and comments)
 - [x] User feed/timeline (Home page with real-time posts)
 - [x] Community join/unjoin
 - [x] Post display with votes, comments, share
+- [x] Comment system (create, reply, vote, nested threading)
 - [x] Dark mode theme
 - [x] Database population script
 
 ### Planned Features
-- [ ] Comment system (create, reply, vote on comments)
 - [ ] Community pages (view all posts in community)
 - [ ] User profile pages
 - [ ] Create post UI (currently API-only)

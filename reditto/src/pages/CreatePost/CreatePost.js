@@ -13,6 +13,8 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
   const [alert, setAlert] = useState(null);
   const [communities, setCommunities] = useState([]);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
+  const [availableFlairs, setAvailableFlairs] = useState([]);
+  const [loadingFlairs, setLoadingFlairs] = useState(false);
   const [postType, setPostType] = useState('text'); // 'text', 'link', 'image'
   const [formData, setFormData] = useState({
     title: '',
@@ -20,10 +22,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
     url: '',
     imageUrl: '',
     community: searchParams.get('community') || '',
-    flairText: '',
-    flairColor: '#0079D3',
-    nsfw: false,
-    spoiler: false
+    flairId: ''
   });
 
   // Redirect if not logged in
@@ -61,6 +60,40 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
 
     fetchCommunities();
   }, [user]);
+
+  // Fetch available flairs when community is selected
+  useEffect(() => {
+    const fetchFlairs = async () => {
+      if (!formData.community) {
+        setAvailableFlairs([]);
+        return;
+      }
+
+      try {
+        setLoadingFlairs(true);
+        // TODO: Fetch flairs from API for selected community
+        // const response = await fetch(`http://localhost:5000/api/communities/${formData.community}/flairs`);
+        // const data = await response.json();
+        // setAvailableFlairs(data.flairs);
+        
+        // Mock data for now
+        const mockFlairs = [
+          { _id: '1', text: 'Discussion', backgroundColor: '#0079D3' },
+          { _id: '2', text: 'Question', backgroundColor: '#46D160' },
+          { _id: '3', text: 'News', backgroundColor: '#FF4500' },
+          { _id: '4', text: 'Meme', backgroundColor: '#FFB000' },
+          { _id: '5', text: 'Announcement', backgroundColor: '#7C7C7C' }
+        ];
+        setAvailableFlairs(mockFlairs);
+        setLoadingFlairs(false);
+      } catch (error) {
+        console.error('Failed to fetch flairs:', error);
+        setLoadingFlairs(false);
+      }
+    };
+
+    fetchFlairs();
+  }, [formData.community]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -150,6 +183,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
     }
 
     // TODO: Implement API call to create post
+    const selectedFlair = availableFlairs.find(f => f._id === formData.flairId);
     const postData = {
       title: formData.title,
       type: postType,
@@ -157,16 +191,12 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
       ...(postType === 'text' && { content: formData.content }),
       ...(postType === 'link' && { url: formData.url }),
       ...(postType === 'image' && { imageUrl: formData.imageUrl }),
-      ...(formData.flairText && {
+      ...(selectedFlair && {
         flair: {
-          text: formData.flairText,
-          backgroundColor: formData.flairColor
+          text: selectedFlair.text,
+          backgroundColor: selectedFlair.backgroundColor
         }
-      }),
-      flags: {
-        nsfw: formData.nsfw,
-        spoiler: formData.spoiler
-      }
+      })
     };
 
     console.log('Creating post with data:', postData);
@@ -359,61 +389,35 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
               <h2>Options</h2>
               
               <div className="form-group">
-                <label htmlFor="flairText">Flair (optional)</label>
-                <div className="flair-input-group">
-                  <Input
-                    id="flairText"
-                    name="flairText"
-                    type="text"
-                    value={formData.flairText}
-                    onChange={handleInputChange}
-                    placeholder="Add a flair"
-                    maxLength={64}
-                  />
-                  <input
-                    type="color"
-                    name="flairColor"
-                    value={formData.flairColor}
-                    onChange={handleInputChange}
-                    className="color-picker-small"
-                    title="Flair color"
-                  />
-                </div>
-                {formData.flairText && (
-                  <div className="flair-preview">
-                    <span className="flair-badge" style={{ backgroundColor: formData.flairColor }}>
-                      {formData.flairText}
-                    </span>
-                  </div>
+                <label htmlFor="flairId">Flair (optional)</label>
+                <select
+                  id="flairId"
+                  name="flairId"
+                  value={formData.flairId}
+                  onChange={handleInputChange}
+                  className="form-select"
+                  disabled={!formData.community || loadingFlairs}
+                >
+                  <option value="">No flair</option>
+                  {availableFlairs.map(flair => (
+                    <option key={flair._id} value={flair._id}>
+                      {flair.text}
+                    </option>
+                  ))}
+                </select>
+                {!formData.community && (
+                  <p className="field-hint">Select a community first to see available flairs</p>
                 )}
-              </div>
-
-              <div className="form-group-checkbox">
-                <input
-                  type="checkbox"
-                  id="nsfw"
-                  name="nsfw"
-                  checked={formData.nsfw}
-                  onChange={handleInputChange}
-                />
-                <label htmlFor="nsfw">
-                  <strong>NSFW</strong>
-                  <span className="checkbox-hint">Not safe for work content</span>
-                </label>
-              </div>
-
-              <div className="form-group-checkbox">
-                <input
-                  type="checkbox"
-                  id="spoiler"
-                  name="spoiler"
-                  checked={formData.spoiler}
-                  onChange={handleInputChange}
-                />
-                <label htmlFor="spoiler">
-                  <strong>Spoiler</strong>
-                  <span className="checkbox-hint">Contains spoilers</span>
-                </label>
+                {formData.flairId && (() => {
+                  const selectedFlair = availableFlairs.find(f => f._id === formData.flairId);
+                  return selectedFlair ? (
+                    <div className="flair-preview">
+                      <span className="flair-badge" style={{ backgroundColor: selectedFlair.backgroundColor }}>
+                        {selectedFlair.text}
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             </div>
 
