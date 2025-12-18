@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
@@ -7,6 +8,7 @@ import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
 const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -227,8 +229,12 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
   };
 
   const handleComment = (postId) => {
-    console.log(`Comment on post ${postId}`);
-    // TODO: Implement comment functionality
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      navigate(`/r/${post.community.name}/posts/${post.id}`, { 
+        state: { post, fromPath: window.location.pathname } 
+      });
+    }
   };
 
   const handleShare = (postId) => {
