@@ -49,8 +49,8 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     if (location.state?.fromPath) {
       navigate(-1);
     } else {
-      // TODO: Handle direct URL access - navigate to home or appropriate page
-      navigate('/');
+      // If no previous location, redirect to community page
+      navigate(`/r/${post.community.name}`);
     }
   };
 
