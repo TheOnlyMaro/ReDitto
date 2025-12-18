@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Post.css';
 
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
@@ -144,12 +144,14 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
       {/* Post Header */}
       <div className="post-header">
         <div className="post-header-left">
-          <img 
-            src={post.community.icon} 
-            alt={post.community.name} 
-            className="community-icon"
-          />
-          <span className="community-name">r/{post.community.name}</span>
+          <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={post.community.icon} 
+              alt={post.community.name} 
+              className="community-icon"
+            />
+            <span className="community-name">r/{post.community.name}</span>
+          </Link>
           <span className="post-divider">•</span>
           <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
         </div>

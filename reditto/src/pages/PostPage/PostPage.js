@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Loading from '../../components/Loading/Loading';
@@ -150,14 +150,20 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                 {/* Post Header */}
                 <div className="post-detail-header">
                   <div className="post-detail-header-info">
-                    <img 
-                      src={post.community?.icon} 
-                      alt={post.community?.name} 
-                      className="post-detail-community-icon"
-                    />
+                    <Link to={`/r/${post.community?.name}`} className="post-detail-community-link">
+                      <img 
+                        src={post.community?.icon} 
+                        alt={post.community?.name} 
+                        className="post-detail-community-icon"
+                      />
+                    </Link>
                     <div className="post-detail-header-text">
-                      <span className="post-detail-community-name">r/{post.community?.name}</span>
-                      <span className="post-detail-author">u/{post.author?.username || 'unknown'}</span>
+                      <Link to={`/r/${post.community?.name}`} className="post-detail-community-name">
+                        r/{post.community?.name}
+                      </Link>
+                      <Link to={`/user/${post.author?.username}`} className="post-detail-author">
+                        u/{post.author?.username || 'unknown'}
+                      </Link>
                     </div>
                     <span className="post-detail-divider">•</span>
                     <span className="post-detail-time">{formatTimeAgo(post.createdAt)}</span>

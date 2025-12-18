@@ -83,6 +83,11 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  transition: opacity 0.2s ease;
+}
+
+.post-detail-community-link:hover .post-detail-community-icon {
+  opacity: 0.8;
 }
 
 .post-detail-header-text {
@@ -95,12 +100,26 @@
   font-weight: 700;
   font-size: 15px;
   color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.post-detail-community-name:hover {
+  color: #ff8c42;
+  text-decoration: underline;
 }
 
 .post-detail-author {
   font-weight: 400;
   font-size: 12px;
   color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.post-detail-author:hover {
+  color: #ff8c42;
+  text-decoration: underline;
 }
 
 .post-detail-divider {
