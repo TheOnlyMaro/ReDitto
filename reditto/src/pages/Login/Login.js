@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input, Button, Card, Alert } from '../../components';
 import { authAPI } from '../../services/api';
 import { authService } from '../../services/authService';
 import './Login.css';
 
-const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
+const Login = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -72,10 +74,13 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
 
       // Call onLoginSuccess callback if provided
       if (onLoginSuccess) {
-        setTimeout(() => {
-          onLoginSuccess(response.user);
-        }, 1000);
+        onLoginSuccess(response.user);
       }
+
+      // Navigate to home page
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (error) {
       setAlert({
         type: 'error',
@@ -159,7 +164,7 @@ const Login = ({ onSwitchToRegister, onLoginSuccess }) => {
         <div className="auth-footer">
           <p>
             Don't have an account?{' '}
-            <button onClick={onSwitchToRegister} className="auth-link-button">
+            <button onClick={() => navigate('/register')} className="auth-link-button">
               Sign Up
             </button>
           </p>

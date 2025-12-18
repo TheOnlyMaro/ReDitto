@@ -8,6 +8,10 @@
 # testing
 /coverage
 
+# scripts
+/scripts
+ReDitto_API.postman_collection.json
+
 # production
 /build
 /dist

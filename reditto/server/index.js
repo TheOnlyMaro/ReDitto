@@ -16,8 +16,15 @@ app.use(express.json());
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const postRoutes = require('./routes/postRoutes');
+const communityRoutes = require('./routes/communityRoutes');
+
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/communities', communityRoutes);
+
 
 // Database connection
 const connectDB = async () => {

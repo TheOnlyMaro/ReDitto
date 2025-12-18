@@ -32,7 +32,12 @@ const register = async (req, res) => {
       username,
       email,
       password,
-      displayName: displayName || username
+      displayName: displayName || username,
+      communities: {
+        joined: [],
+        created: [],
+        moderated: []
+      }
     });
 
     await user.save();

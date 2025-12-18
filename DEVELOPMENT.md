@@ -99,6 +99,28 @@ npm run server
 - Connects to MongoDB `dev` database
 - Nodemon auto-restart on file changes (if configured)
 
+### Database Population
+
+#### Populate Test Data
+```bash
+node scripts/populate.js
+```
+
+This script populates the development database with test data:
+- **3 Users**: monketest1, johndoe, janesmithdev
+- **3 Communities**: webdev, reactjs, javascript
+- **4 Posts**: Mix of text and link posts from different users
+
+**Features**:
+- Direct MongoDB access (bypasses authentication)
+- Initializes user communities properly
+- Handles duplicate data gracefully
+- Uses bcrypt for password hashing
+
+**Test Credentials**:
+- Username: `monketest1`
+- Password: `Test123!`
+
 ## Testing Strategy
 
 ### Test Environment Setup
@@ -129,8 +151,12 @@ module.exports = {
 **Test File Organization**:
 ```
 server/testing/
-├── server.test.js    # Database connection tests
-└── user.test.js      # User & auth endpoint tests (52 tests)
+├── server.test.js              # Database connection tests
+├── user.test.js                # User & auth endpoint tests
+├── community.test.js           # Community model tests
+├── communityController.test.js # Community API tests
+├── post.test.js                # Post model tests
+└── postController.test.js      # Post API tests
 ```
 
 **Test Categories**:
@@ -217,10 +243,318 @@ const validUserData = {
 - `beforeEach`: Clear users collection (ensures clean state)
 
 ### Test Results
-- **Total Tests**: 52
+- **Total Tests**: 202
 - **Pass Rate**: 100%
-- **Average Test Time**: ~15 seconds for full suite
-- **Coverage**: Authentication, authorization, CRUD operations, security
+- **Average Test Time**: ~20 seconds for full suite
+- **Coverage**: Authentication, authorization, CRUD operations, security, communities, posts, voting
+
+### Postman API Testing
+
+#### Setup Postman Environment
+1. **Install Postman**: Download from [postman.com](https://www.postman.com/)
+2. **Import Collection**: Use `scripts/generate-postman-collection.js` to generate collection
+3. **Create Environment Variables**:
+   ```
+   baseUrl: http://localhost:5000/api
+   token: (will be set automatically after login)
+   userId: (will be set automatically after login)
+   communityName: webdev
+   postId: (set after creating post)
+   ```
+
+#### Postman Collection Structure
+
+**Authentication Folder**:
+- `POST {{baseUrl}}/auth/register` - Register new user
+  ```json
+  {
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "Test123!",
+    "displayName": "Test User"
+  }
+  ```
+  *Tests*: Save token and userId to environment
+
+- `POST {{baseUrl}}/auth/login` - Login existing user
+  ```json
+  {
+    "email": "monketest1@example.com",
+    "password": "Test123!"
+  }
+  ```
+  *Tests*: 
+  ```javascript
+  pm.environment.set("token", pm.response.json().token);
+  pm.environment.set("userId", pm.response.json().user._id);
+  ```
+
+- `GET {{baseUrl}}/auth/me` - Get current user (requires token)
+  *Headers*: `Authorization: Bearer {{token}}`
+
+**Users Folder**:
+- `GET {{baseUrl}}/users/{{userId}}` - Get user by ID
+- `GET {{baseUrl}}/users/username/monketest1` - Get user by username
+- `PUT {{baseUrl}}/users/{{userId}}` - Update user (protected)
+  ```json
+  {
+    "displayName": "Updated Name",
+    "communities": {
+      "joined": ["communityId1", "communityId2"]
+    }
+  }
+  ```
+  *Headers*: `Authorization: Bearer {{token}}`
+
+**Communities Folder**:
+- `POST {{baseUrl}}/communities` - Create community (protected)
+  ```json
+  {
+    "name": "testcommunity",
+    "description": "Test community description"
+  }
+  ```
+  *Tests*: Save communityId to environment
+
+- `GET {{baseUrl}}/communities/{{communityName}}` - Get community by name
+- `GET {{baseUrl}}/communities` - Get all communities
+
+**Posts Folder**:
+- `POST {{baseUrl}}/posts` - Create post (protected)
+  ```json
+  {
+    "title": "Test Post Title",
+    "content": "This is the post content",
+    "community": "communityId",
+    "type": "text"
+  }
+  ```
+  *Tests*: Save postId to environment
+
+- `GET {{baseUrl}}/posts` - Get all posts
+  *Query params*: `?community=webdev&sort=new&limit=10`
+
+- `GET {{baseUrl}}/posts/{{postId}}` - Get post by ID
+
+- `POST {{baseUrl}}/posts/{{postId}}/upvote` - Upvote post (protected)
+  *Headers*: `Authorization: Bearer {{token}}`
+
+- `POST {{baseUrl}}/posts/{{postId}}/downvote` - Downvote post (protected)
+
+- `DELETE {{baseUrl}}/posts/{{postId}}/vote` - Remove vote (protected)
+
+#### Testing Workflow
+
+**Manual Testing Flow**:
+1. **Register** new user → verify token received
+2. **Login** with credentials → save token
+3. **Get current user** → verify token works
+4. **Create community** → save community ID
+5. **Create post** in community → save post ID
+6. **Upvote post** → verify vote count increases
+7. **Update user** to join community → verify communities.joined updated
+8. **Get posts** with filters → verify filtering works
+
+**Automated Test Scripts**:
+```javascript
+// Add to Postman Tests tab
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has token", function () {
+    pm.expect(pm.response.json()).to.have.property('token');
+});
+
+pm.test("User has required fields", function () {
+    const user = pm.response.json().user;
+    pm.expect(user).to.have.property('username');
+    pm.expect(user).to.have.property('email');
+    pm.expect(user).to.not.have.property('password');
+});
+```
+
+#### Common API Test Scenarios
+
+**Authentication Flow**:
+- ✅ Valid registration creates user and returns token
+- ✅ Duplicate username/email rejected
+- ✅ Weak password rejected
+- ✅ Login with correct credentials succeeds
+- ✅ Login with wrong password fails
+- ✅ Protected routes require valid token
+- ✅ Expired/invalid tokens rejected
+
+**Community Operations**:
+- ✅ Create community with valid data
+- ✅ Get community by name
+- ✅ Community name must be unique
+- ✅ Join/unjoin community updates user.communities.joined
+
+**Post Operations**:
+- ✅ Create text post (no image)
+- ✅ Create link post with URL
+- ✅ Image post cannot have text content
+- ✅ Upvote increases vote count
+- ✅ Downvote after upvote changes vote
+- ✅ Filter posts by community
+- ✅ Sort posts by new/top/hot
+
+### Manual Frontend Testing
+
+#### Testing Checklist
+
+**Authentication Flow**:
+- [ ] Register with valid data → redirects to login
+- [ ] Register with duplicate username → shows error
+- [ ] Register with weak password → shows validation error
+- [ ] Login with valid credentials → redirects to home
+- [ ] Login with wrong password → shows error message
+- [ ] Logout → clears localStorage and redirects to login
+- [ ] Refresh page while logged in → stays logged in
+- [ ] Token expiration → redirects to login
+
+**Home Page**:
+- [ ] Posts load from database on mount
+- [ ] User data loads before posts (no race condition)
+- [ ] Join button hidden for already-joined communities
+- [ ] Join button shows on non-joined communities
+- [ ] Click Join → button turns gray "Joined"
+- [ ] Page refresh → joined state persists
+- [ ] Upvote button changes color when clicked
+- [ ] Vote count updates correctly
+- [ ] Dark mode toggle works
+- [ ] Profile dropdown menu displays
+
+**UI Components**:
+- [ ] Navbar displays username and avatar
+- [ ] Sidebar navigation works
+- [ ] Post cards render correctly
+- [ ] Avatar shows user initials when no image
+- [ ] Loading spinner shows during data fetch
+- [ ] Alert notifications display and auto-dismiss
+- [ ] Buttons show hover states
+- [ ] Input fields show focus states
+- [ ] Form validation displays inline errors
+
+**Responsive Design**:
+- [ ] Desktop view (1920px) renders properly
+- [ ] Laptop view (1366px) adjusts layout
+- [ ] Tablet view (768px) stacks components
+- [ ] Mobile view (375px) single column layout
+- [ ] Sidebar collapses on mobile
+- [ ] Touch targets appropriate size
+
+**Browser Compatibility**:
+- [ ] Chrome (latest)
+- [ ] Firefox (latest)
+- [ ] Edge (latest)
+- [ ] Safari (latest)
+
+#### Frontend Debugging Techniques
+
+**React DevTools**:
+1. **Install Extension**: Chrome/Firefox React DevTools
+2. **Inspect Component Tree**: View component hierarchy
+3. **Check Props**: Verify props passed correctly
+4. **Monitor State**: Watch state changes in real-time
+5. **Profiler**: Identify performance bottlenecks
+
+**Browser DevTools**:
+```javascript
+// Console debugging
+console.log('User:', user);
+console.log('Posts:', posts);
+console.log('isFollowing:', isFollowing);
+
+// Network tab
+// - Check API requests/responses
+// - Verify request headers (Authorization)
+// - Check response status codes
+// - View request/response payloads
+
+// Application tab
+// - Inspect localStorage
+// - View cookies
+// - Check session storage
+
+// Performance tab
+// - Identify slow renders
+// - Check component mount times
+// - Monitor re-renders
+```
+
+**Common Frontend Issues**:
+
+**State Not Updating**:
+- Check if setState called correctly
+- Verify useEffect dependencies array
+- Ensure not mutating state directly
+- Check for async timing issues
+
+**API Calls Failing**:
+- Verify token in localStorage: `localStorage.getItem('reditto_auth_token')`
+- Check Authorization header in Network tab
+- Verify API URL in .env.local
+- Check CORS errors in console
+- Verify backend server running on port 5000
+
+**Race Condition Debugging**:
+```javascript
+// Add logging to track execution order
+useEffect(() => {
+  console.log('1. Component mounted');
+  console.log('2. userLoading:', userLoading);
+  console.log('3. user:', user);
+  
+  if (userLoading) {
+    console.log('4. Waiting for user to load...');
+    return;
+  }
+  
+  console.log('5. Fetching posts...');
+  fetchPosts();
+}, [userLoading]);
+```
+
+**Component Not Rendering**:
+- Check conditional rendering logic
+- Verify data exists before mapping
+- Check for undefined/null errors
+- Use optional chaining: `user?.communities?.joined`
+- Verify component imported/exported correctly
+
+#### Performance Testing
+
+**Lighthouse Audit**:
+1. Open Chrome DevTools → Lighthouse tab
+2. Run audit (Performance, Accessibility, Best Practices, SEO)
+3. Review metrics:
+   - First Contentful Paint (< 1.8s)
+   - Largest Contentful Paint (< 2.5s)
+   - Time to Interactive (< 3.8s)
+   - Cumulative Layout Shift (< 0.1)
+
+**Network Performance**:
+- Check bundle size: `npm run build` → review build/static/
+- Minimize API calls (use caching)
+- Lazy load components with React.lazy()
+- Optimize images (compress, use WebP)
+- Use code splitting
+
+**Memory Leaks**:
+```javascript
+// Clean up in useEffect
+useEffect(() => {
+  const controller = new AbortController();
+  
+  fetchData(controller.signal);
+  
+  return () => {
+    controller.abort(); // Cancel pending requests
+  };
+}, []);
+```
 
 ## Architecture & Technical Implementation
 
@@ -251,9 +585,15 @@ Request → Routes → Middleware → Controllers → Models → Database
      - register, login, getCurrentUser, refreshToken
    - `userController.js`: User operations
      - updateUser, getUserById, getUserByUsername, deleteUser
+   - `communityController.js`: Community operations
+     - createCommunity, getCommunity, updateCommunity, deleteCommunity
+   - `postController.js`: Post operations
+     - createPost, getPosts, getPost, updatePost, deletePost, upvotePost, downvotePost
 
 4. **Models** (`server/models/`)
    - `User.js`: Mongoose schema with validation
+   - `Community.js`: Community schema with rules, flairs, settings
+   - `Post.js`: Post schema with voting, validation, soft delete
 
 #### Authentication Flow
 
@@ -291,6 +631,16 @@ Request → Routes → Middleware → Controllers → Models → Database
 #### Component Hierarchy
 ```
 App
+├── Home (page)
+│   ├── Navbar
+│   │   ├── Logo
+│   │   ├── SearchBar
+│   │   └── Avatar
+│   ├── Sidebar
+│   └── Post (multiple)
+│       ├── Avatar
+│       ├── Card
+│       └── Button (join/vote/comment/share)
 ├── Login (page)
 │   ├── Card
 │   ├── Input (multiple)
@@ -305,9 +655,17 @@ App
 
 #### State Management
 - **Local State**: React useState hooks
+  - User loading state coordination
+  - Dark mode toggle
+  - Individual component states (isJoined, etc.)
 - **Persistent State**: localStorage
   - `reditto_auth_token`: JWT token
   - `reditto_user`: User object
+- **User Loading Pattern**: Prevents race conditions
+  - App.js fetches user on mount
+  - Sets `userLoading` flag to track fetch status
+  - Child components wait for `userLoading=false` before fetching data
+  - Ensures user.communities.joined is available before rendering
 
 #### Service Layer
 ```
@@ -320,9 +678,17 @@ src/services/
 │   ├── userAPI.getUserById()
 │   ├── userAPI.getUserByUsername()
 │   ├── userAPI.updateUser()
-│   └── userAPI.deleteUser()
+│   ├── userAPI.deleteUser()
+│   ├── communityAPI.createCommunity()
+│   ├── communityAPI.getCommunity()
+│   ├── postAPI.getPosts()
+│   ├── postAPI.getPost()
+│   ├── postAPI.createPost()
+│   ├── postAPI.upvotePost()
+│   └── postAPI.downvotePost()
 └── authService.js   # Auth state management
     ├── saveAuth()
+    ├── saveUser()       # Update user without changing token
     ├── getToken()
     ├── getUser()
     ├── clearAuth()
@@ -371,6 +737,56 @@ app.use(cors({
 - Password strength requirements
 - Display name length limits
 - MongoDB ObjectId validation
+
+### Community Join/Unjoin Flow
+
+**Join Workflow**:
+```
+1. User clicks Join button on Post component
+2. Post component toggles local isJoined state (UI feedback)
+3. Post calls onJoin(communityName, isJoining, communityId)
+4. Home passes call to App.handleJoinCommunity
+5. App updates user.communities.joined array
+6. App calls PUT /api/users/:userId with { communities: { joined: [...] } }
+7. Backend updates user document
+8. App updates localStorage and user state
+9. On next page load, isFollowing calculated from fresh user.communities.joined
+```
+
+**State Separation**:
+- `isFollowing` (from API): Set once when posts are fetched, determines if Join button renders
+- `isJoined` (local UI): Toggles when user clicks, controls button appearance (Join/Joined)
+- This separation prevents button from disappearing on click while still reflecting database state on page load
+
+**Race Condition Prevention**:
+- App.js fetches user from `/api/auth/me` on mount
+- `userLoading` state tracks fetch completion
+- Home.js waits for `userLoading=false` before fetching posts
+- This ensures `user.communities.joined` is available when calculating `isFollowing`
+
+### Post Model Validation
+
+**Text vs Image Exclusivity**:
+```javascript
+// Pre-save hook in Post.js
+if (this.type === 'text' && this.imageUrl) {
+  throw new Error('Text posts cannot have images');
+}
+if (this.type === 'image' && this.content) {
+  throw new Error('Image posts cannot have text content');
+}
+```
+
+**Vote Count Calculation**:
+```javascript
+// Automatically calculated on save
+this.voteCount = this.votes.upvotes.length - this.votes.downvotes.length;
+```
+
+**Consolidated Pre-Save Hooks**:
+- Fixed "next is not a function" error by combining multiple hooks into one
+- Validates text/image exclusivity, updates timestamps, calculates vote count
+- Uses `throw` instead of `next(error)` for proper error handling
 
 ### Database Schema Design
 
@@ -503,17 +919,30 @@ NODE_ENV=production npm run server
 
 ## Future Development
 
+### Completed Features
+- [x] Post creation and management (API ready)
+- [x] Community (subreddit) functionality
+- [x] Voting system (upvote/downvote posts)
+- [x] User feed/timeline (Home page with real-time posts)
+- [x] Community join/unjoin
+- [x] Post display with votes, comments, share
+- [x] Dark mode theme
+- [x] Database population script
+
 ### Planned Features
-- [ ] Post creation and management
-- [ ] Comment system
-- [ ] Community (subreddit) functionality
-- [ ] Voting system (upvote/downvote)
-- [ ] User feed/timeline
+- [ ] Comment system (create, reply, vote on comments)
+- [ ] Community pages (view all posts in community)
+- [ ] User profile pages
+- [ ] Create post UI (currently API-only)
 - [ ] Search functionality
-- [ ] Image upload
+- [ ] Image upload (currently URL-based)
 - [ ] Notifications
 - [ ] User settings page
 - [ ] Password reset flow
+- [ ] Edit posts/comments
+- [ ] Post flairs UI
+- [ ] Community rules display
+- [ ] Moderator tools
 
 ### Technical Improvements
 - [ ] Frontend routing with React Router
@@ -580,6 +1009,40 @@ npm audit fix
 - Ensure test isolation (no shared state)
 - Check for timing issues (add delays if needed)
 
+**Post Model "next is not a function"**
+- Multiple pre-save hooks conflict
+- Consolidate into single pre-save hook
+- Use `throw new Error()` instead of `next(error)`
+
+**Join Button Not Showing/Disappearing**
+- Check `userLoading` state propagation
+- Verify user fetch completes before post fetch
+- Ensure `isFollowing` calculated from `user.communities.joined`
+- Confirm `isJoined` local state separate from `isFollowing`
+
+**User Data Empty on Page Load**
+- Race condition: Home.js fetching before App.js finishes user fetch
+- Solution: Use `userLoading` flag to coordinate timing
+- App.js: Set `userLoading=true`, fetch user, set `userLoading=false`
+- Home.js: `if (userLoading) return;` in useEffect before fetching posts
+- Dependency array should be `[userLoading]` not `[user]`
+
+**Debugging API Requests**
+- Use Browser Network tab to inspect requests
+- Check request headers: `Authorization: Bearer <token>`
+- Verify request payload format (JSON)
+- Check response status codes (200, 401, 404, 500)
+- Use Postman to isolate backend issues
+- Check server console for error logs
+
+**Debugging React Components**
+- Use React DevTools to inspect props/state
+- Add console.logs at component entry points
+- Check useEffect execution with logs
+- Verify conditional rendering logic
+- Use debugger statements or breakpoints
+- Check for infinite render loops (missing dependencies)
+
 ## References
 
 ### Documentation
@@ -596,4 +1059,4 @@ npm audit fix
 
 ---
 
-*Last Updated: December 17, 2025*
+*Last Updated: December 18, 2025*

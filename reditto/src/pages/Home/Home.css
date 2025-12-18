@@ -1,0 +1,138 @@
+.home {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
+}
+
+.home-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  transition: margin-left 0.3s ease;
+}
+
+.home-content.sidebar-expanded {
+  margin-left: 260px;
+}
+
+.home-content.sidebar-collapsed {
+  margin-left: 60px;
+}
+
+@media (max-width: 960px) {
+  .home-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
+  .home-content.sidebar-expanded {
+    margin-left: 0;
+  }
+}
+
+.home-hero {
+  background: linear-gradient(135deg, #0079D3 0%, #0099ff 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: 260px;
+  height: 100%;
+  background: linear-gradient(135deg, #0079D3 0%, #0099ff 100%);
+}
+
+.sidebar-collapsed .home-hero::before {
+  width: 60px;
+}
+
+@media (max-width: 960px) {
+  .home-hero::before {
+    display: none;
+  }
+}
+
+.home-hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.home-hero p {
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.95;
+}
+
+.home-main {
+  display: grid;
+  grid-template-columns: 1fr 312px;
+  gap: 24px;
+  padding: 0 20px 40px;
+  max-width: 1340px;
+  margin: 0 auto;
+}
+
+.home-feed {
+  min-height: 400px;
+  padding: 0;
+}
+
+.feed-placeholder,
+.sidebar-placeholder {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.home-sidebar {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .home-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .home-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .home-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 24px 16px;
+  }
+  
+  .home-hero h1 {
+    font-size: 24px;
+  }
+  
+  .home-hero p {
+    font-size: 14px;
+  }
+  
+  .home-main {
+    padding: 0 12px 24px;
+    gap: 16px;
+  }
+}

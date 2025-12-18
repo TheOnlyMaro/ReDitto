@@ -20,6 +20,11 @@ export const authService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
+  // Update user in localStorage (without changing token)
+  saveUser: (user) => {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  },
+
   // Remove token and user from localStorage
   clearAuth: () => {
     localStorage.removeItem(AUTH_TOKEN_KEY);

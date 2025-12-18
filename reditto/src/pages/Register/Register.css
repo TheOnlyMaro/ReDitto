@@ -19,6 +19,11 @@
   font-size: 12px;
   line-height: 1.5;
   margin: 0;
+  transition: color 0.3s ease;
+}
+
+body.dark-mode .auth-terms p {
+  color: var(--text-secondary);
 }
 
 /* Responsive */
