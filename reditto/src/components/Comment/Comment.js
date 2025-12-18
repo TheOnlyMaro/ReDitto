@@ -59,7 +59,7 @@ const Comment = ({ comment, depth = 0 }) => {
   const avatarUrl = comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`;
 
   return (
-    <div className={`comment ${isCollapsed ? 'comment-collapsed' : ''}`} style={{ marginLeft: depth > 0 ? '28px' : '0' }}>
+    <div className={`comment ${isCollapsed ? 'comment-collapsed' : ''}`} style={{ marginLeft: depth > 0 ? '40px' : '0' }}>
       <div className="comment-main">
         {/* Left side: Avatar and collapse line */}
         <div className="comment-left">
