@@ -90,19 +90,61 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
   // Fetch comments for the post
   useEffect(() => {
+    const MAX_FETCH_DEPTH = 2; // Only auto-fetch 2 levels deep
+    
     const fetchComments = async () => {
       if (!postId) return;
       
       try {
         setCommentsLoading(true);
-        const response = await fetch(`http://localhost:5000/api/comments/post/${postId}`);
         
+        // Fetch top-level comments
+        const response = await fetch(`http://localhost:5000/api/comments/post/${postId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch comments');
         }
-        
         const data = await response.json();
-        setComments(data.comments || []);
+        const topLevelComments = data.comments || [];
+        
+        // Store all fetched comments in a flat array
+        const allFetchedComments = [...topLevelComments];
+        
+        // Recursively fetch replies up to MAX_FETCH_DEPTH
+        const fetchRepliesRecursive = async (comment, currentDepth) => {
+          if (currentDepth >= MAX_FETCH_DEPTH || !comment.replies || comment.replies.length === 0) {
+            return;
+          }
+          
+          // Fetch all replies for this comment
+          const replyPromises = comment.replies.map(async (replyId) => {
+            try {
+              const replyResponse = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+              if (!replyResponse.ok) return null;
+              const replyData = await replyResponse.json();
+              const replyComment = replyData.comment;
+              
+              // Add to our flat array
+              allFetchedComments.push(replyComment);
+              
+              // Recursively fetch this reply's replies
+              await fetchRepliesRecursive(replyComment, currentDepth + 1);
+              
+              return replyComment;
+            } catch (error) {
+              console.error('Error fetching reply:', error);
+              return null;
+            }
+          });
+          
+          await Promise.all(replyPromises);
+        };
+        
+        // Fetch replies for all top-level comments
+        await Promise.all(
+          topLevelComments.map(comment => fetchRepliesRecursive(comment, 0))
+        );
+        
+        setComments(allFetchedComments);
         setCommentsLoading(false);
       } catch (error) {
         console.error('Failed to fetch comments:', error);
@@ -550,7 +592,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                 </div>
 
                 <div className="comments-header">
-                  <h2>{comments.filter(c => !c.parentComment).length || 0} Comments</h2>
+                  <h2>{post?.commentCount || 0} Comments</h2>
                 </div>
                 
                 {commentsLoading ? (
@@ -564,7 +606,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                           key={comment._id} 
                           comment={{
                             id: comment._id,
-                            author: comment.author.username,
+                            author: comment.author?.username || '[deleted]',
                             content: comment.content,
                             createdAt: comment.createdAt,
                             voteScore: comment.voteCount,
@@ -574,7 +616,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                           depth={0}
                           allComments={comments.map(c => ({
                             id: c._id,
-                            author: c.author.username,
+                            author: c.author?.username || '[deleted]',
                             content: c.content,
                             createdAt: c.createdAt,
                             voteScore: c.voteCount,

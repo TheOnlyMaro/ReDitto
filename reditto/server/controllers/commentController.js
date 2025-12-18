@@ -53,24 +53,6 @@ const updateAncestorReplyCounts = async (commentId, delta) => {
   }
 };
 
-// Helper function to get all reply IDs recursively (for deep deletion)
-const getAllReplyIds = async (commentId) => {
-  const comment = await Comment.findById(commentId);
-  if (!comment || comment.replies.length === 0) {
-    return [];
-  }
-
-  let allReplyIds = [...comment.replies];
-  
-  // Recursively get replies of replies
-  for (const replyId of comment.replies) {
-    const nestedReplyIds = await getAllReplyIds(replyId);
-    allReplyIds = allReplyIds.concat(nestedReplyIds);
-  }
-
-  return allReplyIds;
-};
-
 // Create a new comment
 const createComment = async (req, res) => {
   try {
@@ -118,7 +100,7 @@ const createComment = async (req, res) => {
       await updateParentReplies(parentComment, comment._id, 'add');
     }
 
-    // Increment comment count on post
+    // Always increment comment count on post (includes top-level comments and all nested replies)
     postDoc.commentCount += 1;
     await postDoc.save();
 
@@ -164,10 +146,9 @@ const getCommentsByPost = async (req, res) => {
     const sortBy = req.query.sortBy || 'createdAt'; // 'createdAt', 'voteCount'
     const parentCommentId = req.query.parentComment;
 
-    // Build query
+    // Build query - include deleted comments to maintain thread structure
     const query = {
-      post: postId,
-      'flags.isDeleted': false
+      post: postId
     };
 
     // Filter by parent comment (for replies) or top-level comments
@@ -235,19 +216,11 @@ const getCommentById = async (req, res) => {
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    // Don't return deleted comments unless requester is the author
-    if (comment.flags.isDeleted) {
-      const requesterId = req.user?.userId;
-      if (!requesterId || comment.author._id.toString() !== requesterId) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
-    }
-
+    // Return deleted comments with [deleted] content to maintain thread structure
     // Optionally include populated replies (direct children only)
     if (includeReplies && comment.replies && comment.replies.length > 0) {
       comment = await comment.populate({
         path: 'replies',
-        match: { 'flags.isDeleted': false },
         populate: {
           path: 'author',
           select: 'username displayName avatar karma'
@@ -302,9 +275,9 @@ const getCommentReplies = async (req, res) => {
     
     const replyIds = comment.replies.slice(startIndex, endIndex);
     
+    // Include deleted comments to maintain thread structure
     const replies = await Comment.find({
-      _id: { $in: replyIds },
-      'flags.isDeleted': false
+      _id: { $in: replyIds }
     })
       .populate('author', 'username displayName avatar karma')
       .sort(sortOptions);
@@ -408,13 +381,10 @@ const deleteComment = async (req, res) => {
     }
 
     // Soft delete - keep in thread structure to maintain reply chains
+    // Don't decrement any counts - deleted comments still count toward totals
     comment.flags.isDeleted = true;
     comment.content = '[deleted]';
     await comment.save();
-
-    // Decrement comment count on post
-    post.commentCount = Math.max(0, post.commentCount - 1);
-    await post.save();
 
     // Don't remove from parent's replies array or update reply counts
     // This preserves the thread structure and allows replies to remain visible

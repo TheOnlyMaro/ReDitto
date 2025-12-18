@@ -5,75 +5,21 @@ import './Comment.css';
 
 const MAX_NESTING_LEVEL = 5;
 const INITIAL_REPLIES_SHOWN = 3;
-const MAX_DEPTH_AUTO_LOAD = 2; // Only auto-load replies for depth 0, 1, 2
-const MAX_COMMENTS_PER_FETCH = 20; // Limit number of comments fetched at once
 
 // Utility function to fetch comment by ID from the data structure
 const fetchCommentById = (commentId, allComments) => {
-  return allComments.find(c => c.id === commentId);
+  return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
 const Comment = ({ comment, depth = 0, allComments = [] }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
-  const [loadedReplies, setLoadedReplies] = useState([]);
-  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
 
-
-  // Only auto-fetch replies if within depth limit
-  const shouldAutoLoad = depth < MAX_DEPTH_AUTO_LOAD;
-
-  // Recursively fetch replies based on comment.replies array of IDs
-  // Only auto-load if within depth limit, otherwise wait for user to expand
-  useEffect(() => {
-    if (shouldAutoLoad && comment.replies && comment.replies.length > 0 && loadedReplies.length === 0) {
-      //TODO: Replace with actual API call when integrating with backend
-      // Simulate async fetch with 1-second delay for testing
-      console.log('Auto-loading replies for comment:', comment.id, 'at depth:', depth);
-      console.log('Full comments data:', JSON.stringify(allComments, null, 2));
-      setIsLoadingReplies(true);
-      setTimeout(() => {
-        const fetchedReplies = comment.replies
-          .slice(0, MAX_COMMENTS_PER_FETCH)
-          .map(replyId => fetchCommentById(replyId, allComments))
-          .filter(reply => reply !== undefined);
-        console.log('Auto-loaded replies:', fetchedReplies);
-        setLoadedReplies(fetchedReplies);
-        setIsLoadingReplies(false);
-        setRepliesExpanded(true);
-      }, 1000); // Temporary 1-second delay for testing
-    }
-  }, [comment.replies, allComments, shouldAutoLoad, loadedReplies.length]);
-
-  // Function to load replies on demand (for collapsed/deeper levels)
+  // Function to toggle replies visibility
   const handleLoadReplies = () => {
-    if (loadedReplies.length > 0) {
-      // Already loaded, just toggle expand
-      setRepliesExpanded(!repliesExpanded);
-      return;
-    }
-
-    if (!comment.replies || comment.replies.length === 0) {
-      return;
-    }
-
-    //TODO: Replace with actual API call when integrating with backend
-    // Simulate async fetch with 1-second delay for testing
-    console.log('Manually loading replies for comment:', comment.id, 'at depth:', depth);
-    console.log('Full comments data:', JSON.stringify(allComments, null, 2));
-    setIsLoadingReplies(true);
-    setTimeout(() => {
-      const fetchedReplies = comment.replies
-        .slice(0, MAX_COMMENTS_PER_FETCH)
-        .map(replyId => fetchCommentById(replyId, allComments))
-        .filter(reply => reply !== undefined);
-      console.log('Manually loaded replies:', fetchedReplies);
-      setLoadedReplies(fetchedReplies);
-      setIsLoadingReplies(false);
-      setRepliesExpanded(true);
-    }, 1000); // Temporary 1-second delay for testing
+    setRepliesExpanded(!repliesExpanded);
   };
 
   const formatTimeAgo = (timestamp) => {
@@ -115,29 +61,33 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
   };
 
   const hasReplies = comment.replies && comment.replies.length > 0;
-  const hasLoadedReplies = loadedReplies && loadedReplies.length > 0;
-  const hiddenRepliesCount = hasLoadedReplies && !showAllReplies ? Math.max(0, loadedReplies.length - INITIAL_REPLIES_SHOWN) : 0;
-  const visibleReplies = hasLoadedReplies && !showAllReplies ? loadedReplies.slice(0, INITIAL_REPLIES_SHOWN) : loadedReplies || [];
+  
+  // Get actual reply objects from allComments array
+  const replyObjects = hasReplies 
+    ? comment.replies.map(replyId => fetchCommentById(replyId, allComments)).filter(r => r !== undefined)
+    : [];
+  
+  const hiddenRepliesCount = replyObjects.length > 0 && !showAllReplies ? Math.max(0, replyObjects.length - INITIAL_REPLIES_SHOWN) : 0;
+  const visibleReplies = replyObjects.length > 0 && !showAllReplies ? replyObjects.slice(0, INITIAL_REPLIES_SHOWN) : replyObjects;
 
   // Check if we've reached max nesting depth
   const atMaxDepth = depth >= MAX_NESTING_LEVEL;
 
-  // Check if replies should be lazy-loaded (beyond auto-load depth)
-  const shouldLazyLoad = depth >= MAX_DEPTH_AUTO_LOAD && hasReplies && !repliesExpanded;
-
   // Check if comment is deleted
-  const isDeleted = comment.content === '[deleted]' || comment.isDeleted === true;
+  const isDeleted = comment.flags?.isDeleted || comment.content === '[deleted]';
+  const displayAuthor = isDeleted ? '[deleted]' : (comment.author || '[deleted]');
+  const displayContent = isDeleted ? '[deleted]' : comment.content;
 
   // Generate avatar URL - using DiceBear API for consistent avatars
-  const avatarUrl = comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`;
+  const avatarUrl = isDeleted ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=deleted' : (comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`);
 
   return (
     <div className={`comment ${isCollapsed ? 'comment-collapsed' : ''}`} style={{ marginLeft: depth > 0 ? '40px' : '0' }}>
       <div className="comment-main">
         {/* Left side: Avatar and collapse line */}
         <div className="comment-left">
-          <Link to={`/user/${comment.author}`} className="comment-avatar-link">
-            <img src={avatarUrl} alt={comment.author} className="comment-avatar" />
+          <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-avatar-link" onClick={(e) => isDeleted && e.preventDefault()}>
+            <img src={avatarUrl} alt={displayAuthor} className="comment-avatar" />
           </Link>
           <div className="comment-collapse-controls">
             <div className="comment-collapse-line" onClick={handleCollapse}></div>
@@ -151,8 +101,8 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
         <div className="comment-content-wrapper">
           {/* Comment Header */}
           <div className="comment-header">
-            <Link to={`/user/${comment.author}`} className="comment-author">
-              u/{comment.author}
+            <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-author" onClick={(e) => isDeleted && e.preventDefault()}>
+              {isDeleted ? '[deleted]' : `u/${displayAuthor}`}
             </Link>
             <span className="comment-divider">•</span>
             <span className="comment-time">{formatTimeAgo(comment.createdAt)}</span>
@@ -165,7 +115,9 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
           {!isCollapsed && (
             <>
               <div className="comment-body">
-                <p className="comment-text">{comment.content}</p>
+                <p className="comment-text" style={{ fontStyle: isDeleted ? 'italic' : 'normal', color: isDeleted ? '#999' : 'inherit' }}>
+                  {displayContent}
+                </p>
               </div>
 
               {/* Comment Actions */}
@@ -222,44 +174,28 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
                 Continue this thread →
               </Link>
             </div>
-          ) : shouldLazyLoad ? (
+          ) : replyObjects.length === 0 ? (
             <div className="comment-lazy-load">
-              {isLoadingReplies ? (
-                <div className="comment-loading">
-                  <Loading size="small" />
-                  <span>Loading replies...</span>
-                </div>
-              ) : (
-                <button 
-                  className="load-replies-btn"
-                  onClick={handleLoadReplies}
-                >
-                  Load {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
-                </button>
-              )}
+              <button 
+                className="load-replies-btn"
+                onClick={handleLoadReplies}
+              >
+                Load {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+              </button>
             </div>
           ) : (
             <>
-              {isLoadingReplies ? (
-                <div className="comment-loading">
-                  <Loading size="small" />
-                  <span>Loading replies...</span>
-                </div>
-              ) : (
-                <>
-                  {visibleReplies.map((reply) => (
-                    <Comment key={reply.id} comment={reply} depth={depth + 1} allComments={allComments} />
-                  ))}
-                  
-                  {hiddenRepliesCount > 0 && (
-                    <button 
-                      className="show-more-replies-btn"
-                      onClick={() => setShowAllReplies(true)}
-                    >
-                      Show {hiddenRepliesCount} more {hiddenRepliesCount === 1 ? 'reply' : 'replies'}
-                    </button>
-                  )}
-                </>
+              {visibleReplies.map((reply) => (
+                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} />
+              ))}
+              
+              {hiddenRepliesCount > 0 && (
+                <button 
+                  className="show-more-replies-btn"
+                  onClick={() => setShowAllReplies(true)}
+                >
+                  Show {hiddenRepliesCount} more {hiddenRepliesCount === 1 ? 'reply' : 'replies'}
+                </button>
               )}
             </>
           )}
