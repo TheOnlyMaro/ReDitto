@@ -4,7 +4,7 @@ const User = require('../models/User');
 const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { displayName, avatar } = req.body;
+    const { displayName, avatar, communities } = req.body;
 
     // Find user
     const user = await User.findById(userId);
@@ -19,6 +19,17 @@ const updateUser = async (req, res) => {
     }
     if (avatar !== undefined) {
       user.avatar = avatar;
+    }
+    if (communities !== undefined) {
+      // Initialize communities object if it doesn't exist
+      if (!user.communities) {
+        user.communities = { joined: [], created: [], moderated: [] };
+      }
+      
+      // Allow updating joined communities array
+      if (communities.joined !== undefined) {
+        user.communities.joined = communities.joined;
+      }
     }
 
     // Update last active

@@ -4,19 +4,25 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
 import './Home.css';
 
-const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
+const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode }) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
-  const [followedCommunities, setFollowedCommunities] = useState(['r/reactjs']); // Example: user follows r/reactjs
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch posts from database
+  // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
+    if (userLoading) return; // Wait until user fetch is complete
+    
     const fetchPosts = async () => {
       //TODO: Replace with relevant feed fetching logic
       try {
         const response = await fetch('http://localhost:5000/api/posts');
         const data = await response.json();
+        
+        // Get user's joined communities if logged in
+        const joinedCommunityIds = user?.communities?.joined || [];
+        console.log('User joined community IDs:', joinedCommunityIds);
+        console.log('User object:', user);
         
         // Transform posts to match expected format
         const transformedPosts = data.posts.map(post => ({
@@ -26,13 +32,14 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
           content: post.content,
           imageUrl: post.imageUrl,
           community: {
+            id: post.community._id,
             name: `r/${post.community.name}`,
             icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
           },
           voteScore: post.voteCount,
           commentCount: post.commentCount,
           createdAt: new Date(post.createdAt),
-          isFollowing: followedCommunities.includes(`r/${post.community.name}`)
+          isFollowing: joinedCommunityIds.includes(post.community._id)
         }));
         
         setPosts(transformedPosts);
@@ -44,7 +51,7 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
     };
 
     fetchPosts();
-  }, []);
+  }, [userLoading]); // Only depend on userLoading, not user
   
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -66,14 +73,11 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
     // TODO: Implement share functionality
   };
 
-  const handleJoin = (communityName, isJoining) => {
+  const handleJoin = async (communityName, isJoining, communityId) => {
     console.log(`${isJoining ? 'Join' : 'Unjoin'} community:`, communityName);
-    if (isJoining) {
-      setFollowedCommunities(prev => [...prev, communityName]);
-    } else {
-      setFollowedCommunities(prev => prev.filter(name => name !== communityName));
+    if (onJoinCommunity) {
+      await onJoinCommunity(communityName, isJoining, communityId);
     }
-    // TODO: Implement join/unjoin functionality
   };
 
   const handleSave = (postId) => {

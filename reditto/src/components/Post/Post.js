@@ -7,6 +7,9 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   const [isJoined, setIsJoined] = useState(false);
   const optionsRef = useRef(null);
 
+  // Debug logging
+  console.log(`Post ${post.title.substring(0, 30)}... - isFollowing:`, isFollowing, 'community:', post.community.name);
+
   // Close options menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,7 +59,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     const newJoinedState = !isJoined;
     setIsJoined(newJoinedState);
     if (onJoin) {
-      onJoin(post.community.name, newJoinedState);
+      onJoin(post.community.name, newJoinedState, post.community.id);
     }
   };
 
