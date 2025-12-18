@@ -143,6 +143,37 @@ describe('Post Model Tests', () => {
 
       expect(post.type).toBe('text');
     });
+
+    test('should fail when text post has imageUrl', async () => {
+      await expect(Post.create({
+        title: 'Text Post with Image',
+        content: 'Some text content',
+        author: testUser._id,
+        community: testCommunity._id,
+        type: 'text',
+        imageUrl: 'https://example.com/image.jpg'
+      })).rejects.toThrow('Text posts cannot have an image URL');
+    });
+
+    test('should fail when image post has content', async () => {
+      await expect(Post.create({
+        title: 'Image Post with Content',
+        content: 'Some text content',
+        author: testUser._id,
+        community: testCommunity._id,
+        type: 'image',
+        imageUrl: 'https://example.com/image.jpg'
+      })).rejects.toThrow('Image posts cannot have text content');
+    });
+
+    test('should fail when image post has no imageUrl', async () => {
+      await expect(Post.create({
+        title: 'Image Post without URL',
+        author: testUser._id,
+        community: testCommunity._id,
+        type: 'image'
+      })).rejects.toThrow('Image posts must have an image URL');
+    });
   });
 
   describe('Post Flags', () => {

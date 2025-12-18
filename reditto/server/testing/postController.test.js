@@ -230,6 +230,38 @@ describe('Post Controller Tests', () => {
 
       expect(response.body.error).toContain('require an image URL');
     });
+
+    test('Should fail text post with imageUrl', async () => {
+      const response = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          title: 'Text Post',
+          content: 'Some content',
+          community: 'testcommunity',
+          type: 'text',
+          imageUrl: 'https://example.com/image.jpg'
+        })
+        .expect(500);
+
+      expect(response.body.error).toContain('Failed to create post');
+    });
+
+    test('Should fail image post with content', async () => {
+      const response = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          title: 'Image Post',
+          content: 'Some content',
+          community: 'testcommunity',
+          type: 'image',
+          imageUrl: 'https://example.com/image.jpg'
+        })
+        .expect(500);
+
+      expect(response.body.error).toContain('Failed to create post');
+    });
   });
 
   describe('GET /api/posts - Get Posts', () => {
@@ -250,7 +282,6 @@ describe('Post Controller Tests', () => {
         .set('Authorization', `Bearer ${authToken2}`)
         .send({
           title: 'Post 2',
-          content: 'Content 2',
           community: 'testcommunity',
           type: 'link',
           url: 'https://example.com'
@@ -261,7 +292,6 @@ describe('Post Controller Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Post 3',
-          content: 'Content 3',
           community: 'testcommunity',
           type: 'image',
           imageUrl: 'https://example.com/image.jpg'
