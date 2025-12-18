@@ -63,20 +63,22 @@
   flex: 1;
   margin-top: 4px;
   position: relative;
+  min-height: 0;
 }
 
 .comment-collapse-line {
   width: 2px;
   flex: 1;
-  background: linear-gradient(to bottom, var(--border-color) 0%, var(--border-color) 100%);
+  background: var(--border-color);
   cursor: pointer;
   transition: all 0.2s ease;
   border-radius: 1px;
-  min-height: 20px;
+  min-height: 24px;
+  align-self: stretch;
 }
 
 .comment-collapse-line:hover {
-  background: linear-gradient(to bottom, var(--primary) 0%, var(--primary) 100%);
+  background: var(--primary);
   box-shadow: 0 0 4px rgba(255, 140, 66, 0.3);
 }
 
@@ -245,29 +247,21 @@
   position: relative;
 }
 
-/* Vertical line connecting all sibling replies */
+/* Add vertical lines connecting siblings */
 .comment-replies::before {
-  content: '';
+content: '';
   position: absolute;
   left: -24px;
   top: -100px;
   bottom: 8px;
   width: 2px;
   background-color: var(--border-color);
-  pointer-events: none;
-}
+  pointer-events: none;}
 
 /* Remove the connecting line for the last reply */
 .comment-replies > .comment:last-child::after {
-  content: '';
-  position: absolute;
-  left: -24px;
-  bottom: 0;
-  width: 2px;
-  height: 100%;
-  background-color: var(--bg-primary);
-  pointer-events: none;
-  z-index: 1;
+
+    
 }
 
 .show-more-replies-btn {
