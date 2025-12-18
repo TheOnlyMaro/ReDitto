@@ -21,26 +21,44 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         
         // Get user's joined communities if logged in
         const joinedCommunityIds = user?.communities?.joined || [];
+        const upvotedPostIds = (user?.upvotedPosts || []).map(id => id.toString());
+        const downvotedPostIds = (user?.downvotedPosts || []).map(id => id.toString());
         console.log('User joined community IDs:', joinedCommunityIds);
+        console.log('User upvoted posts:', upvotedPostIds);
+        console.log('User downvoted posts:', downvotedPostIds);
         console.log('User object:', user);
         
         // Transform posts to match expected format
-        const transformedPosts = data.posts.map(post => ({
-          id: post._id,
-          type: post.type,
-          title: post.title,
-          content: post.content,
-          imageUrl: post.imageUrl,
-          community: {
-            id: post.community._id,
-            name: `r/${post.community.name}`,
-            icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
-          },
-          voteScore: post.voteCount,
-          commentCount: post.commentCount,
-          createdAt: new Date(post.createdAt),
-          isFollowing: joinedCommunityIds.includes(post.community._id)
-        }));
+        const transformedPosts = data.posts.map(post => {
+          // Determine user's vote on this post
+          let userVote = null;
+          const postIdString = post._id.toString();
+          if (upvotedPostIds.includes(postIdString)) {
+            userVote = 'upvote';
+          } else if (downvotedPostIds.includes(postIdString)) {
+            userVote = 'downvote';
+          }
+          
+          console.log(`Post ${post.title.substring(0, 20)}... ID: ${postIdString}, userVote: ${userVote}`);
+          
+          return {
+            id: post._id,
+            type: post.type,
+            title: post.title,
+            content: post.content,
+            imageUrl: post.imageUrl,
+            community: {
+              id: post.community._id,
+              name: `r/${post.community.name}`,
+              icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
+            },
+            voteScore: post.voteCount,
+            commentCount: post.commentCount,
+            createdAt: new Date(post.createdAt),
+            isFollowing: joinedCommunityIds.includes(post.community._id),
+            userVote: userVote
+          };
+        });
         
         setPosts(transformedPosts);
         setLoading(false);
@@ -58,9 +76,71 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
     // TODO: Implement search functionality
   };
 
-  const handleVote = (postId, voteType) => {
-    console.log(`Post ${postId} voted:`, voteType);
-    // TODO: Implement voting functionality
+  const handleVote = async (postId, voteType) => {
+    if (!user) {
+      console.log('User must be logged in to vote');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      let endpoint = '';
+      
+      if (voteType === 'upvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/upvote`;
+      } else if (voteType === 'downvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/downvote`;
+      } else if (voteType === 'unvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/vote`;
+      }
+
+      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+      
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local post state with new vote count from response
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              // Update both voteScore and userVote
+              return {
+                ...post,
+                voteScore: data.voteCount,
+                userVote: voteType === 'unvote' ? null : voteType
+              };
+            }
+            return post;
+          })
+        );
+        
+        // Fetch fresh user data to update upvotedPosts/downvotedPosts
+        const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          const authService = require('../../services/authService');
+          authService.default.saveUser(userData.user);
+        }
+        
+        console.log(`Vote ${voteType} successful for post ${postId}`);
+      } else {
+        console.error('Vote failed:', await response.json());
+      }
+    } catch (error) {
+      console.error('Failed to vote:', error);
+    }
   };
 
   const handleComment = (postId) => {
@@ -80,9 +160,49 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
     }
   };
 
-  const handleSave = (postId) => {
-    console.log(`Save post:`, postId);
-    // TODO: Implement save functionality
+  const handleSave = async (postId, isSaved) => {
+    if (!user) {
+      console.log('User must be logged in to save posts');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      
+      // Update user's savedPosts array
+      let updatedSavedPosts = [...(user.savedPosts || [])];
+      
+      if (isSaved) {
+        // Remove from saved
+        updatedSavedPosts = updatedSavedPosts.filter(id => id !== postId);
+      } else {
+        // Add to saved
+        updatedSavedPosts.push(postId);
+      }
+
+      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          savedPosts: updatedSavedPosts
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update user in parent component via localStorage
+        const authService = require('../../services/authService');
+        authService.default.saveUser(data.user);
+        console.log(`Post ${isSaved ? 'unsaved' : 'saved'} successfully`);
+      } else {
+        console.error('Save failed:', await response.json());
+      }
+    } catch (error) {
+      console.error('Failed to save post:', error);
+    }
   };
 
   // Use real user prop or null for logged out state

@@ -2,13 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import './Post.css';
 
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
-  const [userVote, setUserVote] = useState(null); // null, 'upvote', or 'downvote'
+  const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const optionsRef = useRef(null);
 
   // Debug logging
   console.log(`Post ${post.title.substring(0, 30)}... - isFollowing:`, isFollowing, 'community:', post.community.name);
+
+  // Update userVote when post changes (e.g., after refresh)
+  useEffect(() => {
+    setUserVote(post.userVote || null);
+  }, [post.userVote]);
 
   // Close options menu when clicking outside
   useEffect(() => {
@@ -28,18 +33,34 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   }, [optionsOpen]);
 
   const handleUpvote = () => {
-    const newVote = userVote === 'upvote' ? null : 'upvote';
-    setUserVote(newVote);
-    if (onVote) {
-      onVote(post.id, newVote);
+    if (userVote === 'upvote') {
+      // Remove upvote
+      setUserVote(null);
+      if (onVote) {
+        onVote(post.id, 'unvote');
+      }
+    } else {
+      // Add upvote (removes downvote if exists)
+      setUserVote('upvote');
+      if (onVote) {
+        onVote(post.id, 'upvote');
+      }
     }
   };
 
   const handleDownvote = () => {
-    const newVote = userVote === 'downvote' ? null : 'downvote';
-    setUserVote(newVote);
-    if (onVote) {
-      onVote(post.id, newVote);
+    if (userVote === 'downvote') {
+      // Remove downvote
+      setUserVote(null);
+      if (onVote) {
+        onVote(post.id, 'unvote');
+      }
+    } else {
+      // Add downvote (removes upvote if exists)
+      setUserVote('downvote');
+      if (onVote) {
+        onVote(post.id, 'downvote');
+      }
     }
   };
 
@@ -82,10 +103,9 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   };
 
   const calculateVoteScore = () => {
-    let score = post.voteScore || 0;
-    if (userVote === 'upvote') score += 1;
-    if (userVote === 'downvote') score -= 1;
-    return score;
+    // Return the actual vote score from the post
+    // Don't add local state - the backend handles this
+    return post.voteScore || 0;
   };
 
   return (

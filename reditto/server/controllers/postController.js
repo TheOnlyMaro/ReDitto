@@ -331,6 +331,20 @@ const upvotePost = async (req, res) => {
     post.upvote(userId);
     await post.save();
 
+    // Update user's upvotedPosts and downvotedPosts arrays
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from downvoted if exists
+      user.downvotedPosts = user.downvotedPosts.filter(
+        id => id.toString() !== postId
+      );
+      // Add to upvoted if not already there
+      if (!user.upvotedPosts.some(id => id.toString() === postId)) {
+        user.upvotedPosts.push(postId);
+      }
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Post upvoted successfully',
       voteCount: post.voteCount,
@@ -377,6 +391,20 @@ const downvotePost = async (req, res) => {
     post.downvote(userId);
     await post.save();
 
+    // Update user's upvotedPosts and downvotedPosts arrays
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from upvoted if exists
+      user.upvotedPosts = user.upvotedPosts.filter(
+        id => id.toString() !== postId
+      );
+      // Add to downvoted if not already there
+      if (!user.downvotedPosts.some(id => id.toString() === postId)) {
+        user.downvotedPosts.push(postId);
+      }
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Post downvoted successfully',
       voteCount: post.voteCount,
@@ -416,6 +444,18 @@ const removeVote = async (req, res) => {
 
     post.removeVote(userId);
     await post.save();
+
+    // Update user's upvotedPosts and downvotedPosts arrays
+    const user = await User.findById(userId);
+    if (user) {
+      user.upvotedPosts = user.upvotedPosts.filter(
+        id => id.toString() !== postId
+      );
+      user.downvotedPosts = user.downvotedPosts.filter(
+        id => id.toString() !== postId
+      );
+      await user.save();
+    }
 
     res.status(200).json({
       message: 'Vote removed successfully',
