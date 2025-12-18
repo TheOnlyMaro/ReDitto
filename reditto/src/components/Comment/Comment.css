@@ -221,7 +221,16 @@
   transition: background-color 0.2s ease;
 }
 
-.comment-action-btn:hover {
+.comment-action-btn:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+}
+
+.comment-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.comment-action-btn:disabled:hover {
   background-color: var(--bg-secondary);
 }
 
