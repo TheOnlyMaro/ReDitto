@@ -48,6 +48,13 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     fetchCommunity();
   }, [communityName]);
 
+  // Update join state when user data changes
+  useEffect(() => {
+    if (community && user && user.communities?.joined) {
+      setIsJoined(user.communities.joined.includes(community._id));
+    }
+  }, [user, community]);
+
   // Fetch posts from this community
   useEffect(() => {
     if (userLoading) return;
@@ -206,11 +213,8 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
       });
       return;
     }
-    // TODO: Navigate to create post page
-    setAlert({
-      type: 'info',
-      message: 'Create post functionality coming soon'
-    });
+    // Navigate to create post page with community pre-filled
+    navigate(`/create/post?community=${community._id}`);
   };
 
   const toggleRule = (ruleIndex) => {
@@ -243,17 +247,33 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         {/* Community Header */}
         {community && (
           <div className="community-header">
-            <div className="community-banner" style={{ backgroundColor: community.appearance?.bannerColor || '#0079D3' }}>
-              {community.appearance?.banner && (
-                <img src={community.appearance.banner} alt={community.name} className="community-banner-img" />
-              )}
-            </div>
+            {/* Banner */}
+            {community.appearance?.banner ? (
+              <div 
+                className="community-banner" 
+                style={{
+                  backgroundImage: `url("${community.appearance.banner}")`,
+                  backgroundColor: community.appearance?.primaryColor || '#0079D3'
+                }}
+              />
+            ) : (
+              <div 
+                className="community-banner" 
+                style={{
+                  backgroundColor: community.appearance?.primaryColor || '#0079D3'
+                }}
+              />
+            )}
             <div className="community-info-bar">
               <div className="community-info-left">
                 <img 
-                  src={community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'} 
+                  src={community.appearance?.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'} 
                   alt={community.name} 
                   className="community-icon"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png';
+                  }}
                 />
                 <div className="community-title-section">
                   <h1 className="community-title">r/{community.name}</h1>
