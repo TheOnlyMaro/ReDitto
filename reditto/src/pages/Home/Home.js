@@ -53,6 +53,9 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
             title: post.title,
             content: post.content,
             imageUrl: post.imageUrl,
+            author: post.author?.username || '[deleted]',
+            authorDeleted: post.author?.flags?.isDeleted || !post.author,
+            postDeleted: post.flags?.isDeleted || false,
             community: {
               id: post.community._id,
               name: post.community.name,

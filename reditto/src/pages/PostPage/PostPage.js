@@ -67,6 +67,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           imageUrl: data.post.imageUrl,
           url: data.post.url,
           flair: data.post.flair,
+          flags: data.post.flags,
           community: {
             id: data.post.community._id,
             name: data.post.community.name,
@@ -75,7 +76,8 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           author: {
             username: data.post.author.username,
             displayName: data.post.author.displayName,
-            avatar: data.post.author.avatar
+            avatar: data.post.author.avatar,
+            flags: data.post.author.flags
           },
           voteScore: data.post.voteCount,
           commentCount: data.post.commentCount,
@@ -519,8 +521,14 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                       <Link to={`/r/${post.community?.name}`} className="post-detail-community-name">
                         r/{post.community?.name}
                       </Link>
-                      <Link to={`/user/${post.author?.username}`} className="post-detail-author">
-                        u/{post.author?.username || 'unknown'}
+                      <Link 
+                        to={post.author?.flags?.isDeleted || !post.author ? '#' : `/user/${post.author?.username}`} 
+                        className="post-detail-author"
+                        onClick={(e) => {
+                          if (post.author?.flags?.isDeleted || !post.author) e.preventDefault();
+                        }}
+                      >
+                        u/{post.author?.flags?.isDeleted || !post.author ? '[deleted]' : post.author?.username}
                       </Link>
                     </div>
                     <span className="post-detail-divider">•</span>
@@ -529,10 +537,10 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                 </div>
 
                 {/* Post Title */}
-                <h1 className="post-detail-title">{post.title}</h1>
+                <h1 className="post-detail-title">{post.flags?.isDeleted ? '[deleted]' : post.title}</h1>
 
                 {/* Post Flair */}
-                {post.flair && (
+                {post.flair && !post.flags?.isDeleted && (
                   <div 
                     className="post-detail-flair"
                     style={{
@@ -546,7 +554,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
                 {/* Post Content */}
                 {post.type === 'text' && post.content && (
-                  <p className="post-detail-content">{post.content}</p>
+                  <p className="post-detail-content">{post.flags?.isDeleted ? '[deleted]' : post.content}</p>
                 )}
 
                 {post.type === 'image' && post.imageUrl && (
