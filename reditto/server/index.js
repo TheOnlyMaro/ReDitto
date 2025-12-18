@@ -18,12 +18,14 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/communities', communityRoutes);
+app.use('/api/comments', commentRoutes);
 
 
 // Database connection
