@@ -1,6 +1,5 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const User = require('../models/User');
 const mongoose = require('mongoose');
 
 // Helper function to update parent comment's replies array and recursively update reply counts

@@ -452,6 +452,7 @@ describe('Comment Model Tests', () => {
       parentComment.replies.push(replyComment._id);
       await parentComment.save();
 
+      // eslint-disable-next-line testing-library/await-async-query
       const populatedComment = await Comment.findById(parentComment._id)
         .populate('replies', 'content');
 
