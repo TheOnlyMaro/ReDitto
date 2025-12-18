@@ -34,11 +34,12 @@
   gap: 8px;
 }
 
-.community-icon {
-  width: 24px;
-  height: 24px;
+.post-header .community-icon {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .community-link {
@@ -49,7 +50,7 @@
   transition: opacity 0.2s ease;
 }
 
-.community-link:hover .community-icon {
+.post-header .community-link:hover .community-icon {
   opacity: 0.8;
 }
 
