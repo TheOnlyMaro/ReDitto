@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Loading from '../Loading/Loading';
 import './Comment.css';
 
 const MAX_NESTING_LEVEL = 5;
@@ -222,7 +223,7 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
             <div className="comment-lazy-load">
               {isLoadingReplies ? (
                 <div className="comment-loading">
-                  <div className="comment-loading-spinner"></div>
+                  <Loading size="small" />
                   <span>Loading replies...</span>
                 </div>
               ) : (
@@ -238,7 +239,7 @@ const Comment = ({ comment, depth = 0, allComments = [] }) => {
             <>
               {isLoadingReplies ? (
                 <div className="comment-loading">
-                  <div className="comment-loading-spinner"></div>
+                  <Loading size="small" />
                   <span>Loading replies...</span>
                 </div>
               ) : (
