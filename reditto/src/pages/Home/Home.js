@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
+import Loading from '../../components/Loading/Loading';
 import './Home.css';
 
 const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode }) => {
@@ -228,7 +229,7 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         <div className="home-main">
           <div className="home-feed">
             {loading ? (
-              <p>Loading posts...</p>
+              <Loading size="large" />
             ) : posts.length === 0 ? (
               <p>No posts yet. Be the first to create one!</p>
             ) : (
