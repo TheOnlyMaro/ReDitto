@@ -353,7 +353,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     }
   };
 
-  const handleCommentSubmit = async (e) => {
+  const handleCommentSubmit = async (e, parentCommentId = null) => {
     e.preventDefault();
 
     if (!user) {
@@ -364,7 +364,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       return;
     }
 
-    if (!commentText.trim()) {
+    const textToSubmit = parentCommentId ? e.target.elements[0].value : commentText;
+
+    if (!textToSubmit.trim()) {
       setAlert({
         type: 'warning',
         message: 'Comment cannot be empty'
@@ -372,7 +374,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       return;
     }
 
-    if (commentText.length > 10000) {
+    if (textToSubmit.length > 10000) {
       setAlert({
         type: 'error',
         message: 'Comment cannot exceed 10,000 characters'
@@ -392,9 +394,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       //     'Content-Type': 'application/json'
       //   },
       //   body: JSON.stringify({
-      //     content: commentText,
+      //     content: textToSubmit,
       //     post: postId,
-      //     parentComment: null
+      //     parentComment: parentCommentId
       //   })
       // });
       // if (!response.ok) throw new Error('Failed to create comment');
@@ -403,12 +405,14 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       // For now, just show success message without adding to list
       // Once API is integrated, refetch comments after successful creation
 
-      // Clear input
-      setCommentText('');
+      // Clear input only if it's a top-level comment
+      if (!parentCommentId) {
+        setCommentText('');
+      }
 
       setAlert({
         type: 'success',
-        message: 'Comment will be posted once API is integrated'
+        message: parentCommentId ? 'Reply will be posted once API is integrated' : 'Comment will be posted once API is integrated'
       });
     } catch (error) {
       console.error('Failed to post comment:', error);
@@ -701,6 +705,14 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             flags: c.flags
                           }))}
                           onFetchReplies={handleFetchReplies}
+                          onReplySubmit={(parentCommentId, replyText) => {
+                            const fakeEvent = {
+                              preventDefault: () => {},
+                              target: { elements: [{ value: replyText }] }
+                            };
+                            return handleCommentSubmit(fakeEvent, parentCommentId);
+                          }}
+                          user={user}
                         />
                       ))}
                   </div>

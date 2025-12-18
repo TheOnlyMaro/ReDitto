@@ -11,12 +11,15 @@ const fetchCommentById = (commentId, allComments) => {
   return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
-const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
+const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, user }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [userVote, setUserVote] = useState(null);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   // Function to load unfetched replies
   const handleLoadReplies = async () => {
@@ -33,6 +36,25 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
       console.error('Error loading replies:', error);
     } finally {
       setIsLoadingReplies(false);
+    }
+  };
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!replyText.trim() || !onReplySubmit) {
+      return;
+    }
+    
+    setIsSubmittingReply(true);
+    try {
+      await onReplySubmit(comment.id || comment._id, replyText);
+      setReplyText('');
+      setReplyOpen(false);
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+    } finally {
+      setIsSubmittingReply(false);
     }
   };
 
@@ -158,7 +180,11 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
                   </button>
                 </div>
 
-                <button className="comment-action-btn" disabled={isDeleted}>
+                <button 
+                  className="comment-action-btn" 
+                  disabled={isDeleted}
+                  onClick={() => setReplyOpen(!replyOpen)}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M21 11.5C21.0034 12.8199 20.6951 14.1219 20.1 15.3C19.3944 16.7118 18.3098 17.8992 16.9674 18.7293C15.6251 19.5594 14.0782 19.9994 12.5 20C11.1801 20.0035 9.87812 19.6951 8.7 19.1L3 21L4.9 15.3C4.30493 14.1219 3.99656 12.8199 4 11.5C4.00061 9.92179 4.44061 8.37488 5.27072 7.03258C6.10083 5.69028 7.28825 4.6056 8.7 3.90003C9.87812 3.30496 11.1801 2.99659 12.5 3.00003H13C15.0843 3.11502 17.053 3.99479 18.5291 5.47089C20.0052 6.94699 20.885 8.91568 21 11V11.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -173,6 +199,45 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
                   <span>Share</span>
                 </button>
               </div>
+
+              {/* Reply Input Box */}
+              {replyOpen && (
+                <div className="comment-reply-input">
+                  <div className="comment-input-header">
+                    <span className="comment-as">Reply as <strong>{user?.username || 'Guest'}</strong></span>
+                  </div>
+                  <form onSubmit={handleReplySubmit}>
+                    <textarea
+                      className="comment-input-textarea"
+                      placeholder={user ? "What are your thoughts?" : "Login to reply"}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      disabled={!user || isSubmittingReply}
+                      rows={3}
+                    />
+                    <div className="comment-input-footer">
+                      <button
+                        type="button"
+                        className="comment-cancel-btn"
+                        onClick={() => {
+                          setReplyOpen(false);
+                          setReplyText('');
+                        }}
+                        disabled={isSubmittingReply}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="comment-submit-btn"
+                        disabled={!user || !replyText.trim() || isSubmittingReply}
+                      >
+                        {isSubmittingReply ? 'Posting...' : 'Reply'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -207,7 +272,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies }) => {
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} />
+                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onReplySubmit={onReplySubmit} user={user} />
               ))}
               
               {hiddenRepliesCount > 0 && (
