@@ -241,7 +241,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         />
       )}
 
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
 
       <div className={`community-page-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         {/* Community Header */}

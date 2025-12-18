@@ -289,7 +289,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         />
       )}
 
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
 
       <div className={`create-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         <div className="create-container">

@@ -394,7 +394,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
         />
       )}
 
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
 
       <div className={`comment-thread-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         <div className="comment-thread-container">

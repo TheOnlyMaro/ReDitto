@@ -136,6 +136,37 @@
   background-color: var(--bg-tertiary);
 }
 
+.community-icon-img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.community-icon-fallback {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.sidebar-loading,
+.sidebar-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .sidebar-footer {
   margin-top: 16px;
 }

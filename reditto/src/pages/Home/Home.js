@@ -343,7 +343,7 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
         setDarkMode={setDarkMode}
         onLogout={onLogout}
       />
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
       
       {alert && (
         <Alert 

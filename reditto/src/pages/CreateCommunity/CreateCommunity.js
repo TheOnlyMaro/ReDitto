@@ -183,7 +183,7 @@ const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, s
         />
       )}
 
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
 
       <div className={`create-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         <div className="create-container">
