@@ -5,7 +5,6 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Loading from '../../components/Loading/Loading';
 import Comment from '../../components/Comment/Comment';
 import Alert from '../../components/Alert/Alert';
-import dummyComments from '../../data/dummyComments.json';
 import './PostPage.css';
 
 const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
@@ -19,6 +18,8 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
 
   // Fetch post data (always fetch to get fresh vote counts and data)
   useEffect(() => {
@@ -86,6 +87,32 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     fetchPost();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId, navigate, user?.upvotedPosts, user?.downvotedPosts]);
+
+  // Fetch comments for the post
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!postId) return;
+      
+      try {
+        setCommentsLoading(true);
+        const response = await fetch(`http://localhost:5000/api/comments/post/${postId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch comments');
+        }
+        
+        const data = await response.json();
+        setComments(data.comments || []);
+        setCommentsLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+        setComments([]);
+        setCommentsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [postId]);
 
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -264,32 +291,15 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       // if (!response.ok) throw new Error('Failed to create comment');
       // const data = await response.json();
 
-      //TODO: Simulating adding comment to dummy data (replace with API integration)
-      const newComment = {
-        id: `c${Date.now()}`,
-        author: user.username,
-        content: commentText,
-        createdAt: new Date().toISOString(),
-        voteScore: 1,
-        parentId: null,
-        replies: []
-      };
-
-      // Add to dummy comments array
-      dummyComments.comments.unshift(newComment);
-
-      // Update post comment count
-      setPost(prev => ({
-        ...prev,
-        commentCount: prev.commentCount + 1
-      }));
+      // For now, just show success message without adding to list
+      // Once API is integrated, refetch comments after successful creation
 
       // Clear input
       setCommentText('');
 
       setAlert({
         type: 'success',
-        message: 'Comment posted successfully!'
+        message: 'Comment will be posted once API is integrated'
       });
     } catch (error) {
       console.error('Failed to post comment:', error);
@@ -540,21 +550,41 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                 </div>
 
                 <div className="comments-header">
-                  <h2>{dummyComments?.comments?.filter(c => c.parentId === null).length || 0} Comments</h2>
+                  <h2>{comments.filter(c => !c.parentComment).length || 0} Comments</h2>
                 </div>
                 
-                <div className="comments-list">
-                  {(dummyComments?.comments || [])
-                    .filter(comment => comment.parentId === null)
-                    .map((comment) => (
-                      <Comment 
-                        key={comment.id} 
-                        comment={comment} 
-                        depth={0}
-                        allComments={dummyComments?.comments || []}
-                      />
-                    ))}
-                </div>
+                {commentsLoading ? (
+                  <Loading size="medium" />
+                ) : (
+                  <div className="comments-list">
+                    {comments
+                      .filter(comment => !comment.parentComment)
+                      .map((comment) => (
+                        <Comment 
+                          key={comment._id} 
+                          comment={{
+                            id: comment._id,
+                            author: comment.author.username,
+                            content: comment.content,
+                            createdAt: comment.createdAt,
+                            voteScore: comment.voteCount,
+                            parentId: comment.parentComment,
+                            replies: comment.replies
+                          }} 
+                          depth={0}
+                          allComments={comments.map(c => ({
+                            id: c._id,
+                            author: c.author.username,
+                            content: c.content,
+                            createdAt: c.createdAt,
+                            voteScore: c.voteCount,
+                            parentId: c.parentComment,
+                            replies: c.replies
+                          }))}
+                        />
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
