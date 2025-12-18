@@ -4,6 +4,8 @@ import Home from './pages/Home/Home';
 import PostPage from './pages/PostPage/PostPage';
 import CommentThread from './pages/CommentThread/CommentThread';
 import CommunityPage from './pages/CommunityPage/CommunityPage';
+import CreateCommunity from './pages/CreateCommunity/CreateCommunity';
+import CreatePost from './pages/CreatePost/CreatePost';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
@@ -159,6 +161,8 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/create/community" element={<CreateCommunity user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/create/post" element={<CreatePost user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
