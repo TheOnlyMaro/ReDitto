@@ -116,27 +116,22 @@ postSchema.index({ 'flags.isDeleted': 1 });
 postSchema.index({ community: 1, createdAt: -1 });
 postSchema.index({ community: 1, voteCount: -1 });
 
-// Update timestamps
-postSchema.pre('save', function() {
-  this.updatedAt = Date.now();
-});
-
 // Validate that text posts don't have imageUrl and image posts don't have text content
-postSchema.pre('save', function(next) {
+postSchema.pre('save', function() {
   if (this.type === 'text' && this.imageUrl) {
-    return next(new Error('Text posts cannot have an image URL'));
+    throw new Error('Text posts cannot have an image URL');
   }
   if (this.type === 'image' && this.content) {
-    return next(new Error('Image posts cannot have text content'));
+    throw new Error('Image posts cannot have text content');
   }
   if (this.type === 'image' && !this.imageUrl) {
-    return next(new Error('Image posts must have an image URL'));
+    throw new Error('Image posts must have an image URL');
   }
-  next();
-});
-
-// Calculate vote count before saving
-postSchema.pre('save', function() {
+  
+  // Update timestamps
+  this.updatedAt = Date.now();
+  
+  // Calculate vote count
   this.voteCount = this.votes.upvotes.length - this.votes.downvotes.length;
 });
 
