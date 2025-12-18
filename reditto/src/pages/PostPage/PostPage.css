@@ -234,11 +234,11 @@
 }
 
 .post-detail-vote-btn.upvote.active {
-  color: #FF4500;
+  color: #0079D3;
 }
 
 .post-detail-vote-btn.downvote.active {
-  color: #7193FF;
+  color: #ea0027;
 }
 
 .post-detail-vote-score {

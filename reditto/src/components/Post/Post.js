@@ -4,7 +4,6 @@ import './Post.css';
 
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink, shareMenuOpen, onJoin, onSave }) => {
   const navigate = useNavigate();
-  const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const optionsRef = useRef(null);
@@ -12,10 +11,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
   // Debug logging
   console.log(`Post ${post.title.substring(0, 30)}... - isFollowing:`, isFollowing, 'community:', post.community.name);
 
-  // Update userVote when post changes (e.g., after refresh)
-  useEffect(() => {
-    setUserVote(post.userVote || null);
-  }, [post.userVote]);
+  // Use post.userVote directly from props instead of local state
 
   // Close options menu when clicking outside
   useEffect(() => {
@@ -36,22 +32,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
 
   const handleUpvote = () => {
     if (!user) {
-      // Don't update local state if user is not logged in
       if (onVote) {
         onVote(post.id, 'upvote');
       }
       return;
     }
     
-    if (userVote === 'upvote') {
+    if (post.userVote === 'upvote') {
       // Remove upvote
-      setUserVote(null);
       if (onVote) {
         onVote(post.id, 'unvote');
       }
     } else {
       // Add upvote (removes downvote if exists)
-      setUserVote('upvote');
       if (onVote) {
         onVote(post.id, 'upvote');
       }
@@ -60,22 +53,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
 
   const handleDownvote = () => {
     if (!user) {
-      // Don't update local state if user is not logged in
       if (onVote) {
         onVote(post.id, 'downvote');
       }
       return;
     }
     
-    if (userVote === 'downvote') {
+    if (post.userVote === 'downvote') {
       // Remove downvote
-      setUserVote(null);
       if (onVote) {
         onVote(post.id, 'unvote');
       }
     } else {
       // Add downvote (removes upvote if exists)
-      setUserVote('downvote');
       if (onVote) {
         onVote(post.id, 'downvote');
       }
@@ -223,7 +213,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
         {/* Vote Section */}
         <div className="post-vote">
           <button 
-            className={`vote-btn upvote ${userVote === 'upvote' ? 'active' : ''}`}
+            className={`vote-btn upvote ${post.userVote === 'upvote' ? 'active' : ''}`}
             onClick={handleUpvote}
             aria-label="Upvote"
           >
@@ -233,7 +223,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
           </button>
           <span className="vote-score">{calculateVoteScore()}</span>
           <button 
-            className={`vote-btn downvote ${userVote === 'downvote' ? 'active' : ''}`}
+            className={`vote-btn downvote ${post.userVote === 'downvote' ? 'active' : ''}`}
             onClick={handleDownvote}
             aria-label="Downvote"
           >

@@ -12,71 +12,80 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   const { postId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [post, setPost] = useState(location.state?.post || null);
-  const [loading, setLoading] = useState(!location.state?.post);
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [userVote, setUserVote] = useState(null);
   const [alert, setAlert] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
-  // Fetch post if not passed via navigation state
+  // Fetch post data (always fetch to get fresh vote counts and data)
   useEffect(() => {
-    if (!post) {
-      const fetchPost = async () => {
-        try {
-          const response = await fetch(`http://localhost:5000/api/posts/${postId}`);
-          
-          if (!response.ok) {
-            throw new Error('Post not found');
-          }
-          
-          const data = await response.json();
-          
-          // Transform the post data to match expected format
-          const transformedPost = {
-            id: data.post._id,
-            type: data.post.type,
-            title: data.post.title,
-            content: data.post.content,
-            imageUrl: data.post.imageUrl,
-            url: data.post.url,
-            flair: data.post.flair,
-            community: {
-              id: data.post.community._id,
-              name: data.post.community.name,
-              icon: data.post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
-            },
-            author: {
-              username: data.post.author.username,
-              displayName: data.post.author.displayName,
-              avatar: data.post.author.avatar
-            },
-            voteScore: data.post.voteCount,
-            commentCount: data.post.commentCount,
-            createdAt: new Date(data.post.createdAt),
-            userVote: null // TODO: Determine user's vote if logged in
-          };
-          
-          setPost(transformedPost);
-          setLoading(false);
-        } catch (error) {
-          console.error('Failed to fetch post:', error);
-          setLoading(false);
-          // Redirect to home if post not found
-          navigate('/');
+    const fetchPost = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:5000/api/posts/${postId}`);
+        
+        if (!response.ok) {
+          throw new Error('Post not found');
         }
-      };
+        
+        const data = await response.json();
+        
+        // Determine user's vote on this post
+        let userVote = null;
+        if (user) {
+          const postIdString = data.post._id.toString();
+          const upvotedPostIds = (user.upvotedPosts || []).map(id => id.toString());
+          const downvotedPostIds = (user.downvotedPosts || []).map(id => id.toString());
+          
+          if (upvotedPostIds.includes(postIdString)) {
+            userVote = 'upvote';
+          } else if (downvotedPostIds.includes(postIdString)) {
+            userVote = 'downvote';
+          }
+        }
+        
+        // Transform the post data to match expected format
+        const transformedPost = {
+          id: data.post._id,
+          type: data.post.type,
+          title: data.post.title,
+          content: data.post.content,
+          imageUrl: data.post.imageUrl,
+          url: data.post.url,
+          flair: data.post.flair,
+          community: {
+            id: data.post.community._id,
+            name: data.post.community.name,
+            icon: data.post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
+          },
+          author: {
+            username: data.post.author.username,
+            displayName: data.post.author.displayName,
+            avatar: data.post.author.avatar
+          },
+          voteScore: data.post.voteCount,
+          commentCount: data.post.commentCount,
+          createdAt: new Date(data.post.createdAt),
+          userVote: userVote
+        };
+        
+        setPost(transformedPost);
+        setUserVote(userVote);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch post:', error);
+        setLoading(false);
+        // Redirect to home if post not found
+        navigate('/');
+      }
+    };
 
-      fetchPost();
-    }
-  }, [postId, post, navigate]);
-
-  useEffect(() => {
-    if (post) {
-      setUserVote(post.userVote || null);
-    }
-  }, [post]);
+    fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId, navigate, user?.upvotedPosts, user?.downvotedPosts]);
 
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -92,7 +101,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     }
   };
 
-  const handleUpvote = async () => {
+  const handleVote = async (voteType) => {
     if (!user) {
       setAlert({
         type: 'warning',
@@ -101,29 +110,48 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       return;
     }
 
-    const previousVote = userVote;
-    const previousScore = post.voteScore;
-    const voteType = userVote === 'upvote' ? 'unvote' : 'upvote';
-
-    // Optimistically update UI
-    if (userVote === 'upvote') {
-      setUserVote(null);
-      setPost(prev => ({ ...prev, voteScore: prev.voteScore - 1 }));
-    } else {
-      setUserVote('upvote');
-      setPost(prev => ({ 
-        ...prev, 
-        voteScore: prev.voteScore + (userVote === 'downvote' ? 2 : 1) 
-      }));
-    }
-
     try {
       const token = localStorage.getItem('reditto_auth_token');
-      const endpoint = voteType === 'unvote' 
-        ? `http://localhost:5000/api/posts/${postId}/vote`
-        : `http://localhost:5000/api/posts/${postId}/upvote`;
-      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+      let endpoint = '';
+      
+      if (voteType === 'upvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/upvote`;
+      } else if (voteType === 'downvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/downvote`;
+      } else if (voteType === 'unvote') {
+        endpoint = `http://localhost:5000/api/posts/${postId}/vote`;
+      }
 
+      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+      
+      // Store previous state for rollback
+      const previousVote = userVote;
+      const previousScore = post.voteScore;
+      
+      // Optimistically update UI before API call
+      const currentVote = userVote;
+      let newVoteScore = post.voteScore;
+      
+      // Calculate new vote score based on vote changes
+      if (voteType === 'unvote') {
+        // Remove vote: decrease by 1 if upvoted, increase by 1 if downvoted
+        if (currentVote === 'upvote') newVoteScore -= 1;
+        else if (currentVote === 'downvote') newVoteScore += 1;
+      } else if (voteType === 'upvote') {
+        if (currentVote === 'downvote') newVoteScore += 2; // Remove downvote (-1) and add upvote (+1)
+        else if (!currentVote) newVoteScore += 1; // Add upvote
+      } else if (voteType === 'downvote') {
+        if (currentVote === 'upvote') newVoteScore -= 2; // Remove upvote (+1) and add downvote (-1)
+        else if (!currentVote) newVoteScore -= 1; // Add downvote
+      }
+      
+      setPost(prev => ({
+        ...prev,
+        voteScore: newVoteScore,
+        userVote: voteType === 'unvote' ? null : voteType
+      }));
+      setUserVote(voteType === 'unvote' ? null : voteType);
+      
       const response = await fetch(endpoint, {
         method: method,
         headers: {
@@ -132,14 +160,40 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Vote failed');
+      if (response.ok) {
+        // Vote succeeded - optimistic update already applied
+        console.log(`Vote ${voteType} successful for post ${postId}`);
+        
+        // Update user data synchronously to ensure it's ready before navigation
+        try {
+          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const authService = require('../../services/authService');
+            authService.default.saveUser(userData.user);
+            // Dispatch event to notify App.js that user data has been updated
+            window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
+          }
+        } catch (err) {
+          console.error('Failed to update user data:', err);
+        }
+      } else {
+        console.error('Vote failed:', await response.json());
+        // Rollback optimistic update
+        setUserVote(previousVote);
+        setPost(prev => ({ ...prev, voteScore: previousScore, userVote: previousVote }));
+        setAlert({
+          type: 'error',
+          message: 'Failed to vote. Please try again.'
+        });
       }
     } catch (error) {
       console.error('Failed to vote:', error);
-      // Rollback on error
-      setUserVote(previousVote);
-      setPost(prev => ({ ...prev, voteScore: previousScore }));
       setAlert({
         type: 'error',
         message: 'Failed to vote. Please try again.'
@@ -147,58 +201,19 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     }
   };
 
-  const handleDownvote = async () => {
-    if (!user) {
-      setAlert({
-        type: 'warning',
-        message: 'You must be logged in to vote'
-      });
-      return;
-    }
-
-    const previousVote = userVote;
-    const previousScore = post.voteScore;
-    const voteType = userVote === 'downvote' ? 'unvote' : 'downvote';
-
-    // Optimistically update UI
-    if (userVote === 'downvote') {
-      setUserVote(null);
-      setPost(prev => ({ ...prev, voteScore: prev.voteScore + 1 }));
+  const handleUpvote = () => {
+    if (userVote === 'upvote') {
+      handleVote('unvote');
     } else {
-      setUserVote('downvote');
-      setPost(prev => ({ 
-        ...prev, 
-        voteScore: prev.voteScore - (userVote === 'upvote' ? 2 : 1) 
-      }));
+      handleVote('upvote');
     }
+  };
 
-    try {
-      const token = localStorage.getItem('reditto_auth_token');
-      const endpoint = voteType === 'unvote' 
-        ? `http://localhost:5000/api/posts/${postId}/vote`
-        : `http://localhost:5000/api/posts/${postId}/downvote`;
-      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
-
-      const response = await fetch(endpoint, {
-        method: method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Vote failed');
-      }
-    } catch (error) {
-      console.error('Failed to vote:', error);
-      // Rollback on error
-      setUserVote(previousVote);
-      setPost(prev => ({ ...prev, voteScore: previousScore }));
-      setAlert({
-        type: 'error',
-        message: 'Failed to vote. Please try again.'
-      });
+  const handleDownvote = () => {
+    if (userVote === 'downvote') {
+      handleVote('unvote');
+    } else {
+      handleVote('downvote');
     }
   };
 

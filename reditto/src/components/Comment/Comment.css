@@ -191,11 +191,11 @@
 }
 
 .comment-vote-btn.upvoted {
-  color: #ff4500;
+  color: #0079D3;
 }
 
 .comment-vote-btn.downvoted {
-  color: #7193ff;
+  color: #ea0027;
 }
 
 .comment-vote-score {

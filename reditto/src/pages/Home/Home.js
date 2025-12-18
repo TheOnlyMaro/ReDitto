@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
@@ -7,8 +7,9 @@ import Loading from '../../components/Loading/Loading';
 import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
-const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -74,7 +75,8 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
     };
 
     fetchPosts();
-  }, [userLoading]); // Only depend on userLoading, not user
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLoading, location.key, userVoteVersion]); // Refetch when returning to page or when user votes change
   
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -146,21 +148,24 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         // Vote succeeded - optimistic update already applied, no need to update again
         console.log(`Vote ${voteType} successful for post ${postId}`);
         
-        // Update user data in background without affecting posts state
-        fetch('http://localhost:5000/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }).then(userResponse => {
+        // Update user data synchronously to ensure it's ready before navigation
+        try {
+          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
           if (userResponse.ok) {
-            return userResponse.json();
-          }
-        }).then(userData => {
-          if (userData) {
+            const userData = await userResponse.json();
             const authService = require('../../services/authService');
             authService.default.saveUser(userData.user);
+            // Dispatch event to notify App.js that user data has been updated
+            window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
           }
-        }).catch(err => console.error('Failed to update user data:', err));
+        } catch (err) {
+          console.error('Failed to update user data:', err);
+        }
       } else {
         console.error('Vote failed:', await response.json());
         // Rollback optimistic update by reversing the vote
