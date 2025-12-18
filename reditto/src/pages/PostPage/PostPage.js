@@ -125,7 +125,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                       className="post-detail-community-icon"
                     />
                     <div className="post-detail-header-text">
-                      <span className="post-detail-community-name">{post.community?.name}</span>
+                      <span className="post-detail-community-name">r/{post.community?.name}</span>
                       <span className="post-detail-author">u/{post.author?.username || 'unknown'}</span>
                     </div>
                     <span className="post-detail-divider">•</span>

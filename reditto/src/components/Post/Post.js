@@ -68,9 +68,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
 
   const handleCommentClick = () => {
     // Navigate to post page when clicking comments
-    //TOPOLISH
-    const communityName = post.community.name.replace(/^r\//, '');
-    navigate(`/r/${communityName}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
+    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
   const handleShareClick = () => {
@@ -122,8 +120,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     ) {
       return;
     }
-    const communityName = post.community.name.replace(/^r\//, '');
-    navigate(`/r/${communityName}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
+    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
   return (
@@ -136,7 +133,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
             alt={post.community.name} 
             className="community-icon"
           />
-          <span className="community-name">{post.community.name}</span>
+          <span className="community-name">r/{post.community.name}</span>
           <span className="post-divider">•</span>
           <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
         </div>

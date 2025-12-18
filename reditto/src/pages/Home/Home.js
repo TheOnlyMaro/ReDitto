@@ -49,7 +49,7 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
             imageUrl: post.imageUrl,
             community: {
               id: post.community._id,
-              name: `r/${post.community.name}`,
+              name: post.community.name,
               icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
             },
             voteScore: post.voteCount,
