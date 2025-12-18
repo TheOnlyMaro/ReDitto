@@ -43,14 +43,30 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
 
       try {
         setLoadingCommunities(true);
-        // TODO: Fetch user's joined communities from API
-        // For now, using mock data
-        const mockCommunities = [
-          { _id: '1', name: 'gaming', icon: 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png' },
-          { _id: '2', name: 'technology', icon: 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_2.png' },
-          { _id: '3', name: 'movies', icon: 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_3.png' }
-        ];
-        setCommunities(mockCommunities);
+        
+        // Fetch communities user has joined
+        if (user.communities?.joined && user.communities.joined.length > 0) {
+          const communityPromises = user.communities.joined.map(async (communityId) => {
+            try {
+              const response = await fetch(`http://localhost:5000/api/communities/${communityId}`);
+              if (response.ok) {
+                const data = await response.json();
+                return data.community;
+              }
+              return null;
+            } catch (error) {
+              console.error('Failed to fetch community:', error);
+              return null;
+            }
+          });
+          
+          const fetchedCommunities = await Promise.all(communityPromises);
+          const validCommunities = fetchedCommunities.filter(c => c !== null);
+          setCommunities(validCommunities);
+        } else {
+          setCommunities([]);
+        }
+        
         setLoadingCommunities(false);
       } catch (error) {
         console.error('Failed to fetch communities:', error);
@@ -182,28 +198,76 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
       return;
     }
 
-    // TODO: Implement API call to create post
-    const selectedFlair = availableFlairs.find(f => f._id === formData.flairId);
-    const postData = {
-      title: formData.title,
-      type: postType,
-      community: formData.community,
-      ...(postType === 'text' && { content: formData.content }),
-      ...(postType === 'link' && { url: formData.url }),
-      ...(postType === 'image' && { imageUrl: formData.imageUrl }),
-      ...(selectedFlair && {
-        flair: {
-          text: selectedFlair.text,
-          backgroundColor: selectedFlair.backgroundColor
-        }
-      })
-    };
+    // Create post via API
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      
+      if (!token) {
+        setAlert({
+          type: 'error',
+          message: 'You must be logged in to create a post'
+        });
+        return;
+      }
 
-    console.log('Creating post with data:', postData);
-    setAlert({
-      type: 'info',
-      message: 'Post creation coming soon...'
-    });
+      const selectedFlair = availableFlairs.find(f => f._id === formData.flairId);
+      const postData = {
+        title: formData.title,
+        type: postType,
+        community: formData.community,
+        ...(postType === 'text' && { content: formData.content }),
+        ...(postType === 'link' && { url: formData.url }),
+        ...(postType === 'image' && { imageUrl: formData.imageUrl }),
+        ...(selectedFlair && {
+          flair: {
+            text: selectedFlair.text,
+            backgroundColor: selectedFlair.backgroundColor
+          }
+        })
+      };
+
+      const response = await fetch('http://localhost:5000/api/posts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(postData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAlert({
+          type: 'error',
+          message: data.error || 'Failed to create post'
+        });
+        return;
+      }
+
+      // Success - show message and navigate to the post
+      setAlert({
+        type: 'success',
+        message: 'Post created successfully!'
+      });
+
+      // Get community name for navigation
+      const selectedCommunity = communities.find(c => c._id === formData.community);
+      
+      // Navigate to the new post after a short delay
+      setTimeout(() => {
+        if (selectedCommunity) {
+          navigate(`/r/${selectedCommunity.name}/posts/${data.post._id}`);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error creating post:', error);
+      setAlert({
+        type: 'error',
+        message: 'Failed to create post. Please try again.'
+      });
+    }
   };
 
   if (userLoading) {
