@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './pages/Home/Home';
 import PostPage from './pages/PostPage/PostPage';
 import CommentThread from './pages/CommentThread/CommentThread';
+import CommunityPage from './pages/CommunityPage/CommunityPage';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
@@ -160,7 +161,7 @@ function App() {
           <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/r/:communityName" element={<div style={{padding: '100px', textAlign: 'center'}}>Community Page - Coming Soon</div>} />
+          <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
