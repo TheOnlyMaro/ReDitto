@@ -127,10 +127,66 @@ const validateObjectId = (paramName) => {
   };
 };
 
+// Validate comment creation
+const validateCommentCreation = (req, res, next) => {
+  const { content, post, parentComment } = req.body;
+  const errors = [];
+
+  // Content validation
+  if (!content || content.trim().length === 0) {
+    errors.push('Comment content is required');
+  } else if (content.length > 10000) {
+    errors.push('Comment content must not exceed 10,000 characters');
+  }
+
+  // Post validation
+  if (!post || !post.match(/^[0-9a-fA-F]{24}$/)) {
+    errors.push('Valid post ID is required');
+  }
+
+  // Parent comment validation (optional)
+  if (parentComment && !parentComment.match(/^[0-9a-fA-F]{24}$/)) {
+    errors.push('Invalid parent comment ID format');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
+// Validate comment update
+const validateCommentUpdate = (req, res, next) => {
+  const { content } = req.body;
+  const errors = [];
+
+  // Only content can be updated
+  if (content !== undefined) {
+    if (typeof content !== 'string') {
+      errors.push('Content must be a string');
+    } else if (content.trim().length === 0) {
+      errors.push('Content cannot be empty');
+    } else if (content.length > 10000) {
+      errors.push('Content must not exceed 10,000 characters');
+    }
+  } else {
+    errors.push('Content is required for update');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
 module.exports = {
   authenticateToken,
   validateUserRegistration,
   validateUserUpdate,
   hashPassword,
-  validateObjectId
+  validateObjectId,
+  validateCommentCreation,
+  validateCommentUpdate
 };

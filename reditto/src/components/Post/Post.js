@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import './Post.css';
 
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
+  const navigate = useNavigate();
   const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
@@ -33,6 +35,14 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   }, [optionsOpen]);
 
   const handleUpvote = () => {
+    if (!user) {
+      // Don't update local state if user is not logged in
+      if (onVote) {
+        onVote(post.id, 'upvote');
+      }
+      return;
+    }
+    
     if (userVote === 'upvote') {
       // Remove upvote
       setUserVote(null);
@@ -49,6 +59,14 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   };
 
   const handleDownvote = () => {
+    if (!user) {
+      // Don't update local state if user is not logged in
+      if (onVote) {
+        onVote(post.id, 'downvote');
+      }
+      return;
+    }
+    
     if (userVote === 'downvote') {
       // Remove downvote
       setUserVote(null);
@@ -65,9 +83,8 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   };
 
   const handleCommentClick = () => {
-    if (onComment) {
-      onComment(post.id);
-    }
+    // Navigate to post page when clicking comments
+    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
   const handleShareClick = () => {
@@ -108,17 +125,33 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     return post.voteScore || 0;
   };
 
+  const handlePostClick = (e) => {
+    // Don't navigate if clicking on interactive elements
+    if (
+      e.target.closest('.vote-btn') ||
+      e.target.closest('.post-action-btn') ||
+      e.target.closest('.post-join-btn') ||
+      e.target.closest('.post-options') ||
+      e.target.tagName === 'A'
+    ) {
+      return;
+    }
+    navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
+  };
+
   return (
-    <div className="post">
+    <div className="post" onClick={handlePostClick} style={{ cursor: 'pointer' }}>
       {/* Post Header */}
       <div className="post-header">
         <div className="post-header-left">
-          <img 
-            src={post.community.icon} 
-            alt={post.community.name} 
-            className="community-icon"
-          />
-          <span className="community-name">{post.community.name}</span>
+          <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={post.community.icon} 
+              alt={post.community.name} 
+              className="community-icon"
+            />
+            <span className="community-name">r/{post.community.name}</span>
+          </Link>
           <span className="post-divider">•</span>
           <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
         </div>

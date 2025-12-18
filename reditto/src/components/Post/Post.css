@@ -41,9 +41,28 @@
   object-fit: cover;
 }
 
+.community-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.community-link:hover .community-icon {
+  opacity: 0.8;
+}
+
 .community-name {
   font-weight: 600;
   color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.community-link:hover .community-name {
+  color: #ff8c42;
+  text-decoration: underline;
 }
 
 .post-divider {

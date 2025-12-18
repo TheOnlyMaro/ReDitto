@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home/Home';
+import PostPage from './pages/PostPage/PostPage';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
@@ -10,6 +11,10 @@ function App() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    const saved = localStorage.getItem('reditto_sidebar_expanded');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -55,6 +60,11 @@ function App() {
       document.body.classList.remove('dark-mode');
     }
   }, [darkMode]);
+
+  // Save sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('reditto_sidebar_expanded', JSON.stringify(sidebarExpanded));
+  }, [sidebarExpanded]);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -130,7 +140,10 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Home user={user} userLoading={userLoading} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} />} />
+          <Route path="/" element={<Home user={user} userLoading={userLoading} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/r/:communityName" element={<div style={{padding: '100px', textAlign: 'center'}}>Community Page - Coming Soon</div>} />
+          <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
         </Routes>

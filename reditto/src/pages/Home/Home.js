@@ -3,12 +3,13 @@ import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
 import Loading from '../../components/Loading/Loading';
+import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
-const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode }) => {
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState(null);
 
   // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
@@ -50,7 +51,7 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
             imageUrl: post.imageUrl,
             community: {
               id: post.community._id,
-              name: `r/${post.community.name}`,
+              name: post.community.name,
               icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
             },
             voteScore: post.voteCount,
@@ -79,7 +80,10 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
 
   const handleVote = async (postId, voteType) => {
     if (!user) {
-      console.log('User must be logged in to vote');
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to vote'
+      });
       return;
     }
 
@@ -97,6 +101,36 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
       
+      // Optimistically update UI before API call
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            const currentVote = post.userVote;
+            let newVoteScore = post.voteScore;
+            
+            // Calculate new vote score based on vote changes
+            if (voteType === 'unvote') {
+              // Remove vote: decrease by 1 if upvoted, increase by 1 if downvoted
+              if (currentVote === 'upvote') newVoteScore -= 1;
+              else if (currentVote === 'downvote') newVoteScore += 1;
+            } else if (voteType === 'upvote') {
+              if (currentVote === 'downvote') newVoteScore += 2; // Remove downvote (-1) and add upvote (+1)
+              else if (!currentVote) newVoteScore += 1; // Add upvote
+            } else if (voteType === 'downvote') {
+              if (currentVote === 'upvote') newVoteScore -= 2; // Remove upvote (+1) and add downvote (-1)
+              else if (!currentVote) newVoteScore -= 1; // Add downvote
+            }
+            
+            return {
+              ...post,
+              voteScore: newVoteScore,
+              userVote: voteType === 'unvote' ? null : voteType
+            };
+          }
+          return post;
+        })
+      );
+      
       const response = await fetch(endpoint, {
         method: method,
         headers: {
@@ -106,41 +140,88 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
       });
 
       if (response.ok) {
-        const data = await response.json();
-        // Update local post state with new vote count from response
+        // Vote succeeded - optimistic update already applied, no need to update again
+        console.log(`Vote ${voteType} successful for post ${postId}`);
+        
+        // Update user data in background without affecting posts state
+        fetch('http://localhost:5000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).then(userResponse => {
+          if (userResponse.ok) {
+            return userResponse.json();
+          }
+        }).then(userData => {
+          if (userData) {
+            const authService = require('../../services/authService');
+            authService.default.saveUser(userData.user);
+          }
+        }).catch(err => console.error('Failed to update user data:', err));
+      } else {
+        console.error('Vote failed:', await response.json());
+        // Rollback optimistic update by reversing the vote
         setPosts(prevPosts => 
           prevPosts.map(post => {
             if (post.id === postId) {
-              // Update both voteScore and userVote
+              const currentVote = post.userVote;
+              let revertedVoteScore = post.voteScore;
+              
+              // Reverse the vote change
+              if (voteType === 'unvote') {
+                // Was trying to remove vote, restore it
+                if (currentVote === null) {
+                  // Figure out what the original vote was based on score change
+                  // This is complex, simpler to just re-fetch or store original
+                  revertedVoteScore = post.voteScore; // Keep as is for now
+                }
+              } else if (voteType === 'upvote') {
+                if (currentVote === 'upvote') {
+                  // Reverse upvote
+                  revertedVoteScore -= 1;
+                }
+              } else if (voteType === 'downvote') {
+                if (currentVote === 'downvote') {
+                  // Reverse downvote
+                  revertedVoteScore += 1;
+                }
+              }
+              
               return {
                 ...post,
-                voteScore: data.voteCount,
-                userVote: voteType === 'unvote' ? null : voteType
+                voteScore: revertedVoteScore,
+                userVote: null // Reset to no vote on failure
               };
             }
             return post;
           })
         );
-        
-        // Fetch fresh user data to update upvotedPosts/downvotedPosts
-        const userResponse = await fetch('http://localhost:5000/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          const authService = require('../../services/authService');
-          authService.default.saveUser(userData.user);
-        }
-        
-        console.log(`Vote ${voteType} successful for post ${postId}`);
-      } else {
-        console.error('Vote failed:', await response.json());
       }
     } catch (error) {
       console.error('Failed to vote:', error);
+      // Rollback optimistic update on network error
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            let revertedVoteScore = post.voteScore;
+            const currentVote = post.userVote;
+            
+            // Reverse the optimistic change
+            if (voteType === 'upvote' && currentVote === 'upvote') {
+              revertedVoteScore -= 1;
+            } else if (voteType === 'downvote' && currentVote === 'downvote') {
+              revertedVoteScore += 1;
+            }
+            
+            return {
+              ...post,
+              voteScore: revertedVoteScore,
+              userVote: null
+            };
+          }
+          return post;
+        })
+      );
     }
   };
 
@@ -219,6 +300,15 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         onLogout={onLogout}
       />
       <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+          className="home-alert"
+        />
+      )}
 
       <div className={`home-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         <div className="home-hero">

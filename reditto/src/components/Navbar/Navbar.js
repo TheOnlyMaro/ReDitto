@@ -38,6 +38,8 @@ const Navbar = ({ user, onSearch, darkMode, setDarkMode, onLogout }) => {
   const handleLogout = () => {
     if (onLogout) onLogout();
     setProfileMenuOpen(false);
+    // Refresh the page after logout
+    window.location.reload();
   };
 
   // Close menu when clicking outside
