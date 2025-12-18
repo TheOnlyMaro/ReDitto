@@ -3,11 +3,13 @@ import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
 import Loading from '../../components/Loading/Loading';
+import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
 const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState(null);
 
   // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
@@ -78,7 +80,10 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
 
   const handleVote = async (postId, voteType) => {
     if (!user) {
-      console.log('User must be logged in to vote');
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to vote'
+      });
       return;
     }
 
@@ -295,6 +300,15 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         onLogout={onLogout}
       />
       <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+          className="home-alert"
+        />
+      )}
 
       <div className={`home-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
         <div className="home-hero">

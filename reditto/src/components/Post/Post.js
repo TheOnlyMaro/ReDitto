@@ -35,6 +35,14 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   }, [optionsOpen]);
 
   const handleUpvote = () => {
+    if (!user) {
+      // Don't update local state if user is not logged in
+      if (onVote) {
+        onVote(post.id, 'upvote');
+      }
+      return;
+    }
+    
     if (userVote === 'upvote') {
       // Remove upvote
       setUserVote(null);
@@ -51,6 +59,14 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   };
 
   const handleDownvote = () => {
+    if (!user) {
+      // Don't update local state if user is not logged in
+      if (onVote) {
+        onVote(post.id, 'downvote');
+      }
+      return;
+    }
+    
     if (userVote === 'downvote') {
       // Remove downvote
       setUserVote(null);
