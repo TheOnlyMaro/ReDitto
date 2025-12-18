@@ -17,6 +17,11 @@ describe('Post Model Tests', () => {
   });
 
   beforeEach(async () => {
+    // Clear collections before each test
+    await Post.deleteMany({});
+    await Community.deleteMany({});
+    await User.deleteMany({});
+
     // Create test user
     testUser = await User.create({
       username: 'postauthor',
