@@ -1,55 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
 import './Home.css';
 
-// Dummy post data
-const dummyPosts = [
-  {
-    id: 1,
-    type: 'text',
-    title: 'Just finished implementing the backend API for ReDitto!',
-    content: 'After days of work, I finally got all the controllers, models, and routes working. The test suite shows 202/202 tests passing! What a relief. Now onto the frontend...',
-    community: {
-      name: 'r/webdev',
-      icon: 'https://styles.redditmedia.com/t5_2qh5s/styles/communityIcon_xagsn9qtfwy51.png'
-    },
-    voteScore: 142,
-    commentCount: 23,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-  },
-  {
-    id: 2,
-    type: 'image',
-    title: 'My new desk setup for coding',
-    imageUrl: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800',
-    community: {
-      name: 'r/battlestations',
-      icon: 'https://styles.redditmedia.com/t5_2sfkp/styles/communityIcon_u1xvy51tekq41.png'
-    },
-    voteScore: 1247,
-    commentCount: 87,
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 hours ago
-  },
-  {
-    id: 3,
-    type: 'text',
-    title: 'What are your thoughts on dark mode by default?',
-    content: 'I\'m building a Reddit clone and set dark mode as the default theme. Do you think this is a good UX decision? I know some people prefer light mode, but dark mode seems to be more popular among developers.',
-    community: {
-      name: 'r/reactjs',
-      icon: 'https://styles.redditmedia.com/t5_2zldd/styles/communityIcon_dtoxqw7bmkn91.png'
-    },
-    voteScore: 89,
-    commentCount: 45,
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000) // 8 hours ago
-  }
-];
-
 const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [followedCommunities, setFollowedCommunities] = useState(['r/reactjs']); // Example: user follows r/reactjs
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch posts from database
+  useEffect(() => {
+    const fetchPosts = async () => {
+      //TODO: Replace with relevant feed fetching logic
+      try {
+        const response = await fetch('http://localhost:5000/api/posts');
+        const data = await response.json();
+        
+        // Transform posts to match expected format
+        const transformedPosts = data.posts.map(post => ({
+          id: post._id,
+          type: post.type,
+          title: post.title,
+          content: post.content,
+          imageUrl: post.imageUrl,
+          community: {
+            name: `r/${post.community.name}`,
+            icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
+          },
+          voteScore: post.voteCount,
+          commentCount: post.commentCount,
+          createdAt: new Date(post.createdAt),
+          isFollowing: followedCommunities.includes(`r/${post.community.name}`)
+        }));
+        
+        setPosts(transformedPosts);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
   
   const handleSearch = (query) => {
     console.log('Search query:', query);
@@ -108,19 +103,25 @@ const Home = ({ user, onLogout, darkMode, setDarkMode }) => {
         
         <div className="home-main">
           <div className="home-feed">
-            {dummyPosts.map(post => (
-              <Post 
-                key={post.id}
-                post={post}
-                user={currentUser}
-                isFollowing={followedCommunities.includes(post.community.name)}
-                onVote={handleVote}
-                onComment={handleComment}
-                onShare={handleShare}
-                onJoin={handleJoin}
-                onSave={handleSave}
-              />
-            ))}
+            {loading ? (
+              <p>Loading posts...</p>
+            ) : posts.length === 0 ? (
+              <p>No posts yet. Be the first to create one!</p>
+            ) : (
+              posts.map(post => (
+                <Post 
+                  key={post.id}
+                  post={post}
+                  user={currentUser}
+                  isFollowing={post.isFollowing}
+                  onVote={handleVote}
+                  onComment={handleComment}
+                  onShare={handleShare}
+                  onJoin={handleJoin}
+                  onSave={handleSave}
+                />
+              ))
+            )}
           </div>
           
           <aside className="home-sidebar">

@@ -4,7 +4,7 @@ import './Post.css';
 const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
   const [userVote, setUserVote] = useState(null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [isJoined, setIsJoined] = useState(isFollowing);
+  const [isJoined, setIsJoined] = useState(false);
   const optionsRef = useRef(null);
 
   // Close options menu when clicking outside
@@ -23,11 +23,6 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [optionsOpen]);
-
-  // Update isJoined when isFollowing prop changes
-  useEffect(() => {
-    setIsJoined(isFollowing);
-  }, [isFollowing]);
 
   const handleUpvote = () => {
     const newVote = userVote === 'upvote' ? null : 'upvote';
@@ -107,13 +102,15 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
 
         {user && (
           <div className="post-header-right">
-            {/* Join Button - toggleable */}
-            <button 
-              className={`post-join-btn ${isJoined ? 'joined' : ''}`}
-              onClick={handleJoinClick}
-            >
-              {isJoined ? 'Joined' : 'Join'}
-            </button>
+            {/* Join Button - only show if not already following */}
+            {!isFollowing && (
+              <button 
+                className={`post-join-btn ${isJoined ? 'joined' : ''}`}
+                onClick={handleJoinClick}
+              >
+                {isJoined ? 'Joined' : 'Join'}
+              </button>
+            )}
 
             {/* Options Menu */}
             <div className="post-options" ref={optionsRef}>
