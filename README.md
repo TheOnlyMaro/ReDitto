@@ -143,11 +143,18 @@ ReDitto is a social media platform inspired by Reddit, featuring user authentica
   - Author and post tracking
   - Nested comment support (parent/child relationships)
   - Reply tracking with counts
-  - Vote system (upvotes/downvotes)
-  - Soft delete functionality
+  - Vote system (upvotes/downvotes with optimistic updates)
+  - User vote tracking (upvotedComments/downvotedComments arrays)
+  - Soft delete functionality (maintains thread structure)
   - Edit tracking with timestamps
 - ✅ Create comments (protected)
 - ✅ Get comments by post ID
+- ✅ Comment voting system with:
+  - Backend user array updates for persistent vote state
+  - Optimistic UI updates for instant feedback
+  - Proper vote state initialization from user data
+  - Support for nested comments at all depths
+  - API endpoints: upvote, downvote, and remove vote
 - ✅ Get comment by ID
 - ✅ Get comment replies (nested threading)
 - ✅ Update comments (protected)
@@ -646,27 +653,60 @@ npm run test:server
 
 ## Testing
 
-The project includes comprehensive backend testing:
-- **202+ passing tests** covering:
-  - User registration validation (9 tests)
-  - Login functionality (6 tests)
-  - JWT token generation and validation (10 tests)
-  - Token security - wrong secrets, expired tokens, stolen tokens (5 tests)
-  - User CRUD operations (22 tests)
-  - Protected route authorization
-  - Community model tests (13 tests)
-  - Community CRUD operations (22 tests)
-  - Post model tests (10 tests)
-  - Post CRUD operations (51 tests)
-  - Comment model tests (13 tests)
-  - Comment CRUD operations (51 tests)
-  - Voting functionality (posts and comments)
-  - Nested comment threading and reply counts
+The project includes comprehensive backend testing with **excellent coverage**:
+
+### Test Coverage Summary
+- **319 passing tests** with **87.5% overall coverage**
+  - Models: 97.54% coverage (100% for Comment, Community, User models)
+  - Routes: 100% coverage
+  - Controllers: 84.98% coverage
+  - Middleware: 85.57% coverage
+
+### Test Suites
+1. **Authentication Tests** (33 tests)
+   - User registration validation
+   - Login functionality with case-insensitive email
+   - JWT token generation and validation
+   - Token security (wrong secrets, expired tokens, manipulated tokens)
+   - Token refresh mechanism
+   
+2. **User Tests** (22 tests)
+   - User profile operations (get by ID/username)
+   - Protected route authorization
+   - User updates and deletion
+   
+3. **Community Tests** (69 tests)
+   - Community model validation (25 tests)
+   - Community CRUD operations (44 tests)
+   - Moderator and rule management
+   
+4. **Post Tests** (87 tests)
+   - Post model validation (30 tests)
+   - Post CRUD operations (57 tests)
+   - Post voting with optimistic updates
+   - Post type validation (text, link, image)
+   
+5. **Comment Tests** (108 tests)
+   - Comment model validation (34 tests)
+   - Comment CRUD operations (74 tests)
+   - Nested comment threading
+   - Reply count tracking
+   - Comment voting with user array updates
+   - Soft delete functionality
 
 Run tests with:
 ```bash
-npm run test:server
+npm run test:server          # Run all backend tests
+npm run test:server -- --coverage  # Run with coverage report
 ```
+
+### Key Testing Features
+- Integration testing with Supertest
+- MongoDB test database isolation
+- JWT authentication testing
+- Comprehensive validation testing
+- Soft delete verification
+- Vote system integrity testing
 
 ## Color Scheme
 

@@ -7,7 +7,7 @@ import Loading from '../../components/Loading/Loading';
 import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
-const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch, searchResults, isSearching }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [posts, setPosts] = useState([]);
@@ -22,7 +22,7 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
     const fetchPosts = async () => {
       //TODO: Replace with relevant feed fetching logic
       try {
-        const response = await fetch('http://localhost:5000/api/posts');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`);
         const data = await response.json();
         
         // Get user's joined communities if logged in
@@ -80,9 +80,11 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLoading, location.key, userVoteVersion]); // Refetch when returning to page or when user votes change  
+  
   const handleSearch = (query) => {
-    console.log('Search query:', query);
-    // TODO: Implement search functionality
+    if (onSearch) {
+      onSearch(query);
+    }
   };
 
   const handleVote = async (postId, voteType) => {
@@ -99,11 +101,11 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
       let endpoint = '';
       
       if (voteType === 'upvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/upvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/upvote`;
       } else if (voteType === 'downvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/downvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/downvote`;
       } else if (voteType === 'unvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/vote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/vote`;
       }
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
@@ -152,7 +154,7 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
         
         // Update user data synchronously to ensure it's ready before navigation
         try {
-          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+          const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -306,7 +308,7 @@ const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, d
         updatedSavedPosts.push(postId);
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

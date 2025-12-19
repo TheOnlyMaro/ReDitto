@@ -8,7 +8,7 @@ import Alert from '../../components/Alert/Alert';
 import Button from '../../components/Button/Button';
 import './CommunityPage.css';
 
-const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch }) => {
   const { communityName } = useParams();
   const navigate = useNavigate();
   const [community, setCommunity] = useState(null);
@@ -30,7 +30,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
   useEffect(() => {
     const fetchCommunity = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/communities/${communityName}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/communities/${communityName}`);
         
         if (!response.ok) {
           throw new Error('Community not found');
@@ -74,7 +74,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/posts?community=${communityName}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/posts?community=${communityName}`);
         const data = await response.json();
         
         const upvotedPostIds = (user?.upvotedPosts || []).map(id => id.toString());
@@ -138,11 +138,11 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
       let endpoint = '';
       
       if (voteType === 'upvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/upvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/upvote`;
       } else if (voteType === 'downvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/downvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/downvote`;
       } else if (voteType === 'unvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/vote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/vote`;
       }
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
@@ -191,7 +191,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         
         // Update user data synchronously to ensure it's ready before navigation
         try {
-          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+          const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -344,7 +344,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
 
     try {
       const token = localStorage.getItem('reditto_auth_token');
-      const response = await fetch(`http://localhost:5000/api/communities/${community.name}/flairs`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/communities/${community.name}/flairs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -380,7 +380,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
 
     try {
       const token = localStorage.getItem('reditto_auth_token');
-      const response = await fetch(`http://localhost:5000/api/communities/${community.name}/rules`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/communities/${community.name}/rules`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -413,6 +413,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         onLogout={onLogout} 
         darkMode={darkMode} 
         setDarkMode={setDarkMode}
+        onSearch={onSearch}
       />
       
       {alert && (

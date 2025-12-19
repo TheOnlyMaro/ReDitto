@@ -9,6 +9,7 @@ import CreatePost from './pages/CreatePost/CreatePost';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
+import { searchAPI } from './services/api';
 import './App.css';
 
 function App() {
@@ -20,6 +21,8 @@ function App() {
     const saved = localStorage.getItem('reditto_sidebar_expanded');
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -29,7 +32,7 @@ function App() {
         try {
           console.log('Fetching current user from API...');
           // Fetch fresh user data from the server
-          const response = await fetch('http://localhost:5000/api/auth/me', {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -99,6 +102,24 @@ function App() {
     setUser(null);
   };
 
+  const handleSearch = async (query) => {
+    if (!query || query.trim() === '') {
+      setSearchResults(null);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const results = await searchAPI.globalSearch(query, 10);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults({ communities: [], users: [], posts: [], query, totalResults: 0 });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleJoinCommunity = async (communityName, isJoining, communityId) => {
     if (!user) return;
 
@@ -133,7 +154,7 @@ function App() {
       console.log('Updated joined communities:', updatedJoined);
 
       // Call API to update user
-      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const response = await fetch(`process.env.REACT_APP_API_UR/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${authService.getToken()}`,
@@ -160,12 +181,12 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/create/community" element={<CreateCommunity user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/create/post" element={<CreatePost user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} searchResults={searchResults} isSearching={isSearching} />} />
+          <Route path="/create/community" element={<CreateCommunity user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/create/post" element={<CreatePost user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} searchResults={searchResults} isSearching={isSearching} />} />
+          <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
