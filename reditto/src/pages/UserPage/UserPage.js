@@ -14,6 +14,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
   const navigate = useNavigate();
   const [community, setCommunity] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [moderatedCommunities, setModeratedCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
   const [shareMenuPostId, setShareMenuPostId] = useState(null);
@@ -35,10 +36,34 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
         const response = await fetch(`${process.env.REACT_APP_API_URL}/users/username/${name}`);
         if (!response.ok) throw new Error('User not found');
         const data = await response.json();
-        setCommunity(data.user || data.profile || data.userProfile || data.user);
+        const profile = data.user || data.profile || data.userProfile || data.user;
+        setCommunity(profile);
+        // Normalize karma to numeric value if needed
+        if (profile) {
+          const karmaObj = profile.karma;
+          profile._computedKarma = (typeof karmaObj === 'object' && karmaObj !== null)
+            ? ((karmaObj.post || 0) + (karmaObj.comment || 0))
+            : (Number(profile.karma) || 0);
+        }
+
+        // Fetch moderated community details if user has moderated community ids
+        const moderatedIds = profile?.communities?.moderated || [];
+        if (moderatedIds && moderatedIds.length > 0) {
+          try {
+            // fetch a larger list of communities and match by id (server doesn't expose batch by ids)
+            const commResp = await fetch(`${process.env.REACT_APP_API_URL}/communities?limit=1000`);
+            if (commResp.ok) {
+              const commData = await commResp.json();
+              const matched = (commData.communities || []).filter(c => moderatedIds.map(String).includes(String(c._id)));
+              setModeratedCommunities(matched);
+            }
+          } catch (err) {
+            console.error('Failed to fetch moderated communities:', err);
+          }
+        }
         // Check if current user follows this profile
-        if (user && data.user?.followers) {
-          setIsJoined(data.user.followers.includes(user._id));
+        if (user && profile?.followers) {
+          setIsJoined(profile.followers.map(String).includes(String(user._id)));
         }
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -72,8 +97,12 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
         const response = await fetch(`${process.env.REACT_APP_API_URL}/posts?author=${name}`);
         const data = await response.json();
         
-        const upvotedPostIds = (user?.upvotedPosts || []).map(id => id.toString());
-        const downvotedPostIds = (user?.downvotedPosts || []).map(id => id.toString());
+        // Defensive normalization: user arrays may contain ObjectIds or nested objects
+        const upvotedPostIds = (user?.upvotedPosts || []).map(id => (id && id._id) ? String(id._id) : String(id));
+        const downvotedPostIds = (user?.downvotedPosts || []).map(id => (id && id._id) ? String(id._id) : String(id));
+        const viewerJoinedCommunityIds = (user?.communities?.joined || []).map(id => (id && id._id) ? String(id._id) : String(id));
+
+        console.log('UserPage.fetchPosts: userId=', user?._id, 'upvotedPostIds=', upvotedPostIds, 'downvotedPostIds=', downvotedPostIds, 'joinedCommunityIds=', viewerJoinedCommunityIds);
         
         const transformedPosts = (data.posts || []).map(post => {
           let userVote = null;
@@ -85,7 +114,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
           }
           
           return {
-            id: post._id,
+            id: String(post._id),
             type: post.type,
             title: post.title,
             content: post.content,
@@ -95,18 +124,19 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
             authorDeleted: post.author?.flags?.isDeleted || !post.author,
             postDeleted: post.flags?.isDeleted || false,
             community: post.community ? {
-              id: post.community._id,
+              id: String(post.community._id),
               name: post.community.name,
               icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
             } : null,
             voteScore: post.voteCount,
             commentCount: post.commentCount,
             createdAt: new Date(post.createdAt),
-            isFollowing: false,
+            isFollowing: post.community ? viewerJoinedCommunityIds.includes(String(post.community._id)) : false,
             userVote: userVote
           };
         });
         
+        console.log('UserPage.fetchPosts: mapped posts summary=', transformedPosts.map(p => ({ id: p.id, userVote: p.userVote, isFollowing: p.isFollowing })));
         setPosts(transformedPosts);
         setLoading(false);
       } catch (error) {
@@ -118,6 +148,28 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
     fetchPosts();
   }, [communityName, username, userLoading, user, userVoteVersion]);
 
+  // Keep per-post vote/follow state in sync with the current `user` without refetching
+  useEffect(() => {
+    if (!posts || posts.length === 0) return;
+
+    const upvotedPostIds = (user?.upvotedPosts || []).map(id => (id && id._id) ? String(id._id) : String(id));
+    const downvotedPostIds = (user?.downvotedPosts || []).map(id => (id && id._id) ? String(id._id) : String(id));
+    const viewerJoinedCommunityIds = (user?.communities?.joined || []).map(id => (id && id._id) ? String(id._id) : String(id));
+
+    console.log('UserPage.syncEffect: syncing posts with user; upvoted=', upvotedPostIds, 'downvoted=', downvotedPostIds, 'joined=', viewerJoinedCommunityIds);
+
+    setPosts(prevPosts => {
+      const newPosts = prevPosts.map(p => {
+        const postId = String(p.id || p._id || '');
+        const userVote = upvotedPostIds.includes(postId) ? 'upvote' : (downvotedPostIds.includes(postId) ? 'downvote' : null);
+        const isFollowing = p.community ? viewerJoinedCommunityIds.includes(String(p.community.id || p.community._id || p.community)) : false;
+        return { ...p, userVote, isFollowing };
+      });
+      console.log('UserPage.syncEffect: result sample=', newPosts.map(p => ({ id: p.id, userVote: p.userVote, isFollowing: p.isFollowing })));
+      return newPosts;
+    });
+  }, [user, user?.upvotedPosts, user?.downvotedPosts, user?.communities?.joined]);
+
   const handleVote = async (postId, voteType) => {
     if (!user) {
       setAlert({
@@ -126,6 +178,8 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       });
       return;
     }
+
+    console.log('UserPage.handleVote START', { postId, voteType, userId: user?._id, userUpvotedCount: (user?.upvotedPosts || []).length, userDownvotedCount: (user?.downvotedPosts || []).length });
 
     try {
       const token = localStorage.getItem('reditto_auth_token');
@@ -142,6 +196,9 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
       
       // Optimistically update UI before API call
+      const currentPost = posts.find(p => String(p.id) === String(postId));
+      console.log('UserPage.handleVote currentPost before update', { id: currentPost?.id, userVote: currentPost?.userVote, voteScore: currentPost?.voteScore });
+
       setPosts(prevPosts => 
         prevPosts.map(post => {
           if (post.id === postId) {
@@ -182,6 +239,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
         console.log(`Vote ${voteType} successful for post ${postId}`);
       } else {
         const data = await response.json();
+        console.log('UserPage.handleVote RESPONSE NOT OK', { postId, voteType, status: response.status, body: data });
         setAlert({
           type: 'error',
           message: data.message || 'Failed to vote. Please try again.'
@@ -604,7 +662,13 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                       <span>Posts</span>
                     </div>
                     <div className="stat">
-                      <strong>{(community.karma || community.karmaPoints || 0).toLocaleString()}</strong>
+                      <strong>{(
+                        community._computedKarma != null
+                          ? community._computedKarma
+                          : (typeof community.karma === 'object' && community.karma !== null)
+                              ? ((community.karma.post || 0) + (community.karma.comment || 0))
+                              : (Number(community.karma) || community.karmaPoints || 0)
+                      ).toLocaleString()}</strong>
                       <span>Karma</span>
                     </div>
                   </div>
@@ -654,23 +718,15 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
               <div className="community-sidebar-card">
                 <h3>Moderates</h3>
                 <div className="moderators-list">
-                  {(() => {
-                    const moderated = community.moderatedCommunities || community.moderates || community.moderated || community.moderatesList || [];
-                    if (!moderated || moderated.length === 0) {
-                      return <p className="sidebar-description">This user does not moderate any subreddits.</p>;
-                    }
-
-                    return moderated.map((c, idx) => {
-                      const name = typeof c === 'string' ? c : (c.name || c.title || c._id);
-                      const icon = typeof c === 'string' ? `https://api.dicebear.com/7.x/identicon/svg?seed=${name}` : (c.icon || `https://api.dicebear.com/7.x/identicon/svg?seed=${name}`);
-                      return (
-                        <Link key={name + idx} to={`/r/${name}`} className="moderator-item">
-                          <img src={icon} alt={name} className="moderator-avatar" />
-                          <span className="moderator-username">r/{name}</span>
-                        </Link>
-                      );
-                    });
-                  })()}
+                        {moderatedCommunities && moderatedCommunities.length === 0 && (
+                          <p className="sidebar-description">This user does not moderate any subreddits.</p>
+                        )}
+                        {moderatedCommunities && moderatedCommunities.length > 0 && moderatedCommunities.map((c) => (
+                          <Link key={c._id} to={`/r/${c.name}`} className="moderator-item">
+                            <img src={c.icon || `https://api.dicebear.com/7.x/identicon/svg?seed=${c.name}`} alt={c.name} className="moderator-avatar" />
+                            <span className="moderator-username">r/{c.name}</span>
+                          </Link>
+                        ))}
                 </div>
               </div>
             )}

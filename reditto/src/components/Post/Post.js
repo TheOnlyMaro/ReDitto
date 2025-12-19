@@ -9,7 +9,11 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
   const optionsRef = useRef(null);
 
   // Debug logging
-  console.log(`Post ${post.title.substring(0, 30)}... - isFollowing:`, isFollowing, 'community:', post.community.name);
+  try {
+    console.log(`Post ${post.title?.substring(0, 30) || ''}... - id: ${post.id} - userVote:`, post.userVote, 'isFollowing:', isFollowing, 'community:', post.community?.name, 'userId:', user?._id, 'userUpvotedCount:', (user?.upvotedPosts || []).length, 'userDownvotedCount:', (user?.downvotedPosts || []).length);
+  } catch (e) {
+    console.log('Post debug log error', e);
+  }
 
   // Use post.userVote directly from props instead of local state
 
