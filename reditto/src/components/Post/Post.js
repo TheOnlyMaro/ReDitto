@@ -139,7 +139,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
           {fromSub ? (
             /* Show author info when viewing from user profile */
             <>
-              <Link to={`/user/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+              <Link to={`/u/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`} 
                   alt={post.author} 
