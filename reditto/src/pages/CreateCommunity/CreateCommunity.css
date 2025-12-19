@@ -1,8 +1,19 @@
 /* Modern Create Community Page */
 .create-community-page {
   min-height: 100vh;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-primary);  position: relative;
 }
+
+/* Alert positioning */
+.create-community-alert {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}
 
 .create-content {
   margin-left: 256px;

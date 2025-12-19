@@ -28,6 +28,8 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
 
       // If user is logged in, fetch their specific communities
       if (user && user.communities) {
+        console.log('User communities data:', user.communities);
+        
         const token = localStorage.getItem('reditto_auth_token');
         
         // Fetch all communities to filter user's joined/moderated ones
@@ -35,11 +37,14 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
         const allData = await allResponse.json();
         const allCommunities = allData.communities || [];
 
+        console.log('All communities fetched:', allCommunities);
+
         // Filter joined communities
         if (user.communities.joined && user.communities.joined.length > 0) {
           const joined = allCommunities.filter(comm => 
             user.communities.joined.includes(comm._id)
           );
+          console.log('Joined communities:', joined);
           setFollowedCommunities(joined);
         }
 
@@ -48,7 +53,11 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
           const moderated = allCommunities.filter(comm => 
             user.communities.moderated.includes(comm._id)
           );
+          console.log('Moderated communities:', moderated);
           setModeratedCommunities(moderated);
+        } else {
+          console.log('No moderated communities in user data');
+          setModeratedCommunities([]);
         }
 
         // Filter popular communities to exclude followed ones (top 10 NOT followed)
@@ -58,6 +67,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
         ).slice(0, 10);
         setPopularCommunities(notFollowed);
       } else {
+        console.log('User not logged in or no communities data');
         // If not logged in, show top 10 popular communities
         setPopularCommunities(allPopularCommunities.slice(0, 10));
       }
@@ -118,53 +128,54 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
           <div className="sidebar-divider"></div>
 
           {/* Moderation Section */}
-          {moderatedCommunities.length > 0 && (
-            <>
-              <div 
-                className="sidebar-section-header"
-                onClick={() => setModerationExpanded(!moderationExpanded)}
-              >
-                <svg 
-                  className={`sidebar-chevron ${moderationExpanded ? 'expanded' : ''}`}
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 16 16" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M5.3 6.7l2.7 2.7 2.7-2.7L12 8l-4 4-4-4 1.3-1.3z" fill="currentColor"/>
-                </svg>
-                <span>Moderation</span>
-              </div>
-              {moderationExpanded && (
-                <div className="sidebar-section">
-                  {moderatedCommunities.map(community => (
-                    <div 
-                      key={community._id} 
-                      className="sidebar-item community-item"
-                      onClick={() => handleCommunityClick(community.name)}
-                    >
-                      {community.appearance?.icon ? (
-                        <img 
-                          src={community.appearance.icon} 
-                          alt={community.name}
-                          className="community-icon-img"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <span className="community-icon-fallback" style={{ display: community.appearance?.icon ? 'none' : 'flex' }}>
-                        {community.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span>r/{community.name}</span>
-                    </div>
-                  ))}
-                </div>
+          <div 
+            className="sidebar-section-header"
+            onClick={() => setModerationExpanded(!moderationExpanded)}
+          >
+            <svg 
+              className={`sidebar-chevron ${moderationExpanded ? 'expanded' : ''}`}
+              width="16" 
+              height="16" 
+              viewBox="0 0 16 16" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M5.3 6.7l2.7 2.7 2.7-2.7L12 8l-4 4-4-4 1.3-1.3z" fill="currentColor"/>
+            </svg>
+            <span>Moderation</span>
+          </div>
+          {moderationExpanded && (
+            <div className="sidebar-section">
+              {moderatedCommunities.length > 0 ? (
+                moderatedCommunities.map(community => (
+                  <div 
+                    key={community._id} 
+                    className="sidebar-item community-item"
+                    onClick={() => handleCommunityClick(community.name)}
+                  >
+                    {community.appearance?.icon ? (
+                      <img 
+                        src={community.appearance.icon} 
+                        alt={community.name}
+                        className="community-icon-img"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <span className="community-icon-fallback" style={{ display: community.appearance?.icon ? 'none' : 'flex' }}>
+                      {community.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span>r/{community.name}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="sidebar-empty">Nothing to show here</div>
               )}
-              <div className="sidebar-divider"></div>
-            </>
+            </div>
           )}
+
+          <div className="sidebar-divider"></div>
 
           {/* Communities Section (Followed) */}
           {followedCommunities.length > 0 && (

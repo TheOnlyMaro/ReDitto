@@ -417,3 +417,157 @@
     padding: 16px;
   }
 }
+
+/* Moderator Tools */
+.mod-tools-card {
+  margin-bottom: 16px;
+  border-left: 4px solid #46D160;
+}
+
+.mod-tools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mod-tools-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #46D160;
+}
+
+.mod-tools-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.mod-tools-content {
+  padding: 12px;
+}
+
+.mod-tool-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mod-tool-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.mod-tool-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.mod-tool-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mod-tool-btn:hover {
+  background-color: #46D160;
+  border-color: #46D160;
+  color: white;
+}
+
+.mod-form {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mod-input,
+.mod-textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.mod-input:focus,
+.mod-textarea:focus {
+  outline: none;
+  border-color: #46D160;
+}
+
+.mod-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.color-picker-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-picker-group label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mod-color-input {
+  width: 60px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mod-submit-btn {
+  padding: 8px 16px;
+  background-color: #46D160;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mod-submit-btn:hover {
+  background-color: #3ab04f;
+}
+
+.current-flairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.flair-preview {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}

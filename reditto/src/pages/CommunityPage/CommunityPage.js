@@ -18,6 +18,12 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
   const [shareMenuPostId, setShareMenuPostId] = useState(null);
   const [isJoined, setIsJoined] = useState(false);
   const [expandedRules, setExpandedRules] = useState({});
+  const [isModerator, setIsModerator] = useState(false);
+  const [showModTools, setShowModTools] = useState(false);
+  const [showAddFlair, setShowAddFlair] = useState(false);
+  const [showAddRule, setShowAddRule] = useState(false);
+  const [flairForm, setFlairForm] = useState({ text: '', backgroundColor: '#0079D3' });
+  const [ruleForm, setRuleForm] = useState({ title: '', description: '' });
 
   // Fetch community data
   useEffect(() => {
@@ -52,6 +58,11 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
   useEffect(() => {
     if (community && user && user.communities?.joined) {
       setIsJoined(user.communities.joined.includes(community._id));
+    }
+    
+    // Check if user is a moderator
+    if (community && user && user.communities?.moderated) {
+      setIsModerator(user.communities.moderated.includes(community._id));
     }
   }, [user, community]);
 
@@ -224,6 +235,84 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     }));
   };
 
+  const handleAddFlair = async (e) => {
+    e.preventDefault();
+    
+    if (!flairForm.text.trim()) {
+      setAlert({ type: 'error', message: 'Flair text is required' });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      const response = await fetch(`http://localhost:5000/api/communities/${community.name}/flairs`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(flairForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add flair');
+      }
+
+      setAlert({ type: 'success', message: 'Flair added successfully' });
+      // Merge flairs with existing community to preserve populated fields
+      setCommunity(prev => ({
+        ...prev,
+        flairs: data.community?.flairs || prev.flairs || []
+      }));
+      setFlairForm({ text: '', backgroundColor: '#0079D3' });
+      setShowAddFlair(false);
+    } catch (error) {
+      console.error('Error adding flair:', error);
+      setAlert({ type: 'error', message: error.message });
+    }
+  };
+
+  const handleAddRule = async (e) => {
+    e.preventDefault();
+    
+    if (!ruleForm.title.trim()) {
+      setAlert({ type: 'error', message: 'Rule title is required' });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      const response = await fetch(`http://localhost:5000/api/communities/${community.name}/rules`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(ruleForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add rule');
+      }
+
+      setAlert({ type: 'success', message: 'Rule added successfully' });
+      // Merge rules with existing community to preserve populated fields
+      setCommunity(prev => ({
+        ...prev,
+        rules: data.community?.rules || prev.rules || []
+      }));
+      setRuleForm({ title: '', description: '' });
+      setShowAddRule(false);
+    } catch (error) {
+      console.error('Error adding rule:', error);
+      setAlert({ type: 'error', message: error.message });
+    }
+  };
+
   return (
     <div className="community-page">
       <Navbar 
@@ -335,6 +424,117 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
 
           {/* Right Sidebar - Placeholder */}
           <div className="community-right-sidebar">
+            {/* Moderator Tools */}
+            {isModerator && (
+              <div className="community-sidebar-card mod-tools-card">
+                <div 
+                  className="mod-tools-header" 
+                  onClick={() => setShowModTools(!showModTools)}
+                >
+                  <h3>⚙️ Moderator Tools</h3>
+                  <button className="mod-tools-toggle" type="button">
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 16 16" 
+                      style={{ transform: showModTools ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                    >
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                {showModTools && (
+                  <div className="mod-tools-content">
+                    {/* Add Flair */}
+                    <div className="mod-tool-section">
+                      <button 
+                        className="mod-tool-btn"
+                        onClick={() => setShowAddFlair(!showAddFlair)}
+                        type="button"
+                      >
+                        {showAddFlair ? '− Cancel' : '+ Add Flair'}
+                      </button>
+                      
+                      {showAddFlair && (
+                        <form onSubmit={handleAddFlair} className="mod-form">
+                          <input
+                            type="text"
+                            placeholder="Flair text"
+                            value={flairForm.text}
+                            onChange={(e) => setFlairForm({ ...flairForm, text: e.target.value })}
+                            maxLength={64}
+                            className="mod-input"
+                          />
+                          <div className="color-picker-group">
+                            <label>Color:</label>
+                            <input
+                              type="color"
+                              value={flairForm.backgroundColor}
+                              onChange={(e) => setFlairForm({ ...flairForm, backgroundColor: e.target.value })}
+                              className="mod-color-input"
+                            />
+                          </div>
+                          <button type="submit" className="mod-submit-btn">Add Flair</button>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* Add Rule */}
+                    <div className="mod-tool-section">
+                      <button 
+                        className="mod-tool-btn"
+                        onClick={() => setShowAddRule(!showAddRule)}
+                        type="button"
+                      >
+                        {showAddRule ? '− Cancel' : '+ Add Rule'}
+                      </button>
+                      
+                      {showAddRule && (
+                        <form onSubmit={handleAddRule} className="mod-form">
+                          <input
+                            type="text"
+                            placeholder="Rule title"
+                            value={ruleForm.title}
+                            onChange={(e) => setRuleForm({ ...ruleForm, title: e.target.value })}
+                            maxLength={100}
+                            className="mod-input"
+                          />
+                          <textarea
+                            placeholder="Rule description (optional)"
+                            value={ruleForm.description}
+                            onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })}
+                            maxLength={500}
+                            rows={3}
+                            className="mod-textarea"
+                          />
+                          <button type="submit" className="mod-submit-btn">Add Rule</button>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* View current flairs */}
+                    {community && community.flairs && community.flairs.length > 0 && (
+                      <div className="mod-tool-section">
+                        <h4>Current Flairs ({community.flairs.length})</h4>
+                        <div className="current-flairs">
+                          {community.flairs.map((flair, idx) => (
+                            <span 
+                              key={idx}
+                              className="flair-preview"
+                              style={{ backgroundColor: flair.backgroundColor, color: flair.textColor || '#FFFFFF' }}
+                            >
+                              {flair.text}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="community-sidebar-card">
               <h3>About Community</h3>
               {community && (

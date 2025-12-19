@@ -6,14 +6,15 @@
 }
 
 /* Alert positioning */
-.create-post-page .alert {
+.create-post-alert {
   position: fixed;
-  top: 60px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  min-width: 400px;
-  max-width: 600px;
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .create-content {

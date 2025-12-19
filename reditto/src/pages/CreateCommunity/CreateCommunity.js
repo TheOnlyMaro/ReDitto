@@ -179,7 +179,8 @@ const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, s
         <Alert 
           type={alert.type} 
           message={alert.message} 
-          onClose={() => setAlert(null)} 
+          onClose={() => setAlert(null)}
+          className="create-community-alert"
         />
       )}
 

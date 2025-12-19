@@ -27,6 +27,7 @@ const createCommunity = async (req, res) => {
       name: name.toLowerCase(),
       description: description || '',
       creator: creatorId,
+      moderators: [creatorId], // Add creator as moderator
       category: category || 'General',
       settings: settings || {},
       appearance: appearance || {},
@@ -35,19 +36,38 @@ const createCommunity = async (req, res) => {
 
     await community.save();
 
-    // Auto-join: Add creator to community members and update user's joined communities
+    // Auto-join: Add creator to community members and update user's communities
     const user = await User.findById(creatorId);
     if (user) {
       if (!user.communities) {
-        user.communities = { joined: [] };
+        user.communities = { created: [], joined: [], moderated: [] };
+      }
+      if (!user.communities.created) {
+        user.communities.created = [];
       }
       if (!user.communities.joined) {
         user.communities.joined = [];
       }
+      if (!user.communities.moderated) {
+        user.communities.moderated = [];
+      }
+      
+      // Add to created communities
+      if (!user.communities.created.includes(community._id)) {
+        user.communities.created.push(community._id);
+      }
+      
+      // Add to joined communities
       if (!user.communities.joined.includes(community._id)) {
         user.communities.joined.push(community._id);
-        await user.save();
       }
+      
+      // Add to moderated communities
+      if (!user.communities.moderated.includes(community._id)) {
+        user.communities.moderated.push(community._id);
+      }
+      
+      await user.save();
     }
 
     // Populate creator and moderator details

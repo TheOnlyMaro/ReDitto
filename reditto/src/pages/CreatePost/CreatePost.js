@@ -82,29 +82,42 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
 
       try {
         setLoadingFlairs(true);
-        // TODO: Fetch flairs from API for selected community
-        // const response = await fetch(`http://localhost:5000/api/communities/${formData.community}/flairs`);
-        // const data = await response.json();
-        // setAvailableFlairs(data.flairs);
         
-        // Mock data for now
-        const mockFlairs = [
-          { _id: '1', text: 'Discussion', backgroundColor: '#0079D3' },
-          { _id: '2', text: 'Question', backgroundColor: '#46D160' },
-          { _id: '3', text: 'News', backgroundColor: '#FF4500' },
-          { _id: '4', text: 'Meme', backgroundColor: '#FFB000' },
-          { _id: '5', text: 'Announcement', backgroundColor: '#7C7C7C' }
-        ];
-        setAvailableFlairs(mockFlairs);
+        // Find the selected community to get its name
+        const selectedCommunity = communities.find(comm => comm._id === formData.community);
+        
+        if (!selectedCommunity) {
+          setAvailableFlairs([]);
+          setLoadingFlairs(false);
+          return;
+        }
+
+        // Fetch community details including flairs
+        const response = await fetch(`http://localhost:5000/api/communities/${selectedCommunity.name}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch community details');
+        }
+
+        const data = await response.json();
+        
+        // Set flairs from community data
+        if (data.community && data.community.flairs) {
+          setAvailableFlairs(data.community.flairs);
+        } else {
+          setAvailableFlairs([]);
+        }
+        
         setLoadingFlairs(false);
       } catch (error) {
         console.error('Failed to fetch flairs:', error);
+        setAvailableFlairs([]);
         setLoadingFlairs(false);
       }
     };
 
     fetchFlairs();
-  }, [formData.community]);
+  }, [formData.community, communities]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -285,7 +298,8 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         <Alert 
           type={alert.type} 
           message={alert.message} 
-          onClose={() => setAlert(null)} 
+          onClose={() => setAlert(null)}
+          className="create-post-alert"
         />
       )}
 
