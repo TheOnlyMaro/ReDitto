@@ -7,6 +7,8 @@ import Post from '../../components/Post/Post';
 import Loading from '../../components/Loading/Loading';
 import Alert from '../../components/Alert/Alert';
 import Button from '../../components/Button/Button';
+import { userAPI } from '../../services/api';
+import { authService } from '../../services/authService';
 import './UserPage.css';
 
 const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch }) => {
@@ -280,11 +282,43 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
     if (!profile) return;
 
     const newIsJoined = !isJoined;
-    setIsJoined(newIsJoined);
 
-    // If parent provided onJoinCommunity, reuse it for follow/unfollow flow for now
-    if (onJoinCommunity) {
-      await onJoinCommunity(profile.username || profile.name, newIsJoined, profile._id);
+    try {
+      const token = authService.getToken();
+      if (!token) throw new Error('Not authenticated');
+
+      if (newIsJoined) {
+        await userAPI.followUser(profile._id, token);
+        // update local profile followers
+        setProfile(prev => ({
+          ...prev,
+          followers: [...(prev.followers || []), user._id]
+        }));
+      } else {
+        await userAPI.unfollowUser(profile._id, token);
+        setProfile(prev => ({
+          ...prev,
+          followers: (prev.followers || []).filter(id => id.toString() !== user._id.toString())
+        }));
+      }
+
+      setIsJoined(newIsJoined);
+
+      // Refresh current user in local storage and notify listeners
+      try {
+        const { authAPI } = require('../../services/api');
+        const refreshed = await authAPI.getCurrentUser(token);
+        if (refreshed && refreshed.user) {
+          authService.saveUser(refreshed.user);
+          window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: refreshed.user } }));
+        }
+      } catch (err) {
+        // Non-fatal
+        console.error('Failed to refresh current user after follow/unfollow:', err);
+      }
+    } catch (error) {
+      console.error('Follow/unfollow failed:', error);
+      setAlert({ type: 'error', message: error.message || 'Failed to update follow status' });
     }
   };
 
@@ -407,6 +441,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                     onShare={() => handleShare(post.id)}
                     onCopyLink={() => handleCopyLink(post)}
                     shareMenuOpen={shareMenuPostId === post.id}
+                    onJoin={onJoinCommunity}
                   />
                 ))}
               </div>
@@ -434,13 +469,42 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                     </div>
                     <div className="sidebar-created">
                     <span>Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : ''}</span>
-                  </div>
+                    </div>
                   </>
                 )}
               </div>
-          </div>
+              {/* Moderated Subreddits */}
+              <div className="community-right-sidebar">
+                {profile?.communities?.moderated && profile.communities.moderated.length > 0 && (
+                  <div className="community-sidebar-card">
+                    <h3>Moderated Subreddits</h3>
+                    <div className="moderators-list">
+                      {(() => {
+                        const createdIds = new Set((profile.communities.created || []).map(c => (c._id || c).toString()));
+                        const seen = new Set();
+                        return profile.communities.moderated
+                          .map(c => (c._id ? c : c))
+                          .filter(c => {
+                            const id = (c._id || c).toString();
+                            if (createdIds.has(id)) return false; // skip duplicates
+                            if (seen.has(id)) return false;
+                            seen.add(id);
+                            return true;
+                          })
+                          .map((community) => (
+                            <Link key={(community._id || community).toString()} to={`/r/${community.name}`} className="moderator-item">
+                              <img src={community.icon || `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.name}`} alt={community.name} className="moderator-avatar" />
+                              <span className="moderator-username">r/{community.name}</span>
+                            </Link>
+                          ));
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

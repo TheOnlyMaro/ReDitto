@@ -89,6 +89,30 @@ export const userAPI = {
     return handleResponse(response);
   },
 
+  // Follow a user
+  followUser: async (userId, token) => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Unfollow a user
+  unfollowUser: async (userId, token) => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/unfollow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      }
+    });
+    return handleResponse(response);
+  },
+
   // Delete user
   deleteUser: async (userId, token) => {
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
