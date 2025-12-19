@@ -1,0 +1,85 @@
+.user-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 32px 24px 24px 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.user-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-color);
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-info h2 {
+  margin: 0 0 4px 0;
+  font-size: 2rem;
+  color: var(--text-primary);
+}
+
+.user-displayName {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.user-karma, .user-followers {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.follow-btn {
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.follow-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.follow-btn:not(:disabled):hover {
+  background: var(--accent-color-dark, #0056b3);
+}
+
+.user-posts-section {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 24px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.user-posts-section h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+}
+
+.user-no-posts {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 32px 0;
+}
