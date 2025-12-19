@@ -22,9 +22,9 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
       setLoading(true);
       
       // Fetch popular communities (top 10 by member count)
-      const popularResponse = await fetch('http://localhost:5000/api/communities?limit=10&sort=-memberCount');
+      const popularResponse = await fetch('http://localhost:5000/api/communities?limit=100&sort=-memberCount');
       const popularData = await popularResponse.json();
-      setPopularCommunities(popularData.communities || []);
+      const allPopularCommunities = popularData.communities || [];
 
       // If user is logged in, fetch their specific communities
       if (user && user.communities) {
@@ -50,6 +50,16 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
           );
           setModeratedCommunities(moderated);
         }
+
+        // Filter popular communities to exclude followed ones (top 10 NOT followed)
+        const userJoinedIds = user.communities.joined || [];
+        const notFollowed = allPopularCommunities.filter(comm => 
+          !userJoinedIds.includes(comm._id)
+        ).slice(0, 10);
+        setPopularCommunities(notFollowed);
+      } else {
+        // If not logged in, show top 10 popular communities
+        setPopularCommunities(allPopularCommunities.slice(0, 10));
       }
     } catch (error) {
       console.error('Error fetching communities:', error);
