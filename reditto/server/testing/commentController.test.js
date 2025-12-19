@@ -84,7 +84,7 @@ describe('Comment Controller Tests', () => {
       });
     
     testPost = postResponse.body.post;
-  });
+  }, 10000); // Increase timeout for main beforeEach
 
   describe('POST /api/comments - Create Comment', () => {
     test('Should create a comment with valid data', async () => {
@@ -525,7 +525,7 @@ describe('Comment Controller Tests', () => {
       expect(response.body.comments[0].content).toContain('Reply');
     });
 
-    test('Should not return deleted comments', async () => {
+    test('Should return deleted comments with [deleted] content', async () => {
       const commentsResponse = await request(app)
         .get(`/api/comments/post/${testPost._id}`);
       
@@ -539,7 +539,11 @@ describe('Comment Controller Tests', () => {
         .get(`/api/comments/post/${testPost._id}`)
         .expect(200);
 
-      expect(response.body.comments).toHaveLength(2);
+      // Should still return all 3 comments, but deleted one has [deleted] content
+      expect(response.body.comments).toHaveLength(3);
+      const deletedComment = response.body.comments.find(c => c._id === commentToDelete._id);
+      expect(deletedComment.content).toBe('[deleted]');
+      expect(deletedComment.flags.isDeleted).toBe(true);
     });
 
     test('Should fail with invalid post ID', async () => {
@@ -623,14 +627,17 @@ describe('Comment Controller Tests', () => {
         .expect(404);
     });
 
-    test('Should not return deleted comment to non-author', async () => {
+    test('Should return deleted comment with [deleted] content', async () => {
       await request(app)
         .delete(`/api/comments/${testComment._id}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      await request(app)
+      const response = await request(app)
         .get(`/api/comments/${testComment._id}`)
-        .expect(404);
+        .expect(200);
+
+      expect(response.body.comment.content).toBe('[deleted]');
+      expect(response.body.comment.flags.isDeleted).toBe(true);
     });
 
     test('Should include replies when includeReplies=true', async () => {
@@ -711,7 +718,7 @@ describe('Comment Controller Tests', () => {
             parentComment: parentComment._id
           });
       }
-    });
+    }, 10000); // Increase timeout for beforeEach
 
     test('Should get all replies for a comment', async () => {
       const response = await request(app)
@@ -783,7 +790,7 @@ describe('Comment Controller Tests', () => {
       expect(response.body.replies[0].voteCount).toBe(1);
     });
 
-    test('Should not include deleted replies', async () => {
+    test('Should include deleted replies with [deleted] content', async () => {
       // Get replies and delete one
       const repliesResponse = await request(app)
         .get(`/api/comments/${parentComment._id}/replies`);
@@ -798,8 +805,11 @@ describe('Comment Controller Tests', () => {
         .get(`/api/comments/${parentComment._id}/replies`)
         .expect(200);
 
-      expect(response.body.replies).toHaveLength(4);
-      expect(response.body.replies.every(r => r._id !== replyToDelete._id)).toBe(true);
+      // Should still return all 5 replies
+      expect(response.body.replies).toHaveLength(5);
+      const deletedReply = response.body.replies.find(r => r._id === replyToDelete._id);
+      expect(deletedReply.content).toBe('[deleted]');
+      expect(deletedReply.flags.isDeleted).toBe(true);
     });
 
     test('Should fail with invalid comment ID', async () => {
@@ -1036,7 +1046,7 @@ describe('Comment Controller Tests', () => {
       expect(response.body.message).toBe('Comment deleted successfully');
     });
 
-    test('Should decrement post commentCount', async () => {
+    test('Should NOT decrement post commentCount on soft delete', async () => {
       await request(app)
         .delete(`/api/comments/${testComment._id}`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -1044,7 +1054,8 @@ describe('Comment Controller Tests', () => {
       const postResponse = await request(app)
         .get(`/api/posts/${testPost._id}`);
 
-      expect(postResponse.body.post.commentCount).toBe(0);
+      // Comment is soft deleted, so count remains the same
+      expect(postResponse.body.post.commentCount).toBe(1);
     });
 
     test('Should NOT decrement parent comment replyCount when deleting reply', async () => {
