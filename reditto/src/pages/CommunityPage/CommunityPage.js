@@ -24,6 +24,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
   const [showAddRule, setShowAddRule] = useState(false);
   const [flairForm, setFlairForm] = useState({ text: '', backgroundColor: '#0079D3' });
   const [ruleForm, setRuleForm] = useState({ title: '', description: '' });
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fetch community data
   useEffect(() => {
@@ -52,7 +53,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
     };
 
     fetchCommunity();
-  }, [communityName]);
+  }, [communityName, refreshTrigger]);
 
   // Update join state when user data changes
   useEffect(() => {
@@ -261,13 +262,10 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
       }
 
       setAlert({ type: 'success', message: 'Flair added successfully' });
-      // Merge flairs with existing community to preserve populated fields
-      setCommunity(prev => ({
-        ...prev,
-        flairs: data.community?.flairs || prev.flairs || []
-      }));
       setFlairForm({ text: '', backgroundColor: '#0079D3' });
       setShowAddFlair(false);
+      // Trigger re-fetch to get updated community data
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error adding flair:', error);
       setAlert({ type: 'error', message: error.message });
@@ -300,13 +298,10 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
       }
 
       setAlert({ type: 'success', message: 'Rule added successfully' });
-      // Merge rules with existing community to preserve populated fields
-      setCommunity(prev => ({
-        ...prev,
-        rules: data.community?.rules || prev.rules || []
-      }));
       setRuleForm({ title: '', description: '' });
       setShowAddRule(false);
+      // Trigger re-fetch to get updated community data
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Error adding rule:', error);
       setAlert({ type: 'error', message: error.message });
