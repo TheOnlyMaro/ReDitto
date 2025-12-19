@@ -8,8 +8,10 @@ import CreateCommunity from './pages/CreateCommunity/CreateCommunity';
 import CreatePost from './pages/CreatePost/CreatePost';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
+
 import { authService } from './services/authService';
 import { searchAPI } from './services/api';
+import UserPage from './pages/UserPage/UserPage';
 import './App.css';
 
 function App() {
@@ -187,7 +189,7 @@ function App() {
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} searchResults={searchResults} isSearching={isSearching} />} />
           <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
-          <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
+          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
         </Routes>
