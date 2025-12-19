@@ -18,10 +18,22 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    // Check if origin matches any allowed origin
+    const isAllowed = allowedOrigins.some(allowed => {
+      // Exact match
+      if (origin === allowed) return true;
+      // For Vercel deployments: allow all subdomains (e.g., preview deployments)
+      if (allowed && allowed.includes('vercel.app') && origin.endsWith('vercel.app')) return true;
+      // Flexible matching for localhost and the allowed origin
+      return origin.startsWith(allowed);
+    });
+    
+    if (isAllowed) {
+      console.log('✅ CORS allowed:', origin);
       callback(null, true);
     } else {
-      console.log('Blocked by CORS:', origin);
+      console.log('❌ Blocked by CORS:', origin);
+      console.log('Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
