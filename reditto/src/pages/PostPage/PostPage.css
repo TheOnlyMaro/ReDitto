@@ -1,8 +1,11 @@
 .post-page {
   min-height: 100vh;
-  background-color: var(--background-primary);
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
+  position: relative;
 }
 
+/* Alert positioning */
 .post-page-alert {
   position: fixed;
   top: 80px;

@@ -147,6 +147,36 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
       
+      // Optimistically update UI before API call
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            const currentVote = post.userVote;
+            let newVoteScore = post.voteScore;
+            
+            // Calculate new vote score based on vote changes
+            if (voteType === 'unvote') {
+              // Remove vote: decrease by 1 if upvoted, increase by 1 if downvoted
+              if (currentVote === 'upvote') newVoteScore -= 1;
+              else if (currentVote === 'downvote') newVoteScore += 1;
+            } else if (voteType === 'upvote') {
+              if (currentVote === 'downvote') newVoteScore += 2; // Remove downvote (-1) and add upvote (+1)
+              else if (!currentVote) newVoteScore += 1; // Add upvote
+            } else if (voteType === 'downvote') {
+              if (currentVote === 'upvote') newVoteScore -= 2; // Remove upvote (+1) and add downvote (-1)
+              else if (!currentVote) newVoteScore -= 1; // Add downvote
+            }
+            
+            return {
+              ...post,
+              voteScore: newVoteScore,
+              userVote: voteType === 'unvote' ? null : voteType
+            };
+          }
+          return post;
+        })
+      );
+      
       const response = await fetch(endpoint, {
         method: method,
         headers: {
@@ -155,33 +185,100 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to vote');
-      }
-
-      const data = await response.json();
-      
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === postId
-            ? {
-                ...post,
-                voteScore: data.post.voteCount,
-                userVote: voteType === 'unvote' ? null : voteType
+      if (response.ok) {
+        // Vote succeeded - optimistic update already applied, no need to update again
+        console.log(`Vote ${voteType} successful for post ${postId}`);
+        
+        // Update user data synchronously to ensure it's ready before navigation
+        try {
+          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const authService = require('../../services/authService');
+            authService.default.saveUser(userData.user);
+            // Dispatch event to notify App.js that user data has been updated
+            window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
+          }
+        } catch (err) {
+          console.error('Failed to update user data:', err);
+        }
+      } else {
+        // If vote failed, revert the optimistic update
+        const data = await response.json();
+        setAlert({
+          type: 'error',
+          message: data.message || 'Failed to vote. Please try again.'
+        });
+        
+        // Revert by re-fetching posts or reversing the change
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              // Reverse the vote change
+              const currentVote = voteType === 'unvote' ? null : voteType;
+              let revertedScore = post.voteScore;
+              
+              if (voteType === 'unvote') {
+                if (post.userVote === 'upvote') revertedScore += 1;
+                else if (post.userVote === 'downvote') revertedScore -= 1;
+              } else if (voteType === 'upvote') {
+                if (post.userVote === 'downvote') revertedScore -= 2;
+                else if (!post.userVote) revertedScore -= 1;
+              } else if (voteType === 'downvote') {
+                if (post.userVote === 'upvote') revertedScore += 2;
+                else if (!post.userVote) revertedScore += 1;
               }
-            : post
-        )
-      );
-
-      window.dispatchEvent(new CustomEvent('userDataUpdated', {
-        detail: { user: data.user }
-      }));
+              
+              return {
+                ...post,
+                voteScore: revertedScore,
+                userVote: post.userVote // Keep original vote state
+              };
+            }
+            return post;
+          })
+        );
+      }
     } catch (error) {
       console.error('Failed to vote:', error);
       setAlert({
         type: 'error',
         message: 'Failed to vote. Please try again.'
       });
+      
+      // Revert the optimistic update on error
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            // Reverse the vote change
+            let revertedScore = post.voteScore;
+            const currentVote = voteType === 'unvote' ? null : voteType;
+            
+            if (voteType === 'unvote') {
+              if (post.userVote === 'upvote') revertedScore += 1;
+              else if (post.userVote === 'downvote') revertedScore -= 1;
+            } else if (voteType === 'upvote') {
+              if (post.userVote === 'downvote') revertedScore -= 2;
+              else if (!post.userVote) revertedScore -= 1;
+            } else if (voteType === 'downvote') {
+              if (post.userVote === 'upvote') revertedScore += 2;
+              else if (!post.userVote) revertedScore += 1;
+            }
+            
+            return {
+              ...post,
+              voteScore: revertedScore,
+              userVote: post.userVote // Keep original vote state
+            };
+          }
+          return post;
+        })
+      );
     }
   };
 
@@ -322,7 +419,8 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
         <Alert 
           type={alert.type} 
           message={alert.message} 
-          onClose={() => setAlert(null)} 
+          onClose={() => setAlert(null)}
+          className="community-page-alert"
         />
       )}
 
