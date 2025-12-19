@@ -11,11 +11,13 @@ const {
   addRule,
   addFlair
 } = require('../controllers/communityController');
+const { getPosts } = require('../controllers/postController');
 const { authenticateToken } = require('../middleware/validation');
 
 // Public routes
 router.get('/', getCommunities);
 router.get('/:name', getCommunityByName);
+router.get('/:name/posts', getPosts); // Get posts for a specific community
 
 // Protected routes
 router.post('/', authenticateToken, createCommunity);

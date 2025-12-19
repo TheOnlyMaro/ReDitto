@@ -401,6 +401,93 @@ describe('Comment Model Tests', () => {
     });
   });
 
+  describe('Comment Replies Array', () => {
+    test('should initialize replies array as empty', async () => {
+      const comment = await Comment.create({
+        content: 'Test comment',
+        author: testUser._id,
+        post: testPost._id
+      });
+
+      expect(comment.replies).toBeDefined();
+      expect(comment.replies).toHaveLength(0);
+      expect(Array.isArray(comment.replies)).toBe(true);
+    });
+
+    test('should allow adding reply IDs to replies array', async () => {
+      const parentComment = await Comment.create({
+        content: 'Parent comment',
+        author: testUser._id,
+        post: testPost._id
+      });
+
+      const replyComment = await Comment.create({
+        content: 'Reply comment',
+        author: testUser._id,
+        post: testPost._id,
+        parentComment: parentComment._id
+      });
+
+      parentComment.replies.push(replyComment._id);
+      await parentComment.save();
+
+      expect(parentComment.replies).toHaveLength(1);
+      expect(parentComment.replies[0].toString()).toBe(replyComment._id.toString());
+    });
+
+    test('should populate replies array', async () => {
+      const parentComment = await Comment.create({
+        content: 'Parent comment',
+        author: testUser._id,
+        post: testPost._id
+      });
+
+      const replyComment = await Comment.create({
+        content: 'Reply comment',
+        author: testUser._id,
+        post: testPost._id,
+        parentComment: parentComment._id
+      });
+
+      parentComment.replies.push(replyComment._id);
+      await parentComment.save();
+
+      // eslint-disable-next-line testing-library/await-async-query
+      const populatedComment = await Comment.findById(parentComment._id)
+        .populate('replies', 'content');
+
+      expect(populatedComment.replies).toHaveLength(1);
+      expect(populatedComment.replies[0].content).toBe('Reply comment');
+    });
+
+    test('should allow multiple replies in array', async () => {
+      const parentComment = await Comment.create({
+        content: 'Parent comment',
+        author: testUser._id,
+        post: testPost._id
+      });
+
+      const reply1 = await Comment.create({
+        content: 'Reply 1',
+        author: testUser._id,
+        post: testPost._id,
+        parentComment: parentComment._id
+      });
+
+      const reply2 = await Comment.create({
+        content: 'Reply 2',
+        author: testUser._id,
+        post: testPost._id,
+        parentComment: parentComment._id
+      });
+
+      parentComment.replies.push(reply1._id, reply2._id);
+      await parentComment.save();
+
+      expect(parentComment.replies).toHaveLength(2);
+    });
+  });
+
   describe('Comment Population', () => {
     test('should populate author details', async () => {
       const comment = await Comment.create({

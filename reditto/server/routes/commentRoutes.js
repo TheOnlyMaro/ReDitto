@@ -4,6 +4,7 @@ const {
   createComment,
   getCommentsByPost,
   getCommentById,
+  getCommentReplies,
   updateComment,
   deleteComment,
   upvoteComment,
@@ -18,6 +19,7 @@ const {
 
 // Public routes
 router.get('/post/:postId', getCommentsByPost); // Get all comments for a post
+router.get('/:commentId/replies', getCommentReplies); // Get replies for a comment (must be before /:commentId)
 router.get('/:commentId', getCommentById);      // Get specific comment
 
 // Protected routes

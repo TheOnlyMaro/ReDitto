@@ -3,6 +3,57 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
+// Helper function to update parent comment's replies array and recursively update reply counts
+const updateParentReplies = async (parentCommentId, childCommentId, action = 'add') => {
+  try {
+    const parentComment = await Comment.findById(parentCommentId);
+    if (!parentComment) return;
+
+    if (action === 'add') {
+      // Add child to parent's replies array
+      if (!parentComment.replies.includes(childCommentId)) {
+        parentComment.replies.push(childCommentId);
+      }
+      // Increment reply count
+      parentComment.replyCount += 1;
+    } else if (action === 'remove') {
+      // Remove child from parent's replies array
+      parentComment.replies = parentComment.replies.filter(
+        id => id.toString() !== childCommentId.toString()
+      );
+      // Decrement reply count
+      parentComment.replyCount = Math.max(0, parentComment.replyCount - 1);
+    }
+
+    await parentComment.save();
+
+    // Recursively update ancestor reply counts
+    if (parentComment.parentComment) {
+      await updateAncestorReplyCounts(parentComment.parentComment, action === 'add' ? 1 : -1);
+    }
+  } catch (error) {
+    console.error('Error updating parent replies:', error);
+  }
+};
+
+// Helper function to recursively update reply counts for all ancestors
+const updateAncestorReplyCounts = async (commentId, delta) => {
+  try {
+    const comment = await Comment.findById(commentId);
+    if (!comment) return;
+
+    comment.replyCount = Math.max(0, comment.replyCount + delta);
+    await comment.save();
+
+    // Continue up the chain
+    if (comment.parentComment) {
+      await updateAncestorReplyCounts(comment.parentComment, delta);
+    }
+  } catch (error) {
+    console.error('Error updating ancestor reply counts:', error);
+  }
+};
+
 // Create a new comment
 const createComment = async (req, res) => {
   try {
@@ -33,10 +84,6 @@ const createComment = async (req, res) => {
       if (parentCommentDoc.flags.isDeleted) {
         return res.status(400).json({ error: 'Cannot reply to deleted comment' });
       }
-
-      // Increment reply count on parent comment
-      parentCommentDoc.replyCount += 1;
-      await parentCommentDoc.save();
     }
 
     // Create comment
@@ -49,7 +96,12 @@ const createComment = async (req, res) => {
 
     await comment.save();
 
-    // Increment comment count on post
+    // If parent comment exists, add this comment to parent's replies array and update reply counts
+    if (parentComment) {
+      await updateParentReplies(parentComment, comment._id, 'add');
+    }
+
+    // Always increment comment count on post (includes top-level comments and all nested replies)
     postDoc.commentCount += 1;
     await postDoc.save();
 
@@ -95,10 +147,9 @@ const getCommentsByPost = async (req, res) => {
     const sortBy = req.query.sortBy || 'createdAt'; // 'createdAt', 'voteCount'
     const parentCommentId = req.query.parentComment;
 
-    // Build query
+    // Build query - include deleted comments to maintain thread structure
     const query = {
-      post: postId,
-      'flags.isDeleted': false
+      post: postId
     };
 
     // Filter by parent comment (for replies) or top-level comments
@@ -119,11 +170,25 @@ const getCommentsByPost = async (req, res) => {
 
     // Get comments with pagination
     const comments = await Comment.find(query)
-      .populate('author', 'username displayName avatar karma')
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('parentComment', 'content author')
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit);
+    
+    // Handle deleted authors - replace null with placeholder
+    comments.forEach(comment => {
+      if (!comment.author || comment.author.flags?.isDeleted) {
+        comment.author = {
+          _id: 'deleted',
+          username: '[deleted]',
+          displayName: '[deleted]'
+        };
+      }
+    });
 
     // Get total count
     const totalComments = await Comment.countDocuments(query);
@@ -150,27 +215,45 @@ const getCommentsByPost = async (req, res) => {
 const getCommentById = async (req, res) => {
   try {
     const { commentId } = req.params;
+    const includeReplies = req.query.includeReplies === 'true';
 
     // Validate comment ID
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
       return res.status(400).json({ error: 'Invalid comment ID' });
     }
 
-    const comment = await Comment.findById(commentId)
-      .populate('author', 'username displayName avatar karma')
+    let comment = await Comment.findById(commentId)
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
       .populate('post', 'title')
       .populate('parentComment', 'content author');
 
     if (!comment) {
       return res.status(404).json({ error: 'Comment not found' });
     }
+    
+    // Handle deleted author
+    if (!comment.author || comment.author.flags?.isDeleted) {
+      comment.author = {
+        _id: 'deleted',
+        username: '[deleted]',
+        displayName: '[deleted]'
+      };
+    }
 
-    // Don't return deleted comments unless requester is the author
-    if (comment.flags.isDeleted) {
-      const requesterId = req.user?.userId;
-      if (!requesterId || comment.author._id.toString() !== requesterId) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
+    // Return deleted comments with [deleted] content to maintain thread structure
+    // Optionally include populated replies (direct children only)
+    if (includeReplies && comment.replies && comment.replies.length > 0) {
+      comment = await comment.populate({
+        path: 'replies',
+        populate: {
+          path: 'author',
+          select: 'username displayName avatar karma'
+        },
+        options: { sort: { createdAt: -1 } }
+      });
     }
 
     res.status(200).json({ comment });
@@ -178,6 +261,81 @@ const getCommentById = async (req, res) => {
     console.error('Error fetching comment:', error);
     res.status(500).json({ 
       error: 'Failed to fetch comment',
+      details: error.message 
+    });
+  }
+};
+
+// Get direct replies for a comment (paginated)
+const getCommentReplies = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+
+    // Validate comment ID
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ error: 'Invalid comment ID' });
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Get pagination params
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const sortBy = req.query.sortBy || 'createdAt';
+
+    // Sort options
+    const sortOptions = {};
+    if (sortBy === 'voteCount') {
+      sortOptions.voteCount = -1;
+      sortOptions.createdAt = -1;
+    } else {
+      sortOptions.createdAt = -1;
+    }
+
+    // Fetch replies from the replies array
+    const totalReplies = comment.replies.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    const replyIds = comment.replies.slice(startIndex, endIndex);
+    
+    // Include deleted comments to maintain thread structure
+    const replies = await Comment.find({
+      _id: { $in: replyIds }
+    })
+      .populate({
+        path: 'author',
+        select: 'username displayName avatar karma flags'
+      })
+      .sort(sortOptions);
+    
+    // Handle deleted authors
+    replies.forEach(reply => {
+      if (!reply.author || reply.author.flags?.isDeleted) {
+        reply.author = {
+          _id: 'deleted',
+          username: '[deleted]',
+          displayName: '[deleted]'
+        };
+      }
+    });
+
+    res.status(200).json({
+      replies,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalReplies / limit),
+        totalReplies,
+        limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching comment replies:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch comment replies',
       details: error.message 
     });
   }
@@ -263,23 +421,14 @@ const deleteComment = async (req, res) => {
       });
     }
 
-    // Soft delete
+    // Soft delete - keep in thread structure to maintain reply chains
+    // Don't decrement any counts - deleted comments still count toward totals
     comment.flags.isDeleted = true;
     comment.content = '[deleted]';
     await comment.save();
 
-    // Decrement comment count on post
-    post.commentCount = Math.max(0, post.commentCount - 1);
-    await post.save();
-
-    // Decrement reply count on parent comment if exists
-    if (comment.parentComment) {
-      const parentComment = await Comment.findById(comment.parentComment);
-      if (parentComment) {
-        parentComment.replyCount = Math.max(0, parentComment.replyCount - 1);
-        await parentComment.save();
-      }
-    }
+    // Don't remove from parent's replies array or update reply counts
+    // This preserves the thread structure and allows replies to remain visible
 
     res.status(200).json({
       message: 'Comment deleted successfully'
@@ -317,6 +466,22 @@ const upvoteComment = async (req, res) => {
     // Upvote the comment
     comment.upvote(userId);
     await comment.save();
+
+    // Update user's upvotedComments array
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from downvoted if present
+      user.downvotedComments = user.downvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      // Add to upvoted if not already present
+      if (!user.upvotedComments.includes(commentId)) {
+        user.upvotedComments.push(commentId);
+      }
+      
+      await user.save();
+    }
 
     res.status(200).json({
       message: 'Comment upvoted successfully',
@@ -360,6 +525,22 @@ const downvoteComment = async (req, res) => {
     comment.downvote(userId);
     await comment.save();
 
+    // Update user's downvotedComments array
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from upvoted if present
+      user.upvotedComments = user.upvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      // Add to downvoted if not already present
+      if (!user.downvotedComments.includes(commentId)) {
+        user.downvotedComments.push(commentId);
+      }
+      
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Comment downvoted successfully',
       voteCount: comment.voteCount,
@@ -398,6 +579,19 @@ const removeVote = async (req, res) => {
     comment.removeVote(userId);
     await comment.save();
 
+    // Update user's vote arrays
+    const user = await User.findById(userId);
+    if (user) {
+      user.upvotedComments = user.upvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      user.downvotedComments = user.downvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Vote removed successfully',
       voteCount: comment.voteCount,
@@ -419,6 +613,7 @@ module.exports = {
   createComment,
   getCommentsByPost,
   getCommentById,
+  getCommentReplies,
   updateComment,
   deleteComment,
   upvoteComment,

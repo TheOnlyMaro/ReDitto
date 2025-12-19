@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import PostPage from './pages/PostPage/PostPage';
+import CommentThread from './pages/CommentThread/CommentThread';
+import CommunityPage from './pages/CommunityPage/CommunityPage';
+import CreateCommunity from './pages/CreateCommunity/CreateCommunity';
+import CreatePost from './pages/CreatePost/CreatePost';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import { authService } from './services/authService';
@@ -10,6 +14,7 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [userVoteVersion, setUserVoteVersion] = useState(0);
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
     const saved = localStorage.getItem('reditto_sidebar_expanded');
@@ -50,6 +55,21 @@ function App() {
     };
 
     fetchCurrentUser();
+
+    // Listen for custom user update events (triggered when user data changes in other components)
+    const handleUserUpdate = (event) => {
+      if (event.detail?.user) {
+        setUser(event.detail.user);
+        // Increment version to trigger refetch in components that depend on vote state
+        setUserVoteVersion(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('userDataUpdated', handleUserUpdate);
+
+    return () => {
+      window.removeEventListener('userDataUpdated', handleUserUpdate);
+    };
   }, []);
 
   // Apply dark mode class to body
@@ -140,9 +160,12 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Home user={user} userLoading={userLoading} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/" element={<Home user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/create/community" element={<CreateCommunity user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/create/post" element={<CreatePost user={user} userLoading={userLoading} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-          <Route path="/r/:communityName" element={<div style={{padding: '100px', textAlign: 'center'}}>Community Page - Coming Soon</div>} />
+          <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+          <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
           <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />

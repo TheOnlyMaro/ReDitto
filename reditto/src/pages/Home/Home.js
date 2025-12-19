@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Post from '../../components/Post/Post';
@@ -6,10 +7,13 @@ import Loading from '../../components/Loading/Loading';
 import Alert from '../../components/Alert/Alert';
 import './Home.css';
 
-const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const Home = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunity, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
+  const [shareMenuPostId, setShareMenuPostId] = useState(null);
 
   // Fetch posts from database ONLY after user is loaded
   useEffect(() => {
@@ -49,6 +53,9 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
             title: post.title,
             content: post.content,
             imageUrl: post.imageUrl,
+            author: post.author?.username || '[deleted]',
+            authorDeleted: post.author?.flags?.isDeleted || !post.author,
+            postDeleted: post.flags?.isDeleted || false,
             community: {
               id: post.community._id,
               name: post.community.name,
@@ -71,8 +78,8 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
     };
 
     fetchPosts();
-  }, [userLoading]); // Only depend on userLoading, not user
-  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLoading, location.key, userVoteVersion]); // Refetch when returning to page or when user votes change  
   const handleSearch = (query) => {
     console.log('Search query:', query);
     // TODO: Implement search functionality
@@ -143,21 +150,24 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         // Vote succeeded - optimistic update already applied, no need to update again
         console.log(`Vote ${voteType} successful for post ${postId}`);
         
-        // Update user data in background without affecting posts state
-        fetch('http://localhost:5000/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }).then(userResponse => {
+        // Update user data synchronously to ensure it's ready before navigation
+        try {
+          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
           if (userResponse.ok) {
-            return userResponse.json();
-          }
-        }).then(userData => {
-          if (userData) {
+            const userData = await userResponse.json();
             const authService = require('../../services/authService');
             authService.default.saveUser(userData.user);
+            // Dispatch event to notify App.js that user data has been updated
+            window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
           }
-        }).catch(err => console.error('Failed to update user data:', err));
+        } catch (err) {
+          console.error('Failed to update user data:', err);
+        }
       } else {
         console.error('Vote failed:', await response.json());
         // Rollback optimistic update by reversing the vote
@@ -226,14 +236,48 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
   };
 
   const handleComment = (postId) => {
-    console.log(`Comment on post ${postId}`);
-    // TODO: Implement comment functionality
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      navigate(`/r/${post.community.name}/posts/${post.id}`, { 
+        state: { post, fromPath: window.location.pathname } 
+      });
+    }
   };
 
   const handleShare = (postId) => {
-    console.log(`Share post ${postId}`);
-    // TODO: Implement share functionality
+    setShareMenuPostId(shareMenuPostId === postId ? null : postId);
   };
+
+  const handleCopyLink = (postId, communityName) => {
+    const postUrl = `${window.location.origin}/r/${communityName}/posts/${postId}`;
+    navigator.clipboard.writeText(postUrl).then(() => {
+      setAlert({
+        type: 'success',
+        message: 'Link copied to clipboard!'
+      });
+      setShareMenuPostId(null);
+    }).catch(err => {
+      console.error('Failed to copy link:', err);
+      setAlert({
+        type: 'error',
+        message: 'Failed to copy link'
+      });
+    });
+  };
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (shareMenuPostId && !event.target.closest('.share-menu-container')) {
+        setShareMenuPostId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [shareMenuPostId]);
 
   const handleJoin = async (communityName, isJoining, communityId) => {
     console.log(`${isJoining ? 'Join' : 'Unjoin'} community:`, communityName);
@@ -299,7 +343,7 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
         setDarkMode={setDarkMode}
         onLogout={onLogout}
       />
-      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} />
+      <Sidebar isExpanded={sidebarExpanded} setIsExpanded={setSidebarExpanded} user={user} />
       
       {alert && (
         <Alert 
@@ -332,6 +376,8 @@ const Home = ({ user, userLoading, onLogout, onJoinCommunity, darkMode, setDarkM
                   onVote={handleVote}
                   onComment={handleComment}
                   onShare={handleShare}
+                  onCopyLink={handleCopyLink}
+                  shareMenuOpen={shareMenuPostId === post.id}
                   onJoin={handleJoin}
                   onSave={handleSave}
                 />

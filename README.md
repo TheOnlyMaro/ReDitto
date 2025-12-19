@@ -2,9 +2,16 @@
 
 A full-stack Reddit clone built with the MERN stack (MongoDB, Express.js, React, Node.js) for the Web Development university course.
 
+## 📚 Documentation
+
+- **[Quick Start Guide](reditto/QUICKSTART.md)** - Get up and running in 5 minutes
+- **[Development Guide](DEVELOPMENT.md)** - Comprehensive development documentation
+- **[API Documentation](reditto/API.md)** - Complete API endpoint reference
+- **[Commit History](reditto/COMMITS.md)** - Project commit log
+
 ## Project Overview
 
-ReDitto is a social media platform inspired by Reddit, featuring user authentication, profile management, and a modern, responsive UI with Reddit-like design principles.
+ReDitto is a social media platform inspired by Reddit, featuring user authentication, community management, post creation, nested comments, voting system, and a modern, responsive UI with Reddit-like design principles.
 
 ## Technology Stack
 
@@ -130,20 +137,43 @@ ReDitto is a social media platform inspired by Reddit, featuring user authentica
   - Settings
   - Log Out
 
+### Comment System
+- ✅ Comment model with full feature set:
+  - Content validation (max 10,000 chars)
+  - Author and post tracking
+  - Nested comment support (parent/child relationships)
+  - Reply tracking with counts
+  - Vote system (upvotes/downvotes)
+  - Soft delete functionality
+  - Edit tracking with timestamps
+- ✅ Create comments (protected)
+- ✅ Get comments by post ID
+- ✅ Get comment by ID
+- ✅ Get comment replies (nested threading)
+- ✅ Update comments (protected)
+- ✅ Delete comments (protected)
+- ✅ Upvote/downvote comments (protected)
+- ✅ Remove vote from comments (protected)
+- ✅ Recursive reply count updates
+
 ### Testing
 - ✅ Postman-tested API endpoints
-- ✅ 202 comprehensive backend tests
-  - User registration tests
-  - Login validation tests
-  - JWT token security tests
-  - Token forgery detection
-  - Expired token handling
-  - User profile CRUD tests
+- ✅ 202+ comprehensive backend tests
+  - User registration tests (9 tests)
+  - Login validation tests (6 tests)
+  - JWT token security tests (5 tests)
+  - Token refresh tests (4 tests)
+  - Get current user tests (6 tests)
+  - User profile CRUD tests (22 tests)
   - Protected route tests
-  - Community CRUD tests
-  - Post CRUD tests
-  - Voting functionality tests
-  - Post validation tests
+  - Community model tests (13 tests)
+  - Community CRUD tests (22 tests)
+  - Post model tests (10 tests)
+  - Post CRUD tests (51 tests)
+  - Comment model tests (13 tests)
+  - Comment CRUD tests (51 tests)
+  - Voting functionality tests (posts and comments)
+  - Post/Comment validation tests
 
 ## Project Structure
 
@@ -169,11 +199,13 @@ reditto/
 │   ├── models/        # MongoDB schemas
 │   │   ├── User.js
 │   │   ├── Community.js
-│   │   └── Post.js
+│   │   ├── Post.js
+│   │   └── Comment.js
 │   ├── routes/        # API routes
 │   │   ├── authRoutes.js
 │   │   ├── communityRoutes.js
 │   │   ├── postRoutes.js
+│   │   ├── commentRoutes.js
 │   │   └── userRoutes.js
 │   ├── testing/       # Backend tests
 │   │   ├── server.test.js
@@ -181,7 +213,9 @@ reditto/
 │   │   ├── community.test.js
 │   │   ├── communityController.test.js
 │   │   ├── post.test.js
-│   │   └── postController.test.js
+│   │   ├── postController.test.js
+│   │   ├── comment.test.js
+│   │   └── commentController.test.js
 │   └── index.js       # Server entry point
 ├── src/               # Frontend React app
 │   ├── components/    # Reusable UI components
@@ -200,8 +234,13 @@ reditto/
 │   │   ├── Sidebar/
 │   │   └── index.js
 │   ├── pages/         # Page components
+│   │   ├── CommentThread/
+│   │   ├── CommunityPage/
+│   │   ├── CreateCommunity/
+│   │   ├── CreatePost/
 │   │   ├── Home/
 │   │   ├── Login/
+│   │   ├── PostPage/
 │   │   └── Register/
 │   ├── services/      # API services
 │   │   ├── api.js
@@ -309,8 +348,36 @@ npm run test:server
 - `POST /` - Create post (protected)
 - `GET /` - Get all posts (with filters: community, author, type, sort)
 - `GET /:postId` - Get post by ID
-- `PUT /: Number,
-    comment: Number
+- `PUT /:postId` - Update post (protected)
+- `DELETE /:postId` - Delete post (protected)
+- `POST /:postId/upvote` - Upvote post (protected)
+- `POST /:postId/downvote` - Downvote post (protected)
+- `DELETE /:postId/vote` - Remove vote (protected)
+
+### Comment Routes (`/api/comments`)
+- `POST /` - Create comment (protected)
+- `GET /post/:postId` - Get all comments for a post
+- `GET /:commentId` - Get comment by ID
+- `GET /:commentId/replies` - Get comment replies
+- `PUT /:commentId` - Update comment (protected)
+- `DELETE /:commentId` - Delete comment (protected)
+- `POST /:commentId/upvote` - Upvote comment (protected)
+- `POST /:commentId/downvote` - Downvote comment (protected)
+- `DELETE /:commentId/vote` - Remove vote (protected)
+
+## Database Structure
+
+### User Schema
+```javascript
+{
+  username: String (unique, 3-20 chars),
+  email: String (unique, lowercase),
+  password: String (hashed),
+  displayName: String (optional, max 30 chars),
+  avatar: String (URL),
+  karma: {
+    postKarma: Number,
+    commentKarma: Number
   },
   posts: [ObjectId],
   communities: {
@@ -397,8 +464,131 @@ npm run test:server
 ### Additional Colors
 - **Upvote**: #0079D3 (Blue)
 - **Downvote**: #ea0027 (Red)
-- **Hover**: #0099ff (Light Blue)osts),
+- **Hover**: #0099ff (Light Blue)
+
+## API Routes
+
+### Auth Routes (`/api/auth`)
+- `POST /register` - Register new user
+- `POST /login` - Login user
+- `GET /me` - Get current user (protected)
+- `POST /refresh` - Refresh JWT token (protected)
+
+### User Routes (`/api/users`)
+- `GET /:userId` - Get user by ID
+- `GET /username/:username` - Get user by username
+- `PUT /:userId` - Update user profile and communities (protected)
+- `DELETE /:userId` - Delete user (protected)
+
+### Community Routes (`/api/communities`)
+- `POST /` - Create community (protected)
+- `GET /` - Get all communities
+- `GET /:name` - Get community by name
+- `PUT /:name` - Update community (protected)
+- `DELETE /:name` - Delete community (protected)
+
+### Post Routes (`/api/posts`)
+- `POST /` - Create post (protected)
+- `GET /` - Get all posts (with filters: community, author, type, sort)
+- `GET /:postId` - Get post by ID
+- `PUT /:postId` - Update post (protected)
+- `DELETE /:postId` - Delete post (protected)
+- `POST /:postId/upvote` - Upvote post (protected)
+- `POST /:postId/downvote` - Downvote post (protected)
+- `DELETE /:postId/vote` - Remove vote (protected)
+
+### Comment Routes (`/api/comments`)
+- `POST /` - Create comment (protected)
+- `GET /post/:postId` - Get all comments for a post
+- `GET /:commentId` - Get comment by ID
+- `GET /:commentId/replies` - Get comment replies
+- `PUT /:commentId` - Update comment (protected)
+- `DELETE /:commentId` - Delete comment (protected)
+- `POST /:commentId/upvote` - Upvote comment (protected)
+- `POST /:commentId/downvote` - Downvote comment (protected)
+- `DELETE /:commentId/vote` - Remove vote (protected)
+
+## Database Structure
+
+### User Schema
+```javascript
+{
+  username: String (unique, 3-20 chars),
+  email: String (unique, lowercase),
+  password: String (hashed),
+  displayName: String (optional, max 30 chars),
+  avatar: String (URL),
+  karma: {
+    postKarma: Number,
+    commentKarma: Number
+  },
+  posts: [ObjectId],
+  communities: {
+    created: [ObjectId],
+    joined: [ObjectId],
+    moderated: [ObjectId]
+  },
+  savedPosts: [ObjectId],
+  upvotedPosts: [ObjectId],
+  downvotedPosts: [ObjectId],
+  upvotedComments: [ObjectId],
+  downvotedComments: [ObjectId],
+  followers: [ObjectId],
+  following: [ObjectId],
+  settings: {
+    lastActive: Date
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Community Schema
+```javascript
+{
+  name: String (unique, lowercase, 3-21 chars),
+  description: String (max 500 chars),
+  creator: ObjectId,
+  moderators: [ObjectId],
+  memberCount: Number,
+  rules: [{
+    title: String,
+    description: String,
+    order: Number
+  }],
+  flairs: [{
+    text: String,
+    backgroundColor: String,
+    textColor: String
+  }],
+  settings: {
+    isPrivate: Boolean,
+    allowTextPosts: Boolean,
+    allowLinkPosts: Boolean,
+    allowImagePosts: Boolean,
+    requirePostApproval: Boolean
+  },
+  appearance: {
+    icon: String,
+    banner: String,
+    primaryColor: String,
+    backgroundColor: String
+  },
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Post Schema
+```javascript
+{
+  title: String (max 300 chars),
+  content: String (for text posts),
+  linkUrl: String (for link posts),
   imageUrl: String (for image posts),
+  type: String (text/link/image),
+  author: ObjectId,
+  community: ObjectId,
   votes: {
     upvotes: [ObjectId],
     downvotes: [ObjectId]
@@ -416,37 +606,31 @@ npm run test:server
   },
   createdAt: Date,
   updatedAt: Date,
-  edi
-## Database Structure
+  editedAt: Date
+}
+```
 
-### User Schema
+### Comment Schema
 ```javascript
 {
-  username: String (unique, 3-20 chars),
-  email: String (unique, lowercase),
-  password: String (hashed),
-  displayName: String (optional, max 30 chars),
-  avatar: String (URL),
-  karma: {
-    postKarma: Number,
-    commentKarma: Number
+  content: String (max 10,000 chars),
+  author: ObjectId,
+  post: ObjectId,
+  parentComment: ObjectId (null for top-level),
+  replies: [ObjectId],
+  votes: {
+    upvotes: [ObjectId],
+    downvotes: [ObjectId]
   },
-  communities: {
-    created: [ObjectId],
-    joined: [ObjectId]
-  },
-  savedPosts: [ObjectId],
-  upvotedPosts: [ObjectId],
-  downvotedPosts: [ObjectId],
-  upvotedComments: [ObjectId],
-  downvotedComments: [ObjectId],
-  followers: [ObjectId],
-  following: [ObjectId],
-  settings: {
-    lastActive: Date
+  voteCount: Number,
+  replyCount: Number,
+  flags: {
+    isDeleted: Boolean,
+    isEdited: Boolean
   },
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  editedAt: Date
 }
 ```
 
@@ -463,13 +647,21 @@ npm run test:server
 ## Testing
 
 The project includes comprehensive backend testing:
-- **52 passing tests** covering:
-  - User registration validation
-  - Login functionality
-  - JWT token generation and validation
-  - Token security (wrong secrets, expired tokens, stolen tokens)
-  - User CRUD operations
+- **202+ passing tests** covering:
+  - User registration validation (9 tests)
+  - Login functionality (6 tests)
+  - JWT token generation and validation (10 tests)
+  - Token security - wrong secrets, expired tokens, stolen tokens (5 tests)
+  - User CRUD operations (22 tests)
   - Protected route authorization
+  - Community model tests (13 tests)
+  - Community CRUD operations (22 tests)
+  - Post model tests (10 tests)
+  - Post CRUD operations (51 tests)
+  - Comment model tests (13 tests)
+  - Comment CRUD operations (51 tests)
+  - Voting functionality (posts and comments)
+  - Nested comment threading and reply counts
 
 Run tests with:
 ```bash

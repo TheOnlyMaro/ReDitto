@@ -435,14 +435,19 @@ describe('Post Controller Tests', () => {
         .expect(404);
     });
 
-    test('Should not return deleted post to non-author', async () => {
+    test('Should soft delete post but keep title', async () => {
+      const originalTitle = testPost.title;
+      
       await request(app)
         .delete(`/api/posts/${testPost._id}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      await request(app)
+      const response = await request(app)
         .get(`/api/posts/${testPost._id}`)
-        .expect(404);
+        .expect(200);
+
+      expect(response.body.post.title).toBe(originalTitle);
+      expect(response.body.post.flags.isDeleted).toBe(true);
     });
   });
 

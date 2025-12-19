@@ -13,7 +13,7 @@ const Loading = ({ size = 'medium', fullScreen = false }) => {
   }
 
   return (
-    <div className="loading-container">
+    <div className={`loading-container ${size === 'small' ? 'loading-small' : ''}`}>
       <div className={`spinner spinner-${size}`}>
         <div className="spinner-circle"></div>
       </div>

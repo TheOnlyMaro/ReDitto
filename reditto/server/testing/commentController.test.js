@@ -84,7 +84,7 @@ describe('Comment Controller Tests', () => {
       });
     
     testPost = postResponse.body.post;
-  });
+  }, 10000); // Increase timeout for main beforeEach
 
   describe('POST /api/comments - Create Comment', () => {
     test('Should create a comment with valid data', async () => {
@@ -525,7 +525,7 @@ describe('Comment Controller Tests', () => {
       expect(response.body.comments[0].content).toContain('Reply');
     });
 
-    test('Should not return deleted comments', async () => {
+    test('Should return deleted comments with [deleted] content', async () => {
       const commentsResponse = await request(app)
         .get(`/api/comments/post/${testPost._id}`);
       
@@ -539,7 +539,11 @@ describe('Comment Controller Tests', () => {
         .get(`/api/comments/post/${testPost._id}`)
         .expect(200);
 
-      expect(response.body.comments).toHaveLength(2);
+      // Should still return all 3 comments, but deleted one has [deleted] content
+      expect(response.body.comments).toHaveLength(3);
+      const deletedComment = response.body.comments.find(c => c._id === commentToDelete._id);
+      expect(deletedComment.content).toBe('[deleted]');
+      expect(deletedComment.flags.isDeleted).toBe(true);
     });
 
     test('Should fail with invalid post ID', async () => {
@@ -623,14 +627,225 @@ describe('Comment Controller Tests', () => {
         .expect(404);
     });
 
-    test('Should not return deleted comment to non-author', async () => {
+    test('Should return deleted comment with [deleted] content', async () => {
       await request(app)
         .delete(`/api/comments/${testComment._id}`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      await request(app)
+      const response = await request(app)
         .get(`/api/comments/${testComment._id}`)
+        .expect(200);
+
+      expect(response.body.comment.content).toBe('[deleted]');
+      expect(response.body.comment.flags.isDeleted).toBe(true);
+    });
+
+    test('Should include replies when includeReplies=true', async () => {
+      // Create replies
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken2}`)
+        .send({
+          content: 'Reply 1',
+          post: testPost._id,
+          parentComment: testComment._id
+        });
+
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Reply 2',
+          post: testPost._id,
+          parentComment: testComment._id
+        });
+
+      const response = await request(app)
+        .get(`/api/comments/${testComment._id}?includeReplies=true`)
+        .expect(200);
+
+      expect(response.body.comment.replies).toBeDefined();
+      expect(response.body.comment.replies).toHaveLength(2);
+      expect(response.body.comment.replies[0]).toHaveProperty('content');
+      expect(response.body.comment.replies[0].author).toHaveProperty('username');
+    });
+
+    test('Should not include replies when includeReplies is not set', async () => {
+      // Create reply
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken2}`)
+        .send({
+          content: 'Reply',
+          post: testPost._id,
+          parentComment: testComment._id
+        });
+
+      const response = await request(app)
+        .get(`/api/comments/${testComment._id}`)
+        .expect(200);
+
+      // replies should exist as IDs array, not populated
+      expect(response.body.comment.replies).toBeDefined();
+      expect(response.body.comment.replies).toHaveLength(1);
+      // Should be ObjectId strings, not populated objects
+      expect(typeof response.body.comment.replies[0]).toBe('string');
+    });
+  });
+
+  describe('GET /api/comments/:commentId/replies - Get Comment Replies', () => {
+    let parentComment;
+
+    beforeEach(async () => {
+      const response = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Parent comment',
+          post: testPost._id
+        });
+      
+      parentComment = response.body.comment;
+
+      // Create multiple replies
+      for (let i = 1; i <= 5; i++) {
+        await request(app)
+          .post('/api/comments')
+          .set('Authorization', `Bearer ${i % 2 === 0 ? authToken2 : authToken}`)
+          .send({
+            content: `Reply ${i}`,
+            post: testPost._id,
+            parentComment: parentComment._id
+          });
+      }
+    }, 10000); // Increase timeout for beforeEach
+
+    test('Should get all replies for a comment', async () => {
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`)
+        .expect(200);
+
+      expect(response.body.replies).toHaveLength(5);
+      expect(response.body.pagination.totalReplies).toBe(5);
+    });
+
+    test('Should populate author details in replies', async () => {
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`)
+        .expect(200);
+
+      expect(response.body.replies[0].author).toHaveProperty('username');
+      expect(response.body.replies[0].author).toHaveProperty('karma');
+    });
+
+    test('Should support pagination', async () => {
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies?page=1&limit=3`)
+        .expect(200);
+
+      expect(response.body.replies).toHaveLength(3);
+      expect(response.body.pagination.currentPage).toBe(1);
+      expect(response.body.pagination.limit).toBe(3);
+      expect(response.body.pagination.totalPages).toBe(2);
+      expect(response.body.pagination.totalReplies).toBe(5);
+    });
+
+    test('Should get second page of replies', async () => {
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies?page=2&limit=3`)
+        .expect(200);
+
+      expect(response.body.replies).toHaveLength(2);
+      expect(response.body.pagination.currentPage).toBe(2);
+    });
+
+    test('Should sort by createdAt by default', async () => {
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`)
+        .expect(200);
+
+      // Most recent first (Reply 5 was created last)
+      expect(response.body.replies[0].content).toBe('Reply 5');
+      expect(response.body.replies[4].content).toBe('Reply 1');
+    });
+
+    test('Should sort by voteCount when specified', async () => {
+      // Get replies first
+      const repliesResponse = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`);
+      
+      const replies = repliesResponse.body.replies;
+      const reply3 = replies.find(r => r.content === 'Reply 3');
+
+      // Upvote Reply 3
+      await request(app)
+        .post(`/api/comments/${reply3._id}/upvote`)
+        .set('Authorization', `Bearer ${authToken2}`);
+
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies?sortBy=voteCount`)
+        .expect(200);
+
+      expect(response.body.replies[0].content).toBe('Reply 3');
+      expect(response.body.replies[0].voteCount).toBe(1);
+    });
+
+    test('Should include deleted replies with [deleted] content', async () => {
+      // Get replies and delete one
+      const repliesResponse = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`);
+      
+      const replyToDelete = repliesResponse.body.replies[0];
+
+      await request(app)
+        .delete(`/api/comments/${replyToDelete._id}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      const response = await request(app)
+        .get(`/api/comments/${parentComment._id}/replies`)
+        .expect(200);
+
+      // Should still return all 5 replies
+      expect(response.body.replies).toHaveLength(5);
+      const deletedReply = response.body.replies.find(r => r._id === replyToDelete._id);
+      expect(deletedReply.content).toBe('[deleted]');
+      expect(deletedReply.flags.isDeleted).toBe(true);
+    });
+
+    test('Should fail with invalid comment ID', async () => {
+      const response = await request(app)
+        .get('/api/comments/invalid_id/replies')
+        .expect(400);
+
+      expect(response.body.error).toContain('Invalid comment ID');
+    });
+
+    test('Should fail with non-existent comment', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      
+      const response = await request(app)
+        .get(`/api/comments/${fakeId}/replies`)
         .expect(404);
+
+      expect(response.body.error).toContain('Comment not found');
+    });
+
+    test('Should return empty array for comment with no replies', async () => {
+      // Create a comment with no replies
+      const commentResponse = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'No replies',
+          post: testPost._id
+        });
+
+      const response = await request(app)
+        .get(`/api/comments/${commentResponse.body.comment._id}/replies`)
+        .expect(200);
+
+      expect(response.body.replies).toHaveLength(0);
+      expect(response.body.pagination.totalReplies).toBe(0);
     });
   });
 
@@ -831,7 +1046,7 @@ describe('Comment Controller Tests', () => {
       expect(response.body.message).toBe('Comment deleted successfully');
     });
 
-    test('Should decrement post commentCount', async () => {
+    test('Should NOT decrement post commentCount on soft delete', async () => {
       await request(app)
         .delete(`/api/comments/${testComment._id}`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -839,10 +1054,11 @@ describe('Comment Controller Tests', () => {
       const postResponse = await request(app)
         .get(`/api/posts/${testPost._id}`);
 
-      expect(postResponse.body.post.commentCount).toBe(0);
+      // Comment is soft deleted, so count remains the same
+      expect(postResponse.body.post.commentCount).toBe(1);
     });
 
-    test('Should decrement parent comment replyCount', async () => {
+    test('Should NOT decrement parent comment replyCount when deleting reply', async () => {
       // Create reply
       const replyResponse = await request(app)
         .post('/api/comments')
@@ -864,9 +1080,18 @@ describe('Comment Controller Tests', () => {
         .delete(`/api/comments/${reply._id}`)
         .set('Authorization', `Bearer ${authToken2}`);
 
-      // Verify replyCount decreased
+      // Verify replyCount stayed the same (deleted comments stay in thread)
       const parentAfter = await Comment.findById(testComment._id);
-      expect(parentAfter.replyCount).toBe(0);
+      expect(parentAfter.replyCount).toBe(1);
+      
+      // Verify reply is still in parent's replies array
+      expect(parentAfter.replies).toHaveLength(1);
+      expect(parentAfter.replies[0].toString()).toBe(reply._id);
+      
+      // Verify reply is marked as deleted
+      const deletedReply = await Comment.findById(reply._id);
+      expect(deletedReply.flags.isDeleted).toBe(true);
+      expect(deletedReply.content).toBe('[deleted]');
     });
 
     test('Should fail without authentication', async () => {
@@ -1058,6 +1283,19 @@ describe('Comment Controller Tests', () => {
         .post(`/api/comments/${testComment._id}/downvote`)
         .expect(401);
     });
+
+    test('Should fail to downvote deleted comment', async () => {
+      await request(app)
+        .delete(`/api/comments/${testComment._id}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      const response = await request(app)
+        .post(`/api/comments/${testComment._id}/downvote`)
+        .set('Authorization', `Bearer ${authToken2}`)
+        .expect(400);
+
+      expect(response.body.error).toContain('Cannot vote on deleted comment');
+    });
   });
 
   describe('DELETE /api/comments/:commentId/vote - Remove Vote', () => {
@@ -1150,7 +1388,7 @@ describe('Comment Controller Tests', () => {
       const comment2 = comment2Response.body.comment;
 
       // Create second-level reply
-      await request(app)
+      const comment3Response = await request(app)
         .post('/api/comments')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -1159,12 +1397,135 @@ describe('Comment Controller Tests', () => {
           parentComment: comment2._id
         });
 
+      const comment3 = comment3Response.body.comment;
+
       // Verify structure
       const topLevel = await Comment.findById(comment1._id);
       const firstLevel = await Comment.findById(comment2._id);
 
-      expect(topLevel.replyCount).toBe(1);
+      // Top level should have 2 total replies (1 direct + 1 nested)
+      expect(topLevel.replyCount).toBe(2);
+      // First level should have 1 reply
       expect(firstLevel.replyCount).toBe(1);
+      // Top level should have comment2 in replies array
+      expect(topLevel.replies).toHaveLength(1);
+      expect(topLevel.replies[0].toString()).toBe(comment2._id);
+      // First level should have comment3 in replies array
+      expect(firstLevel.replies).toHaveLength(1);
+      expect(firstLevel.replies[0].toString()).toBe(comment3._id);
+    });
+
+    test('Should recursively update ancestor reply counts', async () => {
+      // Create 4-level deep thread
+      const level1Response = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Level 1',
+          post: testPost._id
+        });
+      const level1 = level1Response.body.comment;
+
+      const level2Response = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Level 2',
+          post: testPost._id,
+          parentComment: level1._id
+        });
+      const level2 = level2Response.body.comment;
+
+      const level3Response = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Level 3',
+          post: testPost._id,
+          parentComment: level2._id
+        });
+      const level3 = level3Response.body.comment;
+
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Level 4',
+          post: testPost._id,
+          parentComment: level3._id
+        });
+
+      // Check reply counts
+      const updatedLevel1 = await Comment.findById(level1._id);
+      const updatedLevel2 = await Comment.findById(level2._id);
+      const updatedLevel3 = await Comment.findById(level3._id);
+
+      // Level 1 should count all nested replies (3 total)
+      expect(updatedLevel1.replyCount).toBe(3);
+      // Level 2 should count nested replies (2 total)
+      expect(updatedLevel2.replyCount).toBe(2);
+      // Level 3 should count direct reply (1 total)
+      expect(updatedLevel3.replyCount).toBe(1);
+    });
+
+    test('Should maintain reply counts with multiple branches', async () => {
+      // Create parent
+      const parentResponse = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Parent',
+          post: testPost._id
+        });
+      const parent = parentResponse.body.comment;
+
+      // Create 3 direct replies
+      const reply1Response = await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Reply 1',
+          post: testPost._id,
+          parentComment: parent._id
+        });
+      const reply1 = reply1Response.body.comment;
+
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Reply 2',
+          post: testPost._id,
+          parentComment: parent._id
+        });
+
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Reply 3',
+          post: testPost._id,
+          parentComment: parent._id
+        });
+
+      // Create nested reply under Reply 1
+      await request(app)
+        .post('/api/comments')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          content: 'Nested under Reply 1',
+          post: testPost._id,
+          parentComment: reply1._id
+        });
+
+      // Parent should have 4 total replies (3 direct + 1 nested)
+      const updatedParent = await Comment.findById(parent._id);
+      expect(updatedParent.replyCount).toBe(4);
+      expect(updatedParent.replies).toHaveLength(3);
+
+      // Reply 1 should have 1 reply
+      const updatedReply1 = await Comment.findById(reply1._id);
+      expect(updatedReply1.replyCount).toBe(1);
     });
 
     test('Should calculate correct vote count with multiple voters', async () => {

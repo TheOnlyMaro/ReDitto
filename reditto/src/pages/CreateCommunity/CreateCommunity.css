@@ -1,0 +1,337 @@
+/* Modern Create Community Page */
+.create-community-page {
+  min-height: 100vh;
+  background-color: var(--bg-primary);  position: relative;
+}
+
+/* Alert positioning */
+.create-community-alert {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}
+
+.create-content {
+  margin-left: 256px;
+  padding: 40px 24px;
+  transition: margin-left 0.3s ease;
+}
+
+.create-content.sidebar-collapsed {
+  margin-left: 72px;
+}
+
+.create-container {
+  max-width: 720px;
+  margin: 0 auto;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.create-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.create-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.create-header p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form Sections */
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.form-section:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.form-section h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-section h2::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background-color: #0079D3;
+  border-radius: 2px;
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group .required {
+  color: #ea0027;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.char-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+  align-self: flex-end;
+  margin-top: -4px;
+}
+
+/* Name Input with Prefix */
+.name-input-wrapper {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+  height: 48px;
+}
+
+.name-input-wrapper:focus-within {
+  border-color: #0079D3;
+  box-shadow: 0 0 0 3px rgba(0, 121, 211, 0.1);
+}
+
+.name-prefix {
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid var(--border-color);
+}
+
+.name-input-wrapper input {
+  border: none !important;
+  background: transparent !important;
+  flex: 1;
+  font-weight: 600;
+  padding: 0 14px;
+  box-shadow: none !important;
+  color: var(--text-primary);
+  line-height: 48px;
+}
+
+/* Textarea */
+.form-textarea {
+  width: 100%;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  resize: vertical;
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #0079D3;
+  box-shadow: 0 0 0 3px rgba(0, 121, 211, 0.1);
+}
+
+.form-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Select */
+.form-select {
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #0079D3;
+  box-shadow: 0 0 0 3px rgba(0, 121, 211, 0.1);
+}
+
+.form-select:hover {
+  border-color: var(--text-secondary);
+}
+
+/* Checkbox Groups */
+.form-group-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.form-group-checkbox:hover {
+  border-color: #0079D3;
+  background-color: var(--bg-primary);
+}
+
+.form-group-checkbox input[type="checkbox"] {
+  margin-top: 2px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #0079D3;
+  flex-shrink: 0;
+}
+
+.form-group-checkbox label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.form-group-checkbox label strong {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.checkbox-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+/* Color Picker */
+.color-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-picker {
+  width: 60px;
+  height: 44px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.color-picker:hover {
+  border-color: #0079D3;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 4px;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 32px;
+  margin-top: 8px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .create-content {
+    margin-left: 0;
+  }
+
+  .create-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .create-content {
+    padding: 16px;
+  }
+
+  .create-container {
+    padding: 20px;
+  }
+
+  .create-header h1 {
+    font-size: 24px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

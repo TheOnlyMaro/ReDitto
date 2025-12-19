@@ -22,6 +22,10 @@ const commentSchema = new mongoose.Schema({
     ref: 'Comment',
     default: null
   },
+  replies: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment'
+  }],
   votes: {
     upvotes: [{
       type: mongoose.Schema.Types.ObjectId,

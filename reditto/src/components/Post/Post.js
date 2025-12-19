@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Post.css';
 
-const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onSave }) => {
+const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink, shareMenuOpen, onJoin, onSave, fromSub = false }) => {
   const navigate = useNavigate();
-  const [userVote, setUserVote] = useState(post.userVote || null); // null, 'upvote', or 'downvote'
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const optionsRef = useRef(null);
@@ -12,10 +11,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
   // Debug logging
   console.log(`Post ${post.title.substring(0, 30)}... - isFollowing:`, isFollowing, 'community:', post.community.name);
 
-  // Update userVote when post changes (e.g., after refresh)
-  useEffect(() => {
-    setUserVote(post.userVote || null);
-  }, [post.userVote]);
+  // Use post.userVote directly from props instead of local state
 
   // Close options menu when clicking outside
   useEffect(() => {
@@ -36,22 +32,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
 
   const handleUpvote = () => {
     if (!user) {
-      // Don't update local state if user is not logged in
       if (onVote) {
         onVote(post.id, 'upvote');
       }
       return;
     }
     
-    if (userVote === 'upvote') {
+    if (post.userVote === 'upvote') {
       // Remove upvote
-      setUserVote(null);
       if (onVote) {
         onVote(post.id, 'unvote');
       }
     } else {
       // Add upvote (removes downvote if exists)
-      setUserVote('upvote');
       if (onVote) {
         onVote(post.id, 'upvote');
       }
@@ -60,22 +53,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
 
   const handleDownvote = () => {
     if (!user) {
-      // Don't update local state if user is not logged in
       if (onVote) {
         onVote(post.id, 'downvote');
       }
       return;
     }
     
-    if (userVote === 'downvote') {
+    if (post.userVote === 'downvote') {
       // Remove downvote
-      setUserVote(null);
       if (onVote) {
         onVote(post.id, 'unvote');
       }
     } else {
       // Add downvote (removes upvote if exists)
-      setUserVote('downvote');
       if (onVote) {
         onVote(post.id, 'downvote');
       }
@@ -87,7 +77,8 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     navigate(`/r/${post.community.name}/posts/${post.id}`, { state: { post, fromPath: window.location.pathname } });
   };
 
-  const handleShareClick = () => {
+  const handleShareClick = (e) => {
+    e.stopPropagation();
     if (onShare) {
       onShare(post.id);
     }
@@ -130,6 +121,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
     if (
       e.target.closest('.vote-btn') ||
       e.target.closest('.post-action-btn') ||
+      e.target.closest('.share-menu-container') ||
       e.target.closest('.post-join-btn') ||
       e.target.closest('.post-options') ||
       e.target.tagName === 'A'
@@ -144,14 +136,33 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
       {/* Post Header */}
       <div className="post-header">
         <div className="post-header-left">
-          <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
-            <img 
-              src={post.community.icon} 
-              alt={post.community.name} 
-              className="community-icon"
-            />
-            <span className="community-name">r/{post.community.name}</span>
-          </Link>
+          {fromSub ? (
+            /* Show author info when viewing from user profile */
+            <>
+              <Link to={`/user/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`} 
+                  alt={post.author} 
+                  className="community-icon"
+                />
+                <span className="community-name">u/{post.author}</span>
+              </Link>
+              <span className="post-divider">•</span>
+              <Link to={`/r/${post.community.name}`} className="post-subcommunity" onClick={(e) => e.stopPropagation()}>
+                r/{post.community.name}
+              </Link>
+            </>
+          ) : (
+            /* Show community info normally */
+            <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+              <img 
+                src={post.community.icon} 
+                alt={post.community.name} 
+                className="community-icon"
+              />
+              <span className="community-name">r/{post.community.name}</span>
+            </Link>
+          )}
           <span className="post-divider">•</span>
           <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
         </div>
@@ -201,6 +212,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
       {/* Post Title */}
       <h2 className="post-title">{post.title}</h2>
 
+      {/* Post Flair */}
+      {fromSub && post.flair && (
+        <div 
+          className="post-flair"
+          style={{
+            backgroundColor: post.flair.backgroundColor || '#0079D3',
+            color: post.flair.textColor || '#FFFFFF'
+          }}
+        >
+          {post.flair.text}
+        </div>
+      )}
+
       {/* Post Content */}
       {post.type === 'text' && post.content && (
         <p className="post-content">{post.content}</p>
@@ -221,7 +245,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
         {/* Vote Section */}
         <div className="post-vote">
           <button 
-            className={`vote-btn upvote ${userVote === 'upvote' ? 'active' : ''}`}
+            className={`vote-btn upvote ${post.userVote === 'upvote' ? 'active' : ''}`}
             onClick={handleUpvote}
             aria-label="Upvote"
           >
@@ -231,7 +255,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
           </button>
           <span className="vote-score">{calculateVoteScore()}</span>
           <button 
-            className={`vote-btn downvote ${userVote === 'downvote' ? 'active' : ''}`}
+            className={`vote-btn downvote ${post.userVote === 'downvote' ? 'active' : ''}`}
             onClick={handleDownvote}
             aria-label="Downvote"
           >
@@ -250,12 +274,24 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onJoin, onS
         </button>
 
         {/* Share Section */}
-        <button className="post-action-btn" onClick={handleShareClick}>
-          <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 13.442c-.633 0-1.204.246-1.637.642l-5.938-3.463c.046-.204.075-.412.075-.621s-.029-.417-.075-.621l5.938-3.463a2.49 2.49 0 001.637.642c1.379 0 2.5-1.121 2.5-2.5S16.379 1.558 15 1.558s-2.5 1.121-2.5 2.5c0 .209.029.417.075.621l-5.938 3.463a2.49 2.49 0 00-1.637-.642c-1.379 0-2.5 1.121-2.5 2.5s1.121 2.5 2.5 2.5c.633 0 1.204-.246 1.637-.642l5.938 3.463c-.046.204-.075.412-.075.621 0 1.379 1.121 2.5 2.5 2.5s2.5-1.121 2.5-2.5-1.121-2.5-2.5-2.5z" fill="currentColor"/>
-          </svg>
-          <span>Share</span>
-        </button>
+        <div className="share-menu-container">
+          <button className="post-action-btn" onClick={handleShareClick}>
+            <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 13.442c-.633 0-1.204.246-1.637.642l-5.938-3.463c.046-.204.075-.412.075-.621s-.029-.417-.075-.621l5.938-3.463a2.49 2.49 0 001.637.642c1.379 0 2.5-1.121 2.5-2.5S16.379 1.558 15 1.558s-2.5 1.121-2.5 2.5c0 .209.029.417.075.621l-5.938 3.463a2.49 2.49 0 00-1.637-.642c-1.379 0-2.5 1.121-2.5 2.5s1.121 2.5 2.5 2.5c.633 0 1.204-.246 1.637-.642l5.938 3.463c-.046.204-.075.412-.075.621 0 1.379 1.121 2.5 2.5 2.5s2.5-1.121 2.5-2.5-1.121-2.5-2.5-2.5z" fill="currentColor"/>
+            </svg>
+            <span>Share</span>
+          </button>
+          {shareMenuOpen && (
+            <div className="share-menu">
+              <button className="share-menu-item" onClick={() => onCopyLink && onCopyLink(post.id, post.community.name)}>
+                <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.586 2.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" fill="currentColor"/>
+                </svg>
+                <span>Copy link</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

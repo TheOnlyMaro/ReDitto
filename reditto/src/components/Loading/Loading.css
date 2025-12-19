@@ -5,6 +5,10 @@
   padding: 40px;
 }
 
+.loading-container.loading-small {
+  padding: 0;
+}
+
 .loading-fullscreen {
   position: fixed;
   top: 0;
