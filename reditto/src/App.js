@@ -156,7 +156,7 @@ function App() {
       console.log('Updated joined communities:', updatedJoined);
 
       // Call API to update user
-      const response = await fetch(`process.env.REACT_APP_API_UR/users/${user._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${authService.getToken()}`,
