@@ -6,9 +6,25 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 5000;
 
-// Middleware
+// Middleware - CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -44,10 +60,17 @@ const connectDB = async () => {
 // Initialize database connection
 connectDB();
 
+// Log environment configuration on startup
+console.log('🚀 Server Configuration:');
+console.log('- PORT:', PORT);
+console.log('- FRONTEND_URL:', process.env.FRONTEND_URL || 'Not set (using localhost:3000)');
+console.log('- MongoDB URI:', process.env.MONGODB_URI ? 'Connected' : 'NOT SET');
+console.log('- Allowed CORS Origins:', allowedOrigins);
+
 app.get('/', (req, res) => {
   res.send('ReDitto API Server');
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
