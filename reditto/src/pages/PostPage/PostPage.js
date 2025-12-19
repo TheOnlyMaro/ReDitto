@@ -759,7 +759,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                         r/{post.community?.name}
                       </Link>
                       <Link 
-                        to={post.author?.flags?.isDeleted || !post.author ? '#' : `/user/${post.author?.username}`} 
+                        to={post.author?.flags?.isDeleted || !post.author ? '#' : `/u/${post.author?.username}`} 
                         className="post-detail-author"
                         onClick={(e) => {
                           if (post.author?.flags?.isDeleted || !post.author) e.preventDefault();

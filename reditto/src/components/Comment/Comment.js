@@ -147,7 +147,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
       <div className="comment-main">
         {/* Left side: Avatar and collapse line */}
         <div className="comment-left">
-          <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-avatar-link" onClick={(e) => isDeleted && e.preventDefault()}>
+          <Link to={isDeleted ? '#' : `/u/${comment.author}`} className="comment-avatar-link" onClick={(e) => isDeleted && e.preventDefault()}>
             <img src={avatarUrl} alt={displayAuthor} className="comment-avatar" />
           </Link>
           <div className="comment-collapse-controls">
@@ -162,7 +162,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
         <div className="comment-content-wrapper">
           {/* Comment Header */}
           <div className="comment-header">
-            <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-author" onClick={(e) => isDeleted && e.preventDefault()}>
+            <Link to={isDeleted ? '#' : `/u/${comment.author}`} className="comment-author" onClick={(e) => isDeleted && e.preventDefault()}>
               {isDeleted ? '[deleted]' : `u/${displayAuthor}`}
             </Link>
             <span className="comment-divider">•</span>
