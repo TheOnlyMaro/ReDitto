@@ -34,7 +34,7 @@ function App() {
         try {
           console.log('Fetching current user from API...');
           // Fetch fresh user data from the server
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
