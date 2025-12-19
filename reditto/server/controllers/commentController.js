@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 // Helper function to update parent comment's replies array and recursively update reply counts
@@ -466,6 +467,22 @@ const upvoteComment = async (req, res) => {
     comment.upvote(userId);
     await comment.save();
 
+    // Update user's upvotedComments array
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from downvoted if present
+      user.downvotedComments = user.downvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      // Add to upvoted if not already present
+      if (!user.upvotedComments.includes(commentId)) {
+        user.upvotedComments.push(commentId);
+      }
+      
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Comment upvoted successfully',
       voteCount: comment.voteCount,
@@ -508,6 +525,22 @@ const downvoteComment = async (req, res) => {
     comment.downvote(userId);
     await comment.save();
 
+    // Update user's downvotedComments array
+    const user = await User.findById(userId);
+    if (user) {
+      // Remove from upvoted if present
+      user.upvotedComments = user.upvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      // Add to downvoted if not already present
+      if (!user.downvotedComments.includes(commentId)) {
+        user.downvotedComments.push(commentId);
+      }
+      
+      await user.save();
+    }
+
     res.status(200).json({
       message: 'Comment downvoted successfully',
       voteCount: comment.voteCount,
@@ -545,6 +578,19 @@ const removeVote = async (req, res) => {
     // Remove vote
     comment.removeVote(userId);
     await comment.save();
+
+    // Update user's vote arrays
+    const user = await User.findById(userId);
+    if (user) {
+      user.upvotedComments = user.upvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      user.downvotedComments = user.downvotedComments.filter(
+        id => id.toString() !== commentId.toString()
+      );
+      
+      await user.save();
+    }
 
     res.status(200).json({
       message: 'Vote removed successfully',

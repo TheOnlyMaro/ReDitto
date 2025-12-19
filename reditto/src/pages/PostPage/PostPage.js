@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import Loading from '../../components/Loading/Loading';
 import Comment from '../../components/Comment/Comment';
 import Alert from '../../components/Alert/Alert';
+import { authService } from '../../services/authService';
 
 const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
   const { postId } = useParams();
@@ -111,6 +112,10 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       try {
         setCommentsLoading(true);
         
+        // Get user's voted comments for initial state
+        const upvotedCommentIds = (user?.upvotedComments || []).map(id => id.toString());
+        const downvotedCommentIds = (user?.downvotedComments || []).map(id => id.toString());
+        
         // Fetch top-level comments
         const response = await fetch(`http://localhost:5000/api/comments/post/${postId}`);
         if (!response.ok) {
@@ -122,6 +127,17 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           if (!c.author) {
             c.author = { username: '[deleted]' };
           }
+          
+          // Determine user's vote on this comment
+          const commentIdString = c._id.toString();
+          if (upvotedCommentIds.includes(commentIdString)) {
+            c.userVote = 'upvote';
+          } else if (downvotedCommentIds.includes(commentIdString)) {
+            c.userVote = 'downvote';
+          } else {
+            c.userVote = null;
+          }
+          
           return c;
         });
         
@@ -148,6 +164,16 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
               // Handle deleted author
               if (!replyComment.author) {
                 replyComment.author = { username: '[deleted]' };
+              }
+              
+              // Determine user's vote on this reply
+              const replyIdString = replyComment._id.toString();
+              if (upvotedCommentIds.includes(replyIdString)) {
+                replyComment.userVote = 'upvote';
+              } else if (downvotedCommentIds.includes(replyIdString)) {
+                replyComment.userVote = 'downvote';
+              } else {
+                replyComment.userVote = null;
               }
               
               // Recursively fetch this reply's replies
@@ -207,7 +233,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     };
 
     fetchComments();
-  }, [postId, optimisticCommentIds]);
+  }, [postId, optimisticCommentIds, user?.upvotedComments, user?.downvotedComments]);
 
   // Function to fetch additional replies on demand
   const handleFetchReplies = async (replyIds, currentDepth) => {
@@ -216,6 +242,10 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     if (currentDepth >= MAX_FETCH_DEPTH) {
       return;
     }
+    
+    // Get user's voted comments for initial state
+    const upvotedCommentIds = (user?.upvotedComments || []).map(id => id.toString());
+    const downvotedCommentIds = (user?.downvotedComments || []).map(id => id.toString());
     
     const newComments = [];
     
@@ -229,6 +259,16 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
         // Handle deleted author
         if (!comment.author) {
           comment.author = { username: '[deleted]' };
+        }
+        
+        // Determine user's vote on this comment
+        const commentIdString = comment._id.toString();
+        if (upvotedCommentIds.includes(commentIdString)) {
+          comment.userVote = 'upvote';
+        } else if (downvotedCommentIds.includes(commentIdString)) {
+          comment.userVote = 'downvote';
+        } else {
+          comment.userVote = null;
         }
         
         newComments.push(comment);
@@ -276,6 +316,10 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       return;
     }
 
+    // Store previous state for rollback
+    const previousVote = userVote;
+    const previousScore = post.voteScore;
+
     try {
       const token = localStorage.getItem('reditto_auth_token');
       let endpoint = '';
@@ -289,10 +333,6 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       }
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
-      
-      // Store previous state for rollback
-      const previousVote = userVote;
-      const previousScore = post.voteScore;
       
       // Optimistically update UI before API call
       const currentVote = userVote;
@@ -340,8 +380,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           
           if (userResponse.ok) {
             const userData = await userResponse.json();
-            const authService = require('../../services/authService');
-            authService.default.saveUser(userData.user);
+            authService.saveUser(userData.user);
             // Dispatch event to notify App.js that user data has been updated
             window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
           }
@@ -360,6 +399,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       }
     } catch (error) {
       console.error('Failed to vote:', error);
+      // Rollback optimistic update on network error
+      setUserVote(previousVote);
+      setPost(prev => ({ ...prev, voteScore: previousScore, userVote: previousVote }));
       setAlert({
         type: 'error',
         message: 'Failed to vote. Please try again.'
@@ -380,6 +422,103 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       handleVote('unvote');
     } else {
       handleVote('downvote');
+    }
+  };
+
+  const handleCommentVote = async (commentId, voteType) => {
+    if (!user) {
+      setAlert({
+        type: 'warning',
+        message: 'You must be logged in to vote'
+      });
+      return;
+    }
+
+    // Find the comment in state
+    const updateCommentVote = (commentsArray, id, updateFn) => {
+      return commentsArray.map(c => {
+        if ((c._id || c.id) === id) {
+          return updateFn(c);
+        }
+        return c;
+      });
+    };
+
+    // Store previous state for rollback
+    const targetComment = comments.find(c => (c._id || c.id) === commentId);
+    if (!targetComment) return;
+    
+    const previousVote = targetComment.userVote;
+    const previousScore = targetComment.voteCount;
+
+    try {
+      const token = localStorage.getItem('reditto_auth_token');
+      let endpoint = '';
+      
+      if (voteType === 'upvote') {
+        endpoint = `http://localhost:5000/api/comments/${commentId}/upvote`;
+      } else if (voteType === 'downvote') {
+        endpoint = `http://localhost:5000/api/comments/${commentId}/downvote`;
+      } else if (voteType === 'unvote') {
+        endpoint = `http://localhost:5000/api/comments/${commentId}/vote`;
+      }
+
+      const method = voteType === 'unvote' ? 'DELETE' : 'POST';
+      
+      // Calculate new vote score
+      const currentVote = previousVote;
+      let newVoteScore = previousScore;
+      
+      if (voteType === 'unvote') {
+        if (currentVote === 'upvote') newVoteScore -= 1;
+        else if (currentVote === 'downvote') newVoteScore += 1;
+      } else if (voteType === 'upvote') {
+        if (currentVote === 'downvote') newVoteScore += 2;
+        else if (!currentVote) newVoteScore += 1;
+      } else if (voteType === 'downvote') {
+        if (currentVote === 'upvote') newVoteScore -= 2;
+        else if (!currentVote) newVoteScore -= 1;
+      }
+      
+      // Optimistically update comment in state
+      setComments(prev => updateCommentVote(prev, commentId, (c) => ({
+        ...c,
+        voteCount: newVoteScore,
+        userVote: voteType === 'unvote' ? null : voteType
+      })));
+      
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        // Rollback optimistic update
+        setComments(prev => updateCommentVote(prev, commentId, (c) => ({
+          ...c,
+          voteCount: previousScore,
+          userVote: previousVote
+        })));
+        setAlert({
+          type: 'error',
+          message: 'Failed to vote. Please try again.'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to vote on comment:', error);
+      // Rollback optimistic update
+      setComments(prev => updateCommentVote(prev, commentId, (c) => ({
+        ...c,
+        voteCount: previousScore,
+        userVote: previousVote
+      })));
+      setAlert({
+        type: 'error',
+        message: 'Failed to vote. Please try again.'
+      });
     }
   };
 
@@ -783,7 +922,8 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             parentId: comment.parentComment,
                             replies: comment.replies || [],
                             replyCount: comment.replyCount || 0,
-                            flags: comment.flags
+                            flags: comment.flags,
+                            userVote: comment.userVote
                           }} 
                           depth={0}
                           allComments={comments.map(c => ({
@@ -795,9 +935,11 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                             parentId: c.parentComment,
                             replies: c.replies || [],
                             replyCount: c.replyCount || 0,
-                            flags: c.flags
+                            flags: c.flags,
+                            userVote: c.userVote
                           }))}
                           onFetchReplies={handleFetchReplies}
+                          onVote={handleCommentVote}
                           onReplySubmit={(parentCommentId, replyText) => {
                             const fakeEvent = {
                               preventDefault: () => {},

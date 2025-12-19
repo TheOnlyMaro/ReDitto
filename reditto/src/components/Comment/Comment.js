@@ -11,15 +11,16 @@ const fetchCommentById = (commentId, allComments) => {
   return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
-const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, user, postId }) => {
+const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, onVote, user, postId }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
-  const [userVote, setUserVote] = useState(null);
-  //const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+
+  // Use comment.userVote and comment.voteScore directly from props
+  // Parent (PostPage) handles vote state management
 
   // Function to load unfetched replies
   const handleLoadReplies = async () => {
@@ -81,18 +82,42 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
   };
 
   const handleUpvote = () => {
-    if (userVote === 'upvote') {
-      setUserVote(null);
+    if (!user) {
+      return;
+    }
+    
+    const commentId = comment.id || comment._id;
+    
+    if (comment.userVote === 'upvote') {
+      // Remove upvote
+      if (onVote) {
+        onVote(commentId, 'unvote');
+      }
     } else {
-      setUserVote('upvote');
+      // Add upvote (removes downvote if exists)
+      if (onVote) {
+        onVote(commentId, 'upvote');
+      }
     }
   };
 
   const handleDownvote = () => {
-    if (userVote === 'downvote') {
-      setUserVote(null);
+    if (!user) {
+      return;
+    }
+    
+    const commentId = comment.id || comment._id;
+    
+    if (comment.userVote === 'downvote') {
+      // Remove downvote
+      if (onVote) {
+        onVote(commentId, 'unvote');
+      }
     } else {
-      setUserVote('downvote');
+      // Add downvote (removes upvote if exists)
+      if (onVote) {
+        onVote(commentId, 'downvote');
+      }
     }
   };
 
@@ -160,7 +185,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
               <div className="comment-actions">
                 <div className="comment-vote">
                   <button 
-                    className={`comment-vote-btn ${userVote === 'upvote' ? 'upvoted' : ''}`}
+                    className={`comment-vote-btn ${comment.userVote === 'upvote' ? 'upvoted' : ''}`}
                     onClick={handleUpvote}
                     aria-label="Upvote"
                   >
@@ -168,9 +193,9 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
                       <path d="M12 4L3 15H9V20H15V15H21L12 4Z" fill="currentColor"/>
                     </svg>
                   </button>
-                  <span className="comment-vote-score">{formatVoteScore(comment.voteScore)}</span>
+                  <span className="comment-vote-score">{formatVoteScore(comment.voteScore || 0)}</span>
                   <button 
-                    className={`comment-vote-btn ${userVote === 'downvote' ? 'downvoted' : ''}`}
+                    className={`comment-vote-btn ${comment.userVote === 'downvote' ? 'downvoted' : ''}`}
                     onClick={handleDownvote}
                     aria-label="Downvote"
                   >
@@ -275,7 +300,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onReplySubmit={onReplySubmit} user={user} postId={postId} />
+                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onVote={onVote} onReplySubmit={onReplySubmit} user={user} postId={postId} />
               ))}
               
               {hiddenRepliesCount > 0 && (
