@@ -10,8 +10,9 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 
 import { authService } from './services/authService';
-import { searchAPI } from './services/api';
+import { searchAPI, userAPI } from './services/api';
 import UserPage from './pages/UserPage/UserPage';
+import Chat from './pages/Chat/Chat';
 import './App.css';
 
 function App() {
@@ -155,24 +156,13 @@ function App() {
 
       console.log('Updated joined communities:', updatedJoined);
 
-      // Call API to update user
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${user._id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          communities: {
-            joined: updatedJoined
-          }
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      // Call API to update user's joined communities
+      const data = await userAPI.updateUser(user._id, { communities: { joined: updatedJoined } }, authService.getToken());
+      if (data && data.user) {
         setUser(data.user);
         authService.saveUser(data.user);
+        // Notify listeners
+        window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: data.user } }));
       }
     } catch (error) {
       console.error('Failed to join/unjoin community:', error);
@@ -192,6 +182,8 @@ function App() {
           <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/u/:username/chat" element={<Chat />} />
         </Routes>
       </div>
     </Router>

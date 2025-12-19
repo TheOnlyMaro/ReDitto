@@ -296,7 +296,8 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       });
       return;
     }
-    navigate(`/create/post`);
+    // Route to chat for this user (blank for now)
+    navigate(`/u/${profile?.username || profile?.name}/chat`);
   };
 
   
@@ -372,7 +373,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                   className="community-create-post-btn" 
                   onClick={handleCreatePost}
                 >
-                  Create Post
+                  Chat (coming soon)
                 </Button>
               </div>
             </div>
@@ -415,28 +416,28 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
           {/* Right Sidebar - user info */}
           <div className="community-right-sidebar">
             <div className="community-sidebar-card">
-              <h3>About User</h3>
-              {profile && (
-                <>
-                  {(profile.bio || profile.description) && (
-                    <p className="sidebar-description">{profile.bio || profile.description}</p>
-                  )}
-                  <div className="sidebar-stats">
-                    <div className="stat">
-                      <strong>{(profile.followers?.length || 0).toLocaleString()}</strong>
-                      <span>Followers</span>
+                <h3>About User</h3>
+                {profile && (
+                  <>
+                    {(profile.bio || profile.description) && (
+                      <p className="sidebar-description">{profile.bio || profile.description}</p>
+                    )}
+                    <div className="sidebar-stats">
+                      <div className="stat">
+                        <strong>{(profile.followers?.length || 0).toLocaleString()}</strong>
+                        <span>Followers</span>
+                      </div>
+                      <div className="stat">
+                        <strong>{(profile.postCount || posts.length || 0).toLocaleString()}</strong>
+                        <span>Posts</span>
+                      </div>
                     </div>
-                    <div className="stat">
-                      <strong>{(profile.postCount || posts.length || 0).toLocaleString()}</strong>
-                      <span>Posts</span>
-                    </div>
+                    <div className="sidebar-created">
+                    <span>Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : ''}</span>
                   </div>
-                  <div className="sidebar-created">
-                    <span>Created {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : ''}</span>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
           </div>
         </div>
       </div>
