@@ -31,9 +31,12 @@ function App() {
     const fetchCurrentUser = async () => {
       const token = authService.getToken();
       if (token) {
+        // Keep local user immediately so refresh doesn't log out the UI
+        const localUser = authService.getUser();
+        if (localUser) setUser(localUser);
+
         try {
-          console.log('Fetching current user from API...');
-          // Fetch fresh user data from the server
+          console.log('Attempting to refresh current user from API...');
           const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -43,17 +46,20 @@ function App() {
           if (response.ok) {
             const data = await response.json();
             console.log('API returned user:', data.user);
-            console.log('User communities.joined:', data.user?.communities?.joined);
             setUser(data.user);
             authService.saveUser(data.user);
-          } else {
-            console.error('API returned error:', response.status);
-            // Token is invalid, clear auth
+          } else if (response.status === 401 || response.status === 403) {
+            console.error('Token invalid or expired:', response.status);
+            // Clear auth only on explicit authorization failures
             authService.clearAuth();
+            setUser(null);
+          } else {
+            console.warn('Non-auth error fetching current user, keeping local auth. Status:', response.status);
+            // keep local cached user
           }
         } catch (error) {
-          console.error('Failed to fetch user from API:', error);
-          authService.clearAuth();
+          console.error('Network error while fetching current user, keeping local auth:', error);
+          // Network issues shouldn't log the user out — keep the locally cached user
         }
       }
       setUserLoading(false);

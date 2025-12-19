@@ -179,22 +179,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       });
 
       if (response.ok) {
-        try {
-          const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            const authService = require('../../services/authService');
-            authService.default.saveUser(userData.user);
-            window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: userData.user } }));
-          }
-        } catch (err) {
-          console.error('Failed to update user data:', err);
-        }
+        console.log(`Vote ${voteType} successful for post ${postId}`);
       } else {
         const data = await response.json();
         setAlert({
@@ -429,36 +414,29 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
             )}
             <div className="community-info-bar">
               <div className="community-info-left">
-                <img 
-                  src={community.appearance?.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'} 
-                  alt={community.name} 
-                  className="community-icon"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png';
-                  }}
-                />
-                <div className="community-title-section">
-                  <h1 className="community-title">u/{community.name}</h1>
-                  <p className="community-members">{community.memberCount?.toLocaleString() || 0} members</p>
+                  <img 
+                    src={community.avatar || community.appearance?.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'} 
+                    alt={community.username || community.name} 
+                    className="community-icon"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png';
+                    }}
+                  />
+                  <div className="community-title-section">
+                    <h1 className="community-title">u/{community.username || community.name}</h1>
+                    <p className="community-members">{(community.followers?.length || community.followerCount || 0).toLocaleString()} followers</p>
+                  </div>
                 </div>
-              </div>
-              <div className="community-info-right">
-                <Button 
-                  variant={isJoined ? 'secondary' : 'primary'}
-                  className={`community-join-btn ${isJoined ? 'joined' : ''}`}
-                  onClick={handleFollowUser}
-                >
-                  {isJoined ? 'Following' : '+ Follow'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="community-create-post-btn" 
-                  onClick={handleCreatePost}
-                >
-                  Create Post
-                </Button>
-              </div>
+                <div className="community-info-right">
+                  <Button 
+                    variant={isJoined ? 'secondary' : 'primary'}
+                    className={`community-join-btn ${isJoined ? 'joined' : ''}`}
+                    onClick={handleFollowUser}
+                  >
+                    {isJoined ? 'Following' : '+ Follow'}
+                  </Button>
+                </div>
             </div>
             {community.description && (
               <div className="community-description">
@@ -613,21 +591,25 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
               <h3>About User</h3>
               {community && (
                 <>
-                  {community.description && (
-                    <p className="sidebar-description">{community.description}</p>
+                  {community.bio && (
+                    <p className="sidebar-description">{community.bio}</p>
                   )}
                   <div className="sidebar-stats">
                     <div className="stat">
-                      <strong>{community.memberCount?.toLocaleString() || 0}</strong>
-                      <span>Members</span>
+                      <strong>{(community.followers?.length || community.followerCount || 0).toLocaleString()}</strong>
+                      <span>Followers</span>
                     </div>
                     <div className="stat">
-                      <strong>{community.postCount?.toLocaleString() || 0}</strong>
+                      <strong>{(posts?.length || 0).toLocaleString()}</strong>
                       <span>Posts</span>
+                    </div>
+                    <div className="stat">
+                      <strong>{(community.karma || community.karmaPoints || 0).toLocaleString()}</strong>
+                      <span>Karma</span>
                     </div>
                   </div>
                   <div className="sidebar-created">
-                    <span>Created {community.createdAt ? new Date(community.createdAt).toLocaleDateString() : ''}</span>
+                    <span>Joined {community.createdAt ? new Date(community.createdAt).toLocaleDateString() : ''}</span>
                   </div>
                 </>
               )}
@@ -667,43 +649,28 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
               </div>
             )}
 
-            {/* Moderators */}
+            {/* Moderates (subreddits this user moderates) */}
             {community && (
               <div className="community-sidebar-card">
-                <h3>Moderators</h3>
+                <h3>Moderates</h3>
                 <div className="moderators-list">
-                  {/* Creator first */}
-                  {community.creator && (
-                    <Link 
-                      to={`/u/${community.creator.username}`} 
-                      className="moderator-item"
-                    >
-                      <img 
-                        src={community.creator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.creator.username}`}
-                        alt={community.creator.username}
-                        className="moderator-avatar"
-                      />
-                      <span className="moderator-username">u/{community.creator.username}</span>
-                    </Link>
-                  )}
-                  
-                  {/* Other moderators (excluding creator if they're in the list) */}
-                  {community.moderators && community.moderators
-                    .filter(mod => mod._id !== community.creator?._id)
-                    .map((moderator) => (
-                      <Link 
-                        key={moderator._id}
-                        to={`/u/${moderator.username}`} 
-                        className="moderator-item"
-                      >
-                        <img 
-                          src={moderator.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${moderator.username}`}
-                          alt={moderator.username}
-                          className="moderator-avatar"
-                        />
-                        <span className="moderator-username">u/{moderator.username}</span>
-                      </Link>
-                    ))}
+                  {(() => {
+                    const moderated = community.moderatedCommunities || community.moderates || community.moderated || community.moderatesList || [];
+                    if (!moderated || moderated.length === 0) {
+                      return <p className="sidebar-description">This user does not moderate any subreddits.</p>;
+                    }
+
+                    return moderated.map((c, idx) => {
+                      const name = typeof c === 'string' ? c : (c.name || c.title || c._id);
+                      const icon = typeof c === 'string' ? `https://api.dicebear.com/7.x/identicon/svg?seed=${name}` : (c.icon || `https://api.dicebear.com/7.x/identicon/svg?seed=${name}`);
+                      return (
+                        <Link key={name + idx} to={`/r/${name}`} className="moderator-item">
+                          <img src={icon} alt={name} className="moderator-avatar" />
+                          <span className="moderator-username">r/{name}</span>
+                        </Link>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             )}
