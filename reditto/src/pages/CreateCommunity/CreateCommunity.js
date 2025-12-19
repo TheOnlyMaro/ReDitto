@@ -7,7 +7,7 @@ import Input from '../../components/Input/Input';
 import Alert from '../../components/Alert/Alert';
 import './CreateCommunity.css';
 
-const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch }) => {
   const navigate = useNavigate();
   const [alert, setAlert] = useState(null);
   const [formData, setFormData] = useState({
@@ -110,7 +110,7 @@ const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, s
       };
 
       // Call API to create community
-      const response = await fetch('http://localhost:5000/api/communities', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/communities`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -173,6 +173,7 @@ const CreateCommunity = ({ user, userLoading, onLogout, darkMode, setDarkMode, s
         onLogout={onLogout} 
         darkMode={darkMode} 
         setDarkMode={setDarkMode}
+        onSearch={onSearch}
       />
       
       {alert && (

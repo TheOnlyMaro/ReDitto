@@ -7,7 +7,7 @@ import Input from '../../components/Input/Input';
 import Alert from '../../components/Alert/Alert';
 import './CreatePost.css';
 
-const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [alert, setAlert] = useState(null);
@@ -45,7 +45,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         setLoadingCommunities(true);
         
         // Fetch all communities and filter by user's joined list
-        const response = await fetch('http://localhost:5000/api/communities');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/communities`);
         
         if (response.ok) {
           const data = await response.json();
@@ -93,7 +93,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         }
 
         // Fetch community details including flairs
-        const response = await fetch(`http://localhost:5000/api/communities/${selectedCommunity.name}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/communities/${selectedCommunity.name}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch community details');
@@ -242,7 +242,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         })
       };
 
-      const response = await fetch('http://localhost:5000/api/posts', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -292,6 +292,7 @@ const CreatePost = ({ user, userLoading, onLogout, darkMode, setDarkMode, sideba
         onLogout={onLogout} 
         darkMode={darkMode} 
         setDarkMode={setDarkMode}
+        onSearch={onSearch}
       />
       
       {alert && (

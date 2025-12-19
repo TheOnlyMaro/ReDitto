@@ -8,7 +8,7 @@ import Comment from '../../components/Comment/Comment';
 import Alert from '../../components/Alert/Alert';
 import { authService } from '../../services/authService';
 
-const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch, searchResults, isSearching }) => {
   const { postId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +28,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/posts/${postId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}`);
         
         if (!response.ok) {
           throw new Error('Post not found');
@@ -117,7 +117,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
         const downvotedCommentIds = (user?.downvotedComments || []).map(id => id.toString());
         
         // Fetch top-level comments
-        const response = await fetch(`http://localhost:5000/api/comments/post/${postId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/comments/post/${postId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch comments');
         }
@@ -153,7 +153,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
           // Fetch all replies for this comment
           const replyPromises = comment.replies.map(async (replyId) => {
             try {
-              const replyResponse = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+              const replyResponse = await fetch(`${process.env.REACT_APP_API_URL}/comments/${replyId}`);
               if (!replyResponse.ok) return null;
               const replyData = await replyResponse.json();
               const replyComment = replyData.comment;
@@ -251,7 +251,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     
     const fetchRepliesRecursive = async (replyId, depth) => {
       try {
-        const response = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/comments/${replyId}`);
         if (!response.ok) return;
         const data = await response.json();
         const comment = data.comment;
@@ -294,8 +294,9 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   };
 
   const handleSearch = (query) => {
-    console.log('Search query:', query);
-    // TODO: Implement search functionality
+    if (onSearch) {
+      onSearch(query);
+    }
   };
 
   const handleBack = () => {
@@ -325,11 +326,11 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       let endpoint = '';
       
       if (voteType === 'upvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/upvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/upvote`;
       } else if (voteType === 'downvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/downvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/downvote`;
       } else if (voteType === 'unvote') {
-        endpoint = `http://localhost:5000/api/posts/${postId}/vote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/posts/${postId}/vote`;
       }
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
@@ -372,7 +373,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
         
         // Update user data synchronously to ensure it's ready before navigation
         try {
-          const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+          const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -456,11 +457,11 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       let endpoint = '';
       
       if (voteType === 'upvote') {
-        endpoint = `http://localhost:5000/api/comments/${commentId}/upvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/comments/${commentId}/upvote`;
       } else if (voteType === 'downvote') {
-        endpoint = `http://localhost:5000/api/comments/${commentId}/downvote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/comments/${commentId}/downvote`;
       } else if (voteType === 'unvote') {
-        endpoint = `http://localhost:5000/api/comments/${commentId}/vote`;
+        endpoint = `${process.env.REACT_APP_API_URL}/comments/${commentId}/vote`;
       }
 
       const method = voteType === 'unvote' ? 'DELETE' : 'POST';
@@ -587,7 +588,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
 
     try {
       const token = localStorage.getItem('reditto_auth_token');
-      const response = await fetch(`http://localhost:5000/api/comments`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

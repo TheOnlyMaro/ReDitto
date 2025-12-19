@@ -22,7 +22,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
       setLoading(true);
       
       // Fetch popular communities (top 10 by member count)
-      const popularResponse = await fetch('http://localhost:5000/api/communities?limit=100&sort=-memberCount');
+      const popularResponse = await fetch(`${process.env.REACT_APP_API_URL}/communities?limit=100&sort=-memberCount`);
       const popularData = await popularResponse.json();
       const allPopularCommunities = popularData.communities || [];
 
@@ -33,7 +33,7 @@ const Sidebar = ({ isExpanded, setIsExpanded, user }) => {
         const token = localStorage.getItem('reditto_auth_token');
         
         // Fetch all communities to filter user's joined/moderated ones
-        const allResponse = await fetch('http://localhost:5000/api/communities?limit=100');
+        const allResponse = await fetch(`${process.env.REACT_APP_API_URL}/communities?limit=100`);
         const allData = await allResponse.json();
         const allCommunities = allData.communities || [];
 

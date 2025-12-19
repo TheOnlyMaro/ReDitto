@@ -101,3 +101,13 @@ export const userAPI = {
     return handleResponse(response);
   },
 };
+
+// Search API calls
+export const searchAPI = {
+  // Global search
+  globalSearch: async (query, limit = 10) => {
+    const params = new URLSearchParams({ q: query, limit: limit.toString() });
+    const response = await fetch(`${API_BASE_URL}/search?${params}`);
+    return handleResponse(response);
+  },
+};

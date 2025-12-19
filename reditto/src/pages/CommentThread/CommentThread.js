@@ -7,7 +7,7 @@ import Comment from '../../components/Comment/Comment';
 import Alert from '../../components/Alert/Alert';
 import './CommentThread.css';
 
-const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded }) => {
+const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setSidebarExpanded, onSearch }) => {
   const { commentId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +31,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
 
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/comments/${commentId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/comments/${commentId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch comment');
@@ -62,7 +62,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
       if (post || !rootComment) return;
 
       try {
-        const response = await fetch(`http://localhost:5000/api/posts/${rootComment.post}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${rootComment.post}`);
         if (response.ok) {
           const data = await response.json();
           setPost(data.post);
@@ -96,7 +96,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
           
           const replyPromises = comment.replies.map(async (replyId) => {
             try {
-              const replyResponse = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+              const replyResponse = await fetch(`${process.env.REACT_APP_API_URL}/comments/${replyId}`);
               if (!replyResponse.ok) return null;
               const replyData = await replyResponse.json();
               const replyComment = replyData.comment;
@@ -175,7 +175,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
           continue;
         }
         
-        const response = await fetch(`http://localhost:5000/api/comments/${replyId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/comments/${replyId}`);
         if (!response.ok) continue;
         
         const data = await response.json();
@@ -201,7 +201,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
           }
           
           try {
-            const nestedResponse = await fetch(`http://localhost:5000/api/comments/${nestedReplyId}`);
+            const nestedResponse = await fetch(`${process.env.REACT_APP_API_URL}/comments/${nestedReplyId}`);
             if (!nestedResponse.ok) continue;
             
             const nestedData = await nestedResponse.json();
@@ -290,7 +290,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
 
     try {
       const token = localStorage.getItem('reditto_auth_token');
-      const response = await fetch(`http://localhost:5000/api/comments`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -357,7 +357,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
     } else if (rootComment && rootComment.post) {
       // Fetch post data if not available
       try {
-        const response = await fetch(`http://localhost:5000/api/posts/${rootComment.post}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${rootComment.post}`);
         if (response.ok) {
           const data = await response.json();
           if (data.post && data.post.community?.name) {
@@ -384,6 +384,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
         onLogout={onLogout} 
         darkMode={darkMode} 
         setDarkMode={setDarkMode}
+        onSearch={onSearch}
       />
       
       {alert && (
