@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Post.css';
 
-const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink, shareMenuOpen, onJoin, onSave }) => {
+const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink, shareMenuOpen, onJoin, onSave, fromSub = false }) => {
   const navigate = useNavigate();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
@@ -136,14 +136,33 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
       {/* Post Header */}
       <div className="post-header">
         <div className="post-header-left">
-          <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
-            <img 
-              src={post.community.icon} 
-              alt={post.community.name} 
-              className="community-icon"
-            />
-            <span className="community-name">r/{post.community.name}</span>
-          </Link>
+          {fromSub ? (
+            /* Show author info when viewing from user profile */
+            <>
+              <Link to={`/user/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`} 
+                  alt={post.author} 
+                  className="community-icon"
+                />
+                <span className="community-name">u/{post.author}</span>
+              </Link>
+              <span className="post-divider">•</span>
+              <Link to={`/r/${post.community.name}`} className="post-subcommunity" onClick={(e) => e.stopPropagation()}>
+                r/{post.community.name}
+              </Link>
+            </>
+          ) : (
+            /* Show community info normally */
+            <Link to={`/r/${post.community.name}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+              <img 
+                src={post.community.icon} 
+                alt={post.community.name} 
+                className="community-icon"
+              />
+              <span className="community-name">r/{post.community.name}</span>
+            </Link>
+          )}
           <span className="post-divider">•</span>
           <span className="post-time">{formatTimeAgo(post.createdAt)}</span>
         </div>
@@ -192,6 +211,19 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
 
       {/* Post Title */}
       <h2 className="post-title">{post.title}</h2>
+
+      {/* Post Flair */}
+      {fromSub && post.flair && (
+        <div 
+          className="post-flair"
+          style={{
+            backgroundColor: post.flair.backgroundColor || '#0079D3',
+            color: post.flair.textColor || '#FFFFFF'
+          }}
+        >
+          {post.flair.text}
+        </div>
+      )}
 
       {/* Post Content */}
       {post.type === 'text' && post.content && (

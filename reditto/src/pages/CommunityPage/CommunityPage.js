@@ -96,6 +96,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
             title: post.title,
             content: post.content,
             imageUrl: post.imageUrl,
+            flair: post.flair,
             author: post.author?.username || '[deleted]',
             authorDeleted: post.author?.flags?.isDeleted || !post.author,
             postDeleted: post.flags?.isDeleted || false,
@@ -411,6 +412,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                     onShare={() => handleShare(post.id)}
                     onCopyLink={() => handleCopyLink(post)}
                     shareMenuOpen={shareMenuPostId === post.id}
+                    fromSub={true}
                   />
                 ))}
               </div>
