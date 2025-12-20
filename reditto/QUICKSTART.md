@@ -96,6 +96,8 @@ This creates:
 - 3 communities (webdev, reactjs, javascript)
 - 4 sample posts
 
+**Warning:** Running `node scripts/populate.js` will remove or overwrite existing development data and may delete comments, posts, communities, and users. Do NOT run this against production data.
+
 **Test Login:**
 - Username: `monketest1`
 - Password: `Test123!`

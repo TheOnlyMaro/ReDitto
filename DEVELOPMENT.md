@@ -102,6 +102,9 @@ npm run server
 ### Database Population
 
 #### Populate Test Data
+
+**Warning:** `node scripts/populate.js` clears many existing collections and resets seeded accounts. Run only on non-production databases or after backing up data.
+
 ```bash
 node scripts/populate.js
 ```
@@ -132,16 +135,7 @@ This script (`scripts/generate-commits.js`) generates a formatted commit history
 - Includes commit hash, author, date, and changed files
 - Auto-generates table of contents
 
-#### Generate Postman Collection
-```bash
-node scripts/generate-postman-collection.js
-```
-This script generates a Postman collection for API testing:
-- Creates collection with all API endpoints
-- Includes authentication routes
-- Sets up environment variables
-- Outputs JSON file to `scripts/output/`
-- Ready to import into Postman
+<!-- Postman collection generation script removed from docs. Use Postman manually to test endpoints. -->
 
 ### Available Scripts Summary
 
@@ -155,7 +149,7 @@ This script generates a Postman collection for API testing:
 | Build Production | `npm run build` | Creates optimized production build |
 | Populate Database | `node scripts/populate.js` | Seeds database with test data |
 | Generate Commits | `npm run git-history` | Creates formatted commit history |
-| Generate Postman | `node scripts/generate-postman-collection.js` | Creates API collection |
+
 
 ## Testing Strategy
 
@@ -286,11 +280,18 @@ const validUserData = {
 - **Average Test Time**: ~40 seconds for full suite
 - **Coverage**: Authentication, authorization, CRUD operations, security, communities, posts, comments, voting, nested threading
 
+### Alpha Releases & Exploratory Testing
+
+- Deploy alpha builds to a small group of trusted testers (friends) on a development preview environment.
+- Encourage exploratory testing: let testers exercise features freely to uncover edge-case bugs, unclear UX, and data issues.
+- Capture feedback via a shared issue tracker (GitHub Issues) with a short template: steps to reproduce, expected vs actual, screenshots, and environment (dev/release).
+- Use alpha feedback to iterate rapidly on the dev environment before promoting changes to the `release` branch and production.
+
 ### Postman API Testing
 
 #### Setup Postman Environment
 1. **Install Postman**: Download from [postman.com](https://www.postman.com/)
-2. **Import Collection**: Use `scripts/generate-postman-collection.js` to generate collection
+2. **Import Collection**: Import a Postman collection JSON if provided, or create requests manually in Postman to test the API.
 3. **Create Environment Variables**:
    ```
    baseUrl: http://localhost:5000/api
@@ -1003,6 +1004,19 @@ npm run build
 # Backend (no build needed, runs Node directly)
 NODE_ENV=production npm run server
 ```
+
+### Recommended hosting & deployment automation
+
+- **Frontend:** Vercel (supports previews, branch deployments, and environment variables).
+- **Backend:** Render (or similar; supports private services, background workers, and environment groups).
+- **Environments:** Configure two environments on each platform:
+  - `development` (preview/alpha) — for feature branches and internal testing (restricted access to teammates).
+  - `release` — public/stable environment served to end users.
+- **Automation:** Connect the repository to the hosting platforms and configure automatic deployments:
+  - Development deployments: triggered by pushes to feature branches or a `dev/*` naming convention.
+  - Release deployments: triggered by pushes or merges to the `release` branch.
+- **Secrets & envs:** Store distinct environment variables for each environment (API keys, DB URIs). Do NOT store secrets in the repository.
+
 
 ## Future Development
 
