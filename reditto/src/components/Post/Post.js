@@ -30,6 +30,12 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
     };
   }, [optionsOpen]);
 
+  // Keep local isJoined in sync with parent prop `isFollowing` so
+  // the join button reflects the current membership state after updates.
+  useEffect(() => {
+    setIsJoined(!!isFollowing);
+  }, [isFollowing]);
+
   const handleUpvote = () => {
     if (!user) {
       if (onVote) {
@@ -88,6 +94,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
     const newJoinedState = !isJoined;
     setIsJoined(newJoinedState);
     if (onJoin) {
+      console.log('Post.handleJoinClick:', { communityName: post.community.name, communityId: post.community.id, newJoinedState });
       onJoin(post.community.name, newJoinedState, post.community.id);
     }
   };
@@ -139,7 +146,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
           {fromSub ? (
             /* Show author info when viewing from user profile */
             <>
-              <Link to={`/user/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
+              <Link to={`/u/${post.author}`} className="community-link" onClick={(e) => e.stopPropagation()}>
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`} 
                   alt={post.author} 
@@ -170,7 +177,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
         {user && (
           <div className="post-header-right">
             {/* Join Button - only show if not already following */}
-            {!isFollowing && (
+            {!isFollowing && !fromSub && (
               <button 
                 className={`post-join-btn ${isJoined ? 'joined' : ''}`}
                 onClick={handleJoinClick}

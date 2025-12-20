@@ -158,6 +158,15 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
     fetchComments();
   }, [rootComment, optimisticCommentIds]);
 
+  const handleCopyCommentLink = (commentId) => {
+    const commentUrl = `${window.location.origin}/r/comments/${commentId}`;
+    setAlert({ type: 'success', message: 'Link copied to clipboard!' });
+    navigator.clipboard.writeText(commentUrl).catch(err => {
+      console.error('Failed to copy comment link:', err);
+      setAlert({ type: 'error', message: 'Failed to copy link' });
+    });
+  };
+
   // Handle on-demand reply fetching
   const handleFetchReplies = async (replyIds, currentDepth) => {
     const MAX_MANUAL_FETCH_DEPTH = 5;
@@ -392,6 +401,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
           type={alert.type} 
           message={alert.message} 
           onClose={() => setAlert(null)} 
+          className="comment-thread-alert"
         />
       )}
 
@@ -472,6 +482,7 @@ const CommentThread = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded,
                       }}
                       user={user}
                       postId={rootComment.post}
+                      onCopyLink={handleCopyCommentLink}
                     />
                   )}
                 </div>

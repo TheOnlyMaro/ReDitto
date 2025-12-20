@@ -697,7 +697,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                   {/* Creator first */}
                   {community.creator && (
                     <Link 
-                      to={`/user/${community.creator.username}`} 
+                      to={`/u/${community.creator.username}`} 
                       className="moderator-item"
                     >
                       <img 
@@ -715,7 +715,7 @@ const CommunityPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCom
                     .map((moderator) => (
                       <Link 
                         key={moderator._id}
-                        to={`/user/${moderator.username}`} 
+                        to={`/u/${moderator.username}`} 
                         className="moderator-item"
                       >
                         <img 

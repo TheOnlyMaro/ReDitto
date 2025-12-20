@@ -11,7 +11,7 @@ const fetchCommentById = (commentId, allComments) => {
   return allComments.find(c => c.id === commentId || c._id === commentId);
 };
 
-const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, onVote, user, postId }) => {
+const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReplySubmit, onVote, user, postId, onCopyLink }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
@@ -147,7 +147,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
       <div className="comment-main">
         {/* Left side: Avatar and collapse line */}
         <div className="comment-left">
-          <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-avatar-link" onClick={(e) => isDeleted && e.preventDefault()}>
+          <Link to={isDeleted ? '#' : `/u/${comment.author}`} className="comment-avatar-link" onClick={(e) => isDeleted && e.preventDefault()}>
             <img src={avatarUrl} alt={displayAuthor} className="comment-avatar" />
           </Link>
           <div className="comment-collapse-controls">
@@ -162,7 +162,7 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
         <div className="comment-content-wrapper">
           {/* Comment Header */}
           <div className="comment-header">
-            <Link to={isDeleted ? '#' : `/user/${comment.author}`} className="comment-author" onClick={(e) => isDeleted && e.preventDefault()}>
+            <Link to={isDeleted ? '#' : `/u/${comment.author}`} className="comment-author" onClick={(e) => isDeleted && e.preventDefault()}>
               {isDeleted ? '[deleted]' : `u/${displayAuthor}`}
             </Link>
             <span className="comment-divider">•</span>
@@ -216,7 +216,22 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
                   <span>Reply</span>
                 </button>
 
-                <button className="comment-action-btn">
+                <button className="comment-action-btn" onClick={() => {
+                  const commentId = comment.id || comment._id;
+                  if (onCopyLink) {
+                    onCopyLink(commentId, postId);
+                    return;
+                  }
+
+                  // Fallback: copy route to /r/comments/:commentId
+                  const commentUrl = `${window.location.origin}/r/comments/${commentId}`;
+                  navigator.clipboard.writeText(commentUrl).then(() => {
+                    // Best-effort local feedback: use alert if available in global scope
+                    try { window.dispatchEvent(new CustomEvent('appAlert', { detail: { type: 'success', message: 'Link copied to clipboard!' } })); } catch (e) {}
+                  }).catch(err => {
+                    console.error('Failed to copy comment link:', err);
+                  });
+                }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -300,7 +315,18 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onVote={onVote} onReplySubmit={onReplySubmit} user={user} postId={postId} />
+                <Comment 
+                  key={reply.id || reply._id} 
+                  comment={reply} 
+                  depth={depth + 1} 
+                  allComments={allComments} 
+                  onFetchReplies={onFetchReplies} 
+                  onVote={onVote} 
+                  onReplySubmit={onReplySubmit} 
+                  user={user} 
+                  postId={postId}
+                  onCopyLink={onCopyLink}
+                />
               ))}
               
               {hiddenRepliesCount > 0 && (

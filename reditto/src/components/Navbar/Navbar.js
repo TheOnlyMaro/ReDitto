@@ -21,7 +21,7 @@ const Navbar = ({ user, onSearch, darkMode, setDarkMode, onLogout }) => {
   };
 
   const handleViewProfile = () => {
-    navigate(`/user/${user?.username}`);
+    navigate(`/u/${user?.username}`);
     setProfileMenuOpen(false);
   };
 
