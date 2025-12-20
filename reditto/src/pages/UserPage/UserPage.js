@@ -474,34 +474,27 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                 )}
               </div>
               {/* Moderated Subreddits */}
-              <div className="community-right-sidebar">
-                {profile?.communities?.moderated && profile.communities.moderated.length > 0 && (
-                  <div className="community-sidebar-card">
-                    <h3>Moderated Subreddits</h3>
-                    <div className="moderators-list">
-                      {(() => {
-                        const createdIds = new Set((profile.communities.created || []).map(c => (c._id || c).toString()));
-                        const seen = new Set();
-                        return profile.communities.moderated
-                          .map(c => (c._id ? c : c))
-                          .filter(c => {
-                            const id = (c._id || c).toString();
-                            if (createdIds.has(id)) return false; // skip duplicates
-                            if (seen.has(id)) return false;
-                            seen.add(id);
-                            return true;
-                          })
-                          .map((community) => (
-                            <Link key={(community._id || community).toString()} to={`/r/${community.name}`} className="moderator-item">
-                              <img src={community.icon || `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.name}`} alt={community.name} className="moderator-avatar" />
-                              <span className="moderator-username">r/{community.name}</span>
-                            </Link>
-                          ));
-                      })()}
-                    </div>
+              {profile && (
+                <div className="community-sidebar-card">
+                  <h3>Moderated Subreddits</h3>
+                  <div className="moderators-list">
+                    {profile.communities && profile.communities.moderated && profile.communities.moderated.map((community) => (
+                      <Link 
+                        key={community._id} 
+                        to={`/r/${community.name}`} 
+                        className="moderator-item"
+                      >
+                        <img 
+                          src={community.icon || `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.name}`}
+                          alt={community.name}
+                          className="moderator-avatar"
+                        />
+                        <span className="moderator-username">r/{community.name}</span>
+                      </Link>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
         </div>
       </div>
     </div>
