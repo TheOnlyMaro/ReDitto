@@ -293,6 +293,37 @@ Updates user profile information.
 
 ---
 
+### Follow / Unfollow User
+Follow or unfollow another user.
+
+**Follow User:** `POST /:userId/follow`
+
+**Authentication:** Required
+
+**Success Response (200):**
+```json
+{
+  "message": "User followed successfully",
+  "followers": ["user_id_1"],
+  "following": ["user_id_2"]
+}
+```
+
+**Unfollow User:** `POST /:userId/unfollow`
+
+**Authentication:** Required
+
+**Success Response (200):**
+```json
+{
+  "message": "User unfollowed successfully",
+  "followers": [],
+  "following": []
+}
+```
+
+---
+
 ### Delete User
 
 Deletes a user account.
@@ -499,6 +530,94 @@ Deletes a community.
 **Error Responses:**
 - 401: Unauthorized
 - 404: Community not found
+
+---
+
+### Moderator Management
+Manage community moderators.
+
+**Add Moderator:** `POST /:name/moderators`
+
+**Authentication:** Required (must be community creator or moderator)
+
+**Request Body:**
+```json
+{
+  "userId": "string (required)"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "Moderator added successfully"
+}
+```
+
+**Remove Moderator:** `DELETE /:name/moderators`
+
+**Authentication:** Required (must be community creator)
+
+**Request Body:**
+```json
+{
+  "userId": "string (required)"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "message": "Moderator removed successfully"
+}
+```
+
+---
+
+### Rules and Flairs
+Add rules or flairs to a community.
+
+**Add Rule:** `POST /:name/rules`
+
+**Authentication:** Required (must be moderator)
+
+**Request Body:**
+```json
+{
+  "title": "string (required)",
+  "description": "string (optional)",
+  "order": "number (optional)"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "message": "Rule added successfully",
+  "rule": { "title": "Be respectful", "description": "...", "order": 1 }
+}
+```
+
+**Add Flair:** `POST /:name/flairs`
+
+**Authentication:** Required (must be moderator)
+
+**Request Body:**
+```json
+{
+  "text": "string (required)",
+  "backgroundColor": "string (optional)",
+  "textColor": "string (optional)"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "message": "Flair added successfully",
+  "flair": { "text": "Tutorial" }
+}
+```
 
 ---
 
@@ -1108,6 +1227,56 @@ Removes user's vote (upvote or downvote) from a comment.
 
 ---
 
+## AI Routes
+
+Base path: `/api/ai`
+
+### Generate Post Summary
+
+Generate an AI summary for a post using the AI controller.
+
+**Endpoint:** `POST /summary/:postId`
+
+**Authentication:** Not required (controller may apply limits)
+
+**Success Response (200):**
+```json
+{
+  "postId": "post_id",
+  "summary": "A concise summary of the post content"
+}
+```
+
+Note: `GET /summary/:postId` is also supported for convenience.
+
+---
+
+## Search Routes
+
+Base path: `/api/search`
+
+### Global Search
+
+Search posts, users, and communities.
+
+**Endpoint:** `GET /` (query parameters used)
+
+**Query Parameters:**
+- `q` - search query string (required)
+- `type` - filter by resource type (`posts`, `users`, `communities`, or omit for all)
+- `limit` - number of results
+- `skip` - pagination offset
+
+**Success Response (200):**
+```json
+{
+  "query": "term",
+  "results": { "posts": [], "users": [], "communities": [] }
+}
+```
+
+---
+
 ## Error Response Format
 
 All error responses follow this format:
@@ -1134,4 +1303,4 @@ GET /api/posts?limit=20&skip=20 // Second page
 
 ---
 
-*Last Updated: December 18, 2025*
+*Last Updated: December 20, 2025*
