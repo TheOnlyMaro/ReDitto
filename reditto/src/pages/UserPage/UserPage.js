@@ -112,7 +112,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
     };
 
     fetchPosts();
-  }, [communityName, username, userLoading, userVoteVersion]);
+  }, [communityName, username, userLoading, userVoteVersion, user?.upvotedPosts, user?.downvotedPosts]);
 
   const handleVote = async (postId, voteType) => {
     if (!user) {
