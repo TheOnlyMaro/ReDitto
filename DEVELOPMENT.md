@@ -101,18 +101,27 @@ npm run server
 
 ### Database Population
 
-#### Populate Test Data
+#### Populate Development Data (scripts/populate.js)
 
-**Warning:** `node scripts/populate.js` clears many existing collections and resets seeded accounts. Run only on non-production databases or after backing up data.
+**Warning — destructive:** `node scripts/populate.js` is intended for development and will remove and recreate large parts of the database. By default the script connects to `process.env.MONGODB_URI` (the development DB) and performs the following destructive cleanup before seeding:
 
+- Deletes all comments, posts, and communities
+- Deletes all users except `monketest1` (the script resets `monketest1` instead of deleting it)
+
+Run this script only on non-production databases or after taking a backup.
+
+Run:
 ```bash
 node scripts/populate.js
 ```
 
 This script populates the development database with test data:
-- **3 Users**: monketest1, johndoe, janesmithdev
-- **3 Communities**: webdev, reactjs, javascript
-- **4 Posts**: Mix of text and link posts from different users
+- **7 Users**
+- **3 Communities**: `webdev`, `reactjs`, `javascript`
+- **5 Posts**: Mix of text and link posts from different users
+
+Connects to `MONGODB_URI` (not `MONGODB_TEST_URI`) by default — set `MONGODB_URI` to point at a throwaway DB if you want to seed a test instance.
+- Removes existing comments/posts/communities and resets most user state (keeps `monketest1`).
 
 **Features**:
 - Direct MongoDB access (bypasses authentication)
@@ -150,6 +159,48 @@ This script (`scripts/generate-commits.js`) generates a formatted commit history
 | Populate Database | `node scripts/populate.js` | Seeds database with test data |
 | Generate Commits | `npm run git-history` | Creates formatted commit history |
 
+## API Routes
+
+### Auth Routes (`/api/auth`)
+- `POST /register` - Register new user
+- `POST /login` - Login user
+- `GET /me` - Get current user (protected)
+- `POST /refresh` - Refresh JWT token (protected)
+
+### User Routes (`/api/users`)
+- `GET /:userId` - Get user by ID
+- `GET /username/:username` - Get user by username
+- `PUT /:userId` - Update user profile and communities (protected)
+- `DELETE /:userId` - Delete user (protected)
+
+### Community Routes (`/api/communities`)
+- `POST /` - Create community (protected)
+- `GET /` - Get all communities
+- `GET /:name` - Get community by name
+- `PUT /:name` - Update community (protected)
+- `DELETE /:name` - Delete community (protected)
+
+### Post Routes (`/api/posts`)
+- `POST /` - Create post (protected)
+- `GET /` - Get all posts (with filters: community, author, type, sort)
+- `GET /:postId` - Get post by ID
+- `PUT /:postId` - Update post (protected)
+- `DELETE /:postId` - Delete post (protected)
+- `POST /:postId/upvote` - Upvote post (protected)
+- `POST /:postId/downvote` - Downvote post (protected)
+- `DELETE /:postId/vote` - Remove vote (protected)
+
+### Comment Routes (`/api/comments`)
+- `POST /` - Create comment (protected)
+- `GET /post/:postId` - Get all comments for a post
+- `GET /:commentId` - Get comment by ID
+- `GET /:commentId/replies` - Get comment replies
+- `PUT /:commentId` - Update comment (protected)
+- `DELETE /:commentId` - Delete comment (protected)
+- `POST /:commentId/upvote` - Upvote comment (protected)
+- `POST /:commentId/downvote` - Downvote comment (protected)
+- `DELETE /:commentId/vote` - Remove vote (protected)
+
 
 ## Testing Strategy
 
@@ -158,6 +209,46 @@ This script (`scripts/generate-commits.js`) generates a formatted commit history
 - **HTTP Testing**: Supertest 7.1.4
 - **Test Database**: Separate MongoDB database (`test`)
 - **Test Runner**: Node environment (not React Scripts)
+
+### Key Testing Features
+- Integration testing with Supertest
+- MongoDB test database isolation
+- JWT authentication testing
+- Comprehensive validation testing
+- Soft delete verification
+- Vote system integrity testing
+
+### Test Suites
+1. **Authentication Tests** (33 tests)
+   - User registration validation
+   - Login functionality with case-insensitive email
+   - JWT token generation and validation
+   - Token security (wrong secrets, expired tokens, manipulated tokens)
+   - Token refresh mechanism
+   
+2. **User Tests** (22 tests)
+   - User profile operations (get by ID/username)
+   - Protected route authorization
+   - User updates and deletion
+   
+3. **Community Tests** (69 tests)
+   - Community model validation (25 tests)
+   - Community CRUD operations (44 tests)
+   - Moderator and rule management
+   
+4. **Post Tests** (87 tests)
+   - Post model validation (30 tests)
+   - Post CRUD operations (57 tests)
+   - Post voting with optimistic updates
+   - Post type validation (text, link, image)
+   
+5. **Comment Tests** (108 tests)
+   - Comment model validation (34 tests)
+   - Comment CRUD operations (74 tests)
+   - Nested comment threading
+   - Reply count tracking
+   - Comment voting with user array updates
+   - Soft delete functionality
 
 ### Backend Testing
 
@@ -274,11 +365,30 @@ const validUserData = {
 - `afterAll`: Close database connection
 - `beforeEach`: Clear users collection (ensures clean state)
 
+### Smoke testing
+All test suites run for every new functionality implementation as smoke testing to find bugs
+
 ### Test Results
-- **Total Tests**: 202+
+- **Total Tests**: 319
 - **Pass Rate**: 100%
-- **Average Test Time**: ~40 seconds for full suite
+- **Average Test Time**: ~400 seconds for all suites
 - **Coverage**: Authentication, authorization, CRUD operations, security, communities, posts, comments, voting, nested threading
+
+### Early development testing
+
+![Older tests screenshot](./screenshots/older.png)
+
+### Mid development testing with coverage
+
+![Tests screenshot](./screenshots/testf.png)
+- Failed test cases helped in finding bugs in the software.
+
+### Final release testing with coverage
+
+![Tests screenshot](./screenshots/tests.png)
+
+![Coverage screenshot](./screenshots/cvrg.png)
+
 
 ### Alpha Releases & Exploratory Testing
 
@@ -486,6 +596,12 @@ pm.test("User has required fields", function () {
 - ✅ Reply count updates recursively
 
 ### Manual Frontend Testing
+
+- Frontend testing heavily relied on exploratory testing and console logging
+
+![UI log screenshot](./screenshots/log.png)
+
+- Functionalities were often analysed from Reddit to mimic real functionality
 
 #### Testing Checklist
 
@@ -984,16 +1100,20 @@ try {
 
 ## Deployment Readiness
 
+- **Alpha build** already deployed
+- **Beta versions** may be deployed after major bug fixes are complete
+- **Official releases** may be deployed once optimizations have been made and bonus features implemented
+
 ### Production Checklist
-- [ ] Environment variables secured
-- [ ] CORS origin restricted to production domain
-- [ ] JWT secret changed to strong random value
-- [ ] MongoDB connection string updated for production
+- [x] Environment variables secured
+- [x] CORS origin restricted to production domain
+- [x] JWT secret changed to strong random value
+- [x] MongoDB connection string updated for production
 - [ ] Frontend built (`npm run build`)
 - [ ] Backend served with process manager (PM2)
-- [ ] HTTPS enabled
+- [x] HTTPS enabled
 - [ ] Rate limiting implemented
-- [ ] Logging configured
+- [x] Logging configured
 - [ ] Error monitoring setup
 
 ### Build Process
@@ -1005,15 +1125,15 @@ npm run build
 NODE_ENV=production npm run server
 ```
 
-### Recommended hosting & deployment automation
+### Hosting & deployment automation
 
 - **Frontend:** Vercel (supports previews, branch deployments, and environment variables).
-- **Backend:** Render (or similar; supports private services, background workers, and environment groups).
-- **Environments:** Configure two environments on each platform:
+- **Backend:** Render (supports private services, background workers, and environment groups).
+- **Environments:** Configured two environments on each platform:
   - `development` (preview/alpha) — for feature branches and internal testing (restricted access to teammates).
-  - `release` — public/stable environment served to end users.
+  - `release` — public/stable environment served to end users (currently alpha versions).
 - **Automation:** Connect the repository to the hosting platforms and configure automatic deployments:
-  - Development deployments: triggered by pushes to feature branches or a `dev/*` naming convention.
+  - Development deployments: triggered by pushes to feature branches.
   - Release deployments: triggered by pushes or merges to the `release` branch.
 - **Secrets & envs:** Store distinct environment variables for each environment (API keys, DB URIs). Do NOT store secrets in the repository.
 
@@ -1030,23 +1150,25 @@ NODE_ENV=production npm run server
 - [x] Comment system (create, reply, vote, nested threading)
 - [x] Dark mode theme
 - [x] Database population script
+- [x] Community pages (view all posts in community)
+- [x] User profile pages
+- [x] Create post UI (currently API-only)
+- [x] Search functionality
+- [x] Post flairs UI
+- [x] Community rules display
+- [x] Moderator tools
 
 ### Planned Features
-- [ ] Community pages (view all posts in community)
-- [ ] User profile pages
-- [ ] Create post UI (currently API-only)
-- [ ] Search functionality
-- [ ] Image upload (currently URL-based)
-- [ ] Notifications
-- [ ] User settings page
-- [ ] Password reset flow
-- [ ] Edit posts/comments
-- [ ] Post flairs UI
-- [ ] Community rules display
-- [ ] Moderator tools
+- The remaining planned features to implement are intentionally small, prioritized, and listed below. All other previously planned items are implemented.
+- [ ] Image upload using block storage (e.g., Cloudinary) — currently image posting is URL-based
+- [ ] Notifications (in-app notification center and opt-in preferences)
+- [ ] User settings page (profile preferences, privacy, notification toggles)
+- [ ] Password reset flow (email reset + tokenized link)
+- [ ] Edit posts/comments (allow authors to edit their content with edit metadata)
+- [ ] User chat (Real-time, Socket.io)
 
 ### Technical Improvements
-- [ ] Frontend routing with React Router
+- [x] Frontend routing with React Router
 - [ ] State management (Context API or Redux)
 - [ ] Real-time features (Socket.io)
 - [ ] Pagination for lists
@@ -1054,7 +1176,7 @@ NODE_ENV=production npm run server
 - [ ] API rate limiting
 - [ ] Redis caching
 - [ ] Frontend test coverage
-- [ ] CI/CD pipeline
+- [x] CI/CD pipeline
 - [ ] Docker containerization
 
 ## Maintenance & Monitoring
@@ -1153,11 +1275,42 @@ npm audit fix
 - [JWT.io](https://jwt.io/)
 - [Jest Docs](https://jestjs.io/)
 
+### Project & Library References
+- [Node.js](https://nodejs.org/) — runtime used for backend scripts and server
+- [dotenv](https://www.npmjs.com/package/dotenv) — environment variable loading (`.env` files)
+- [bcrypt / bcryptjs](https://www.npmjs.com/package/bcrypt) / https://www.npmjs.com/package/bcryptjs — password hashing used in `scripts/populate.js` and auth flows
+- [Supertest](https://www.npmjs.com/package/supertest) — HTTP integration testing for backend tests in `server/testing`
+- [React Router](https://reactrouter.com/) — frontend routing (`react-router-dom`)
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro) — frontend unit/integration testing utilities
+- [Axios](https://axios-http.com/) — HTTP client used in frontend services
+
+### Hosting, Deployment & Ops
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) — recommended DB hosting
+- [Cloudinary](https://cloudinary.com/) — suggested block-storage/image hosting provider for future image upload feature
+- [Vercel](https://vercel.com/) — recommended frontend hosting
+- [Render](https://render.com/) — recommended backend hosting (or similar provider)
+- [PM2](https://pm2.keymetrics.io/) — process manager suggested for production Node servers
+- [Docker](https://www.docker.com/) — containerization for deployments (optional)
+
+### Monitoring, Logging & Security
+- [Sentry](https://sentry.io/) — error monitoring
+- [Winston](https://github.com/winstonjs/winston) / [Pino](https://getpino.io/) — structured logging suggestions
+- [Morgan](https://github.com/expressjs/morgan) — HTTP request logging middleware for Express
+- [Helmet](https://helmetjs.github.io/) — security hardening middleware for Express
+
+### Tools & Utilities
+- [Postman](https://www.postman.com/) — API testing and collection import/export (Postman collection generation script lives in `scripts/output`)
+- [GitHub](https://github.com/) — code hosting and CI/CD integration
+- [ESLint](https://eslint.org/) and [Prettier](https://prettier.io/) — linting and formatting
+- [concurrently](https://www.npmjs.com/package/concurrently) — used by `npm run dev` to run frontend+backend
+
+---
+
+*Last Updated: December 20, 2025*
+
 ### Learning Resources
 - [MDN Web Docs](https://developer.mozilla.org/)
 - [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
 - [React Best Practices](https://react.dev/learn)
 
 ---
-
-*Last Updated: December 18, 2025*
