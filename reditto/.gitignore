@@ -23,8 +23,6 @@ ReDitto_API.postman_collection.json
 .env.test.local
 .env.production.local
 
-# auto-generated documentation
-COMMITS.md
 
 # logs
 npm-debug.log*
