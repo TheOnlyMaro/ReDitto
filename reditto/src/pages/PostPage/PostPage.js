@@ -695,6 +695,16 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
     });
   };
 
+  const handleCopyCommentLink = (commentId) => {
+    const commentUrl = `${window.location.origin}/r/comments/${commentId}`;
+    navigator.clipboard.writeText(commentUrl).then(() => {
+      setAlert({ type: 'success', message: 'Link copied to clipboard!' });
+    }).catch(err => {
+      console.error('Failed to copy comment link:', err);
+      setAlert({ type: 'error', message: 'Failed to copy link' });
+    });
+  };
+
   // Close share menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -950,6 +960,7 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                           }}
                           user={user}
                           postId={postId}
+                          onCopyLink={handleCopyCommentLink}
                         />
                       ))}
                   </div>
