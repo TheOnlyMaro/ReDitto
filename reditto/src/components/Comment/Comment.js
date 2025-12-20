@@ -315,7 +315,18 @@ const Comment = ({ comment, depth = 0, allComments = [], onFetchReplies, onReply
           ) : (
             <>
               {visibleReplies.map((reply) => (
-                <Comment key={reply.id || reply._id} comment={reply} depth={depth + 1} allComments={allComments} onFetchReplies={onFetchReplies} onVote={onVote} onReplySubmit={onReplySubmit} user={user} postId={postId} />
+                <Comment 
+                  key={reply.id || reply._id} 
+                  comment={reply} 
+                  depth={depth + 1} 
+                  allComments={allComments} 
+                  onFetchReplies={onFetchReplies} 
+                  onVote={onVote} 
+                  onReplySubmit={onReplySubmit} 
+                  user={user} 
+                  postId={postId}
+                  onCopyLink={onCopyLink}
+                />
               ))}
               
               {hiddenRepliesCount > 0 && (
