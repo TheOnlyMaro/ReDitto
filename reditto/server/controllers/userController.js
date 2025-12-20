@@ -1,4 +1,6 @@
 const User = require('../models/User');
+// Ensure Community model is registered before populating community refs
+require('../models/Community');
 
 // Update user profile (only editable fields)
 const updateUser = async (req, res) => {

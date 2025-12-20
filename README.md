@@ -717,16 +717,39 @@ npm run test:server -- --coverage  # Run with coverage report
 - **Borders**: #EDEFF1
 - **Background**: #F6F7F8
 
-## Contributing
+# ReDitto — Reddit-like app (short overview)
 
-This is a university project for the Web Development course.
+ReDitto is a full-stack Reddit-inspired application built with the MERN stack (MongoDB, Express, React, Node).
 
-## License
+This repository contains the frontend React app and the backend API with comprehensive tests.
 
-Academic project - All rights reserved
+Key resources (keep these up-to-date):
 
-## Acknowledgments
+- Quick start & local setup: [reditto/QUICKSTART.md](reditto/QUICKSTART.md)
+- API reference: [reditto/API.md](reditto/API.md)
+- Development guide & troubleshooting: [DEVELOPMENT.md](DEVELOPMENT.md)
 
-- Built with Create React App
-- Inspired by Reddit's design and functionality
-- MongoDB Atlas for cloud database hosting
+Running tests (backend)
+
+Run the server test suite (includes coverage):
+
+```
+npm run test:server -- --coverage
+```
+
+Notes
+- The repository ships a focused QUICKSTART and a detailed API document. To avoid repetition, this README is intentionally concise — use the linked documents for setup, API details, and development workflow.
+
+Project layout
+
+```
+reditto/
+├── server/    # Backend API (controllers, models, routes, tests)
+├── src/       # Frontend React app
+├── public/    # Static assets
+├── scripts/   # Utility scripts (populate, etc.)
+├── .env*      # Environment variable templates
+└── README.md  # This file (overview + links)
+```
+
+If you'd like, I can further consolidate `QUICKSTART.md` and `DEVELOPMENT.md` (merge troubleshooting sections, remove overlap). Would you like me to do that now?
