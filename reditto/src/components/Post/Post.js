@@ -88,6 +88,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
     const newJoinedState = !isJoined;
     setIsJoined(newJoinedState);
     if (onJoin) {
+      console.log('Post.handleJoinClick:', { communityName: post.community.name, communityId: post.community.id, newJoinedState });
       onJoin(post.community.name, newJoinedState, post.community.id);
     }
   };

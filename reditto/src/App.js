@@ -157,12 +157,19 @@ function App() {
       console.log('Updated joined communities:', updatedJoined);
 
       // Call API to update user's joined communities
-      const data = await userAPI.updateUser(user._id, { communities: { joined: updatedJoined } }, authService.getToken());
-      if (data && data.user) {
-        setUser(data.user);
-        authService.saveUser(data.user);
-        // Notify listeners
-        window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: data.user } }));
+      try {
+        console.log('calling userAPI.updateUser', { userId: user._id, joinedCount: updatedJoined.length, hasToken: !!authService.getToken() });
+        const data = await userAPI.updateUser(user._id, { communities: { joined: updatedJoined } }, authService.getToken());
+        console.log('userAPI.updateUser response:', data);
+        if (data && data.user) {
+          setUser(data.user);
+          authService.saveUser(data.user);
+          // Notify listeners
+          window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: data.user } }));
+        }
+      } catch (apiError) {
+        console.error('userAPI.updateUser failed:', apiError);
+        throw apiError;
       }
     } catch (error) {
       console.error('Failed to join/unjoin community:', error);
@@ -179,7 +186,7 @@ function App() {
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} searchResults={searchResults} isSearching={isSearching} />} />
           <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
-          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
           <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
