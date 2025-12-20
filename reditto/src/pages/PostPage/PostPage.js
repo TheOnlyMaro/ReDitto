@@ -22,6 +22,10 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [optimisticCommentIds, setOptimisticCommentIds] = useState(new Set());
+  const [aiSummary, setAiSummary] = useState(null);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState(null);
+  const [showAiSummary, setShowAiSummary] = useState(false);
 
   // Fetch post data (always fetch to get fresh vote counts and data)
   useEffect(() => {
@@ -306,6 +310,62 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
       // If no previous location, redirect to community page
       navigate(`/r/${post.community.name}`);
     }
+  };
+
+  const handleGenerateAiSummary = async () => {
+    if (!postId) return;
+    
+    setAiSummaryLoading(true);
+    setAiSummaryError(null);
+    setShowAiSummary(true);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/ai/summary/${postId}`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate summary');
+      }
+      
+      const data = await response.json();
+      setAiSummary(data.summary);
+    } catch (error) {
+      console.error('Failed to generate AI summary:', error);
+      setAiSummaryError(error.message);
+    } finally {
+      setAiSummaryLoading(false);
+    }
+  };
+
+  // Simple markdown parser for AI summary
+  const parseMarkdown = (text) => {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // Headers
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Line breaks
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph
+    html = '<p>' + html + '</p>';
+    
+    // Lists
+    html = html.replace(/<p>([0-9]+\..+?)<\/p>/g, '<ol><li>$1</li></ol>');
+    html = html.replace(/<p>-\s(.+?)<\/p>/g, '<ul><li>$1</li></ul>');
+    
+    return html;
   };
 
   const handleVote = async (voteType) => {
@@ -858,6 +918,19 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                     <span>{post.commentCount || 0} Comments</span>
                   </div>
 
+                  {/* AI Summary Button */}
+                  <button 
+                    className="post-detail-action-btn ai-summary-btn" 
+                    onClick={handleGenerateAiSummary}
+                    disabled={aiSummaryLoading}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                      <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>{aiSummaryLoading ? 'Generating...' : 'AI Summary'}</span>
+                  </button>
+
                   {/* Share Button */}
                   <div className="share-menu-container">
                     <button className="post-detail-action-btn" onClick={handleShare}>
@@ -879,6 +952,37 @@ const PostPage = ({ user, onLogout, darkMode, setDarkMode, sidebarExpanded, setS
                   </div>
                 </div>
               </div>
+
+              {/* AI Summary Section */}
+              {showAiSummary && (
+                <div className="ai-summary-section">
+                  <div className="ai-summary-header">
+                    <h3>🤖 AI-Generated Summary</h3>
+                    <button 
+                      className="ai-summary-close" 
+                      onClick={() => setShowAiSummary(false)}
+                      aria-label="Close summary"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  {aiSummaryLoading ? (
+                    <div className="ai-summary-loading">
+                      <Loading size="small" />
+                      <p>Analyzing post and comments...</p>
+                    </div>
+                  ) : aiSummaryError ? (
+                    <div className="ai-summary-error">
+                      <p>⚠️ {aiSummaryError}</p>
+                    </div>
+                  ) : aiSummary ? (
+                    <div 
+                      className="ai-summary-content"
+                      dangerouslySetInnerHTML={{ __html: parseMarkdown(aiSummary) }}
+                    />
+                  ) : null}
+                </div>
+              )}
 
               {/* Comments Section */}
               <div className="post-comments-section">
