@@ -48,6 +48,7 @@ const postRoutes = require('./routes/postRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const searchRoutes = require('./routes/searchRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 
 app.use('/api/auth', authRoutes);
@@ -56,6 +57,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/ai', aiRoutes);
 
 
 // Database connection
