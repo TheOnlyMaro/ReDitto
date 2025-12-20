@@ -30,6 +30,12 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
     };
   }, [optionsOpen]);
 
+  // Keep local isJoined in sync with parent prop `isFollowing` so
+  // the join button reflects the current membership state after updates.
+  useEffect(() => {
+    setIsJoined(!!isFollowing);
+  }, [isFollowing]);
+
   const handleUpvote = () => {
     if (!user) {
       if (onVote) {
@@ -171,7 +177,7 @@ const Post = ({ post, user, isFollowing, onVote, onComment, onShare, onCopyLink,
         {user && (
           <div className="post-header-right">
             {/* Join Button - only show if not already following */}
-            {!isFollowing && (
+            {!isFollowing && !fromSub && (
               <button 
                 className={`post-join-btn ${isJoined ? 'joined' : ''}`}
                 onClick={handleJoinClick}

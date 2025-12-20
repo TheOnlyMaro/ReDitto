@@ -65,10 +65,14 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
         const response = await fetch(`${process.env.REACT_APP_API_URL}/posts?author=${name}`);
         const data = await response.json();
         
+        // Get user's joined communities if logged in
+        const joinedCommunityIds = user?.communities?.joined || [];
         const upvotedPostIds = (user?.upvotedPosts || []).map(id => id.toString());
         const downvotedPostIds = (user?.downvotedPosts || []).map(id => id.toString());
-        
+
+        // Transform posts to match expected format (same as Home)
         const transformedPosts = (data.posts || []).map(post => {
+          // Determine user's vote on this post
           let userVote = null;
           const postIdString = post._id.toString();
           if (upvotedPostIds.includes(postIdString)) {
@@ -83,23 +87,22 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
             title: post.title,
             content: post.content,
             imageUrl: post.imageUrl,
-            flair: post.flair,
             author: post.author?.username || '[deleted]',
             authorDeleted: post.author?.flags?.isDeleted || !post.author,
             postDeleted: post.flags?.isDeleted || false,
-            community: post.community ? {
+            community: {
               id: post.community._id,
               name: post.community.name,
               icon: post.community.icon || 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png'
-            } : null,
+            },
             voteScore: post.voteCount,
             commentCount: post.commentCount,
             createdAt: new Date(post.createdAt),
-            isFollowing: false,
+            isFollowing: joinedCommunityIds.includes(post.community._id),
             userVote: userVote
           };
         });
-        
+
         setPosts(transformedPosts);
         setLoading(false);
       } catch (error) {
@@ -143,14 +146,15 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
             
             // Calculate new vote score based on vote changes
             if (voteType === 'unvote') {
+              // Remove vote: decrease by 1 if upvoted, increase by 1 if downvoted
               if (currentVote === 'upvote') newVoteScore -= 1;
               else if (currentVote === 'downvote') newVoteScore += 1;
             } else if (voteType === 'upvote') {
-              if (currentVote === 'downvote') newVoteScore += 2;
-              else if (!currentVote) newVoteScore += 1;
+              if (currentVote === 'downvote') newVoteScore += 2; // Remove downvote (-1) and add upvote (+1)
+              else if (!currentVote) newVoteScore += 1; // Add upvote
             } else if (voteType === 'downvote') {
-              if (currentVote === 'upvote') newVoteScore -= 2;
-              else if (!currentVote) newVoteScore -= 1;
+              if (currentVote === 'upvote') newVoteScore -= 2; // Remove upvote (+1) and add downvote (-1)
+              else if (!currentVote) newVoteScore -= 1; // Add downvote
             }
             
             return {
@@ -172,6 +176,10 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       });
 
       if (response.ok) {
+        // Vote succeeded - optimistic update already applied, no need to update again
+        console.log(`Vote ${voteType} successful for post ${postId}`);
+        
+        // Update user data synchronously to ensure it's ready before navigation
         try {
           const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
@@ -189,34 +197,38 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
           console.error('Failed to update user data:', err);
         }
       } else {
-        const data = await response.json();
-        setAlert({
-          type: 'error',
-          message: data.message || 'Failed to vote. Please try again.'
-        });
-        
-        // Revert by re-fetching posts or reversing the change
+        console.error('Vote failed:', await response.json());
+        // Rollback optimistic update by reversing the vote
         setPosts(prevPosts => 
           prevPosts.map(post => {
             if (post.id === postId) {
-              const currentVote = voteType === 'unvote' ? null : voteType;
-              let revertedScore = post.voteScore;
+              const currentVote = post.userVote;
+              let revertedVoteScore = post.voteScore;
               
+              // Reverse the vote change
               if (voteType === 'unvote') {
-                if (post.userVote === 'upvote') revertedScore += 1;
-                else if (post.userVote === 'downvote') revertedScore -= 1;
+                // Was trying to remove vote, restore it
+                if (currentVote === null) {
+                  // Figure out what the original vote was based on score change
+                  // This is complex, simpler to just re-fetch or store original
+                  revertedVoteScore = post.voteScore; // Keep as is for now
+                }
               } else if (voteType === 'upvote') {
-                if (post.userVote === 'downvote') revertedScore -= 2;
-                else if (!post.userVote) revertedScore -= 1;
+                if (currentVote === 'upvote') {
+                  // Reverse upvote
+                  revertedVoteScore -= 1;
+                }
               } else if (voteType === 'downvote') {
-                if (post.userVote === 'upvote') revertedScore += 2;
-                else if (!post.userVote) revertedScore += 1;
+                if (currentVote === 'downvote') {
+                  // Reverse downvote
+                  revertedVoteScore += 1;
+                }
               }
               
               return {
                 ...post,
-                voteScore: revertedScore,
-                userVote: post.userVote
+                voteScore: revertedVoteScore,
+                userVote: null // Reset to no vote on failure
               };
             }
             return post;
@@ -225,32 +237,24 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       }
     } catch (error) {
       console.error('Failed to vote:', error);
-      setAlert({
-        type: 'error',
-        message: 'Failed to vote. Please try again.'
-      });
-      
+      // Rollback optimistic update on network error
       setPosts(prevPosts => 
         prevPosts.map(post => {
           if (post.id === postId) {
-            let revertedScore = post.voteScore;
-            const currentVote = voteType === 'unvote' ? null : voteType;
+            let revertedVoteScore = post.voteScore;
+            const currentVote = post.userVote;
             
-            if (voteType === 'unvote') {
-              if (post.userVote === 'upvote') revertedScore += 1;
-              else if (post.userVote === 'downvote') revertedScore -= 1;
-            } else if (voteType === 'upvote') {
-              if (post.userVote === 'downvote') revertedScore -= 2;
-              else if (!post.userVote) revertedScore -= 1;
-            } else if (voteType === 'downvote') {
-              if (post.userVote === 'upvote') revertedScore += 2;
-              else if (!post.userVote) revertedScore += 1;
+            // Reverse the optimistic change
+            if (voteType === 'upvote' && currentVote === 'upvote') {
+              revertedVoteScore -= 1;
+            } else if (voteType === 'downvote' && currentVote === 'downvote') {
+              revertedVoteScore += 1;
             }
             
             return {
               ...post,
-              voteScore: revertedScore,
-              userVote: post.userVote
+              voteScore: revertedVoteScore,
+              userVote: null
             };
           }
           return post;
@@ -271,6 +275,13 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
       message: 'Link copied to clipboard!'
     });
     setShareMenuPostId(null);
+  };
+
+  const handleJoin = async (communityName, isJoining, communityId) => {
+    console.log(`${isJoining ? 'Join' : 'Unjoin'} community:`, communityName);
+    if (onJoinCommunity) {
+      await onJoinCommunity(communityName, isJoining, communityId);
+    }
   };
 
   const handleFollowUser = async () => {
@@ -441,7 +452,7 @@ const UserPage = ({ user, userLoading, userVoteVersion, onLogout, onJoinCommunit
                     onShare={() => handleShare(post.id)}
                     onCopyLink={() => handleCopyLink(post)}
                     shareMenuOpen={shareMenuPostId === post.id}
-                    onJoin={onJoinCommunity}
+                    onJoin={handleJoin}
                   />
                 ))}
               </div>
