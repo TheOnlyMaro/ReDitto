@@ -4,7 +4,9 @@ const {
   updateUser,
   getUserById,
   getUserByUsername,
-  deleteUser
+  deleteUser,
+  followUser,
+  unfollowUser
 } = require('../controllers/userController');
 const {
   validateUserUpdate,
@@ -20,6 +22,10 @@ router.get('/:userId', validateObjectId('userId'), getUserById);
 
 // Update user (protected)
 router.put('/:userId', authenticateToken, validateObjectId('userId'), validateUserUpdate, updateUser);
+
+// Follow/unfollow user (protected)
+router.post('/:userId/follow', authenticateToken, validateObjectId('userId'), followUser);
+router.post('/:userId/unfollow', authenticateToken, validateObjectId('userId'), unfollowUser);
 
 // Delete user (protected)
 router.delete('/:userId', authenticateToken, validateObjectId('userId'), deleteUser);

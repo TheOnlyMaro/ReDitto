@@ -45,7 +45,7 @@ const Header = ({ user, onLogout }) => {
                   </svg>
                 </button>
                 <div className="user-dropdown">
-                  <Link to={`/user/${user.username}`} className="dropdown-item">
+                  <Link to={`/u/${user.username}`} className="dropdown-item">
                     My Profile
                   </Link>
                   <Link to="/settings" className="dropdown-item">

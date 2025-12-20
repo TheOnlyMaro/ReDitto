@@ -8,8 +8,11 @@ import CreateCommunity from './pages/CreateCommunity/CreateCommunity';
 import CreatePost from './pages/CreatePost/CreatePost';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
+
 import { authService } from './services/authService';
-import { searchAPI } from './services/api';
+import { searchAPI, userAPI } from './services/api';
+import UserPage from './pages/UserPage/UserPage';
+import Chat from './pages/Chat/Chat';
 import './App.css';
 
 function App() {
@@ -32,7 +35,7 @@ function App() {
         try {
           console.log('Fetching current user from API...');
           // Fetch fresh user data from the server
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -153,24 +156,20 @@ function App() {
 
       console.log('Updated joined communities:', updatedJoined);
 
-      // Call API to update user
-      const response = await fetch(`process.env.REACT_APP_API_UR/users/${user._id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          communities: {
-            joined: updatedJoined
-          }
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        authService.saveUser(data.user);
+      // Call API to update user's joined communities
+      try {
+        console.log('calling userAPI.updateUser', { userId: user._id, joinedCount: updatedJoined.length, hasToken: !!authService.getToken() });
+        const data = await userAPI.updateUser(user._id, { communities: { joined: updatedJoined } }, authService.getToken());
+        console.log('userAPI.updateUser response:', data);
+        if (data && data.user) {
+          setUser(data.user);
+          authService.saveUser(data.user);
+          // Notify listeners
+          window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: { user: data.user } }));
+        }
+      } catch (apiError) {
+        console.error('userAPI.updateUser failed:', apiError);
+        throw apiError;
       }
     } catch (error) {
       console.error('Failed to join/unjoin community:', error);
@@ -187,9 +186,11 @@ function App() {
           <Route path="/r/:communityName/posts/:postId" element={<PostPage user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} searchResults={searchResults} isSearching={isSearching} />} />
           <Route path="/r/comments/:commentId" element={<CommentThread user={user} onLogout={handleLogout} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/r/:communityName" element={<CommunityPage user={user} userLoading={userLoading} userVoteVersion={userVoteVersion} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
-          <Route path="/user/:username" element={<div style={{padding: '100px', textAlign: 'center'}}>User Profile - Coming Soon</div>} />
+          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
           <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/register" element={<Register onRegisterSuccess={handleRegisterSuccess} />} />
+          <Route path="/u/:username" element={<UserPage user={user} onLogout={handleLogout} onJoinCommunity={handleJoinCommunity} darkMode={darkMode} setDarkMode={setDarkMode} sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} onSearch={handleSearch} />} />
+          <Route path="/u/:username/chat" element={<Chat />} />
         </Routes>
       </div>
     </Router>
